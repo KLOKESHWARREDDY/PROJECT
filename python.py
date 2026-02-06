@@ -1,1 +1,1 @@
-print("This code is just for confir")
+print("This code is just for confirmation")
