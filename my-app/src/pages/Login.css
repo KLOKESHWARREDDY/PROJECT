@@ -1,0 +1,110 @@
+* {
+  box-sizing: border-box;
+  font-family: Arial, sans-serif;
+}
+
+.login-container {
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: #f4f6ff;
+}
+
+.login-card {
+  width: 360px;
+  background: #fff;
+  padding: 30px;
+  border-radius: 14px;
+  text-align: center;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+}
+
+.logo {
+  width: 60px;
+  height: 60px;
+  background: #5b5af7;
+  color: #fff;
+  border-radius: 50%;
+  margin: 0 auto 15px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  font-size: 20px;
+}
+
+.subtitle {
+  font-size: 14px;
+  color: #888;
+  margin-bottom: 25px;
+}
+
+.role-switch {
+  display: flex;
+  background: #eef0ff;
+  border-radius: 10px;
+  margin-bottom: 20px;
+}
+
+.role-switch button {
+  flex: 1;
+  padding: 10px;
+  border: none;
+  background: transparent;
+  font-weight: 600;
+  cursor: pointer;
+  border-radius: 10px;
+}
+
+.role-switch .active {
+  background: #fff;
+  color: #5b5af7;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+}
+
+label {
+  display: block;
+  text-align: left;
+  font-size: 13px;
+  margin-top: 10px;
+  margin-bottom: 5px;
+}
+
+input {
+  width: 100%;
+  padding: 10px;
+  border-radius: 8px;
+  border: 1px solid #ddd;
+}
+
+.forgot {
+  text-align: right;
+  font-size: 13px;
+  color: #5b5af7;
+  margin: 10px 0;
+  cursor: pointer;
+}
+
+.login-btn {
+  width: 100%;
+  padding: 14px;
+  background: #5b5af7;
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  font-size: 16px;
+  cursor: pointer;
+  margin-top: 10px;
+}
+
+.register-text {
+  margin-top: 18px;
+  font-size: 14px;
+}
+
+.register-text span {
+  color: #5b5af7;
+  font-weight: bold;
+  cursor: pointer;
+}
