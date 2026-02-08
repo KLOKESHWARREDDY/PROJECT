@@ -1,0 +1,168 @@
+.dashboard-container {
+  max-width: 420px;
+  margin: 0 auto;
+  background-color: white;
+  min-height: 100vh;
+  padding: 16px;
+  padding-bottom: 80px; /* Space for bottom nav */
+  font-family: 'Inter', sans-serif;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.logo-section {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.logo-icon {
+  background: #2563eb;
+  color: white;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+}
+
+.logo-text {
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.greeting-section h1 {
+  font-size: 24px;
+  margin-bottom: 4px;
+}
+
+.greeting-section p {
+  color: #94a3b8;
+  font-size: 14px;
+}
+
+/* Search Bar */
+.search-container {
+  position: relative;
+  margin: 20px 0;
+}
+
+.search-container input {
+  width: 100%;
+  padding: 12px 12px 12px 40px;
+  border: 1px solid #f1f5f9;
+  background: #f8fafc;
+  border-radius: 12px;
+}
+
+.search-icon {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #94a3b8;
+}
+
+/* Stats Grid */
+.stats-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.stat-card {
+  background: #f8fafc;
+  padding: 16px;
+  border-radius: 12px;
+}
+
+.stat-card span {
+  font-size: 12px;
+  color: #64748b;
+  font-weight: 500;
+}
+
+.stat-card h3 {
+  font-size: 20px;
+  margin-top: 4px;
+}
+
+/* Event Cards */
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.see-all {
+  color: #2563eb;
+  background: none;
+  border: none;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.event-card {
+  border: 1px solid #f1f5f9;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.05);
+}
+
+.event-info {
+  padding: 12px;
+}
+
+.event-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 12px;
+}
+
+.register-btn {
+  background: #2563eb;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: bold;
+}
+
+/* Your existing Bottom Nav CSS */
+.bottom-nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  max-width: 420px;
+  margin: 0 auto;
+  display: flex;
+  justify-content: space-around;
+  border-top: 1px solid #eee;
+  background: white;
+  padding: 8px 0;
+}
+
+.nav {
+  font-size: 12px;
+  color: #9ca3af;
+  text-align: center;
+}
+
+.nav span { display: block; }
+
+.nav.active {
+  color: #2563eb;
+  font-weight: bold;
+}
