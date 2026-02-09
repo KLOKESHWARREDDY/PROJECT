@@ -1,53 +1,62 @@
 import React from 'react';
-import { ArrowLeft, CheckCircle, Calendar, RefreshCw, MessageSquare } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
-const Notifications = () => {
+const Notifications = ({ theme, notificationsList }) => {
   const navigate = useNavigate();
+  const isDark = theme === 'dark';
 
-  const containerStyle = { maxWidth: '400px', margin: '0 auto', backgroundColor: 'white', minHeight: '100vh', padding: '20px', fontFamily: 'sans-serif' };
-  const headerStyle = { display: 'flex', alignItems: 'center', marginBottom: '25px' };
-  const cardStyle = { display: 'flex', gap: '15px', padding: '15px', borderRadius: '12px', border: '1px solid #f0f0ff', marginBottom: '12px' };
-  const iconBox = (bg) => ({ width: '40px', height: '40px', borderRadius: '50%', backgroundColor: bg, display: 'flex', justifyContent: 'center', alignItems: 'center' });
+  // Use the list passed from App.js (or fallback to empty array)
+  const notifications = notificationsList || [];
+
+  const styles = {
+    container: { padding: '20px', backgroundColor: isDark ? '#0f172a' : '#fff', minHeight: '100vh', maxWidth: '430px', margin: '0 auto', boxSizing: 'border-box', fontFamily: 'sans-serif' },
+    header: { display: 'flex', alignItems: 'center', gap: '15px', marginBottom: '30px' },
+    pageTitle: { margin: 0, fontSize: '24px', fontWeight: 'bold', color: isDark ? '#fff' : '#1e293b' },
+    card: { display: 'flex', gap: '15px', padding: '16px', borderRadius: '20px', border: isDark ? '1px solid #334155' : '1px solid #f1f5f9', marginBottom: '15px', backgroundColor: isDark ? '#1e293b' : '#fff', boxShadow: '0 4px 10px rgba(0,0,0,0.02)', cursor: 'pointer', transition: 'transform 0.2s ease' },
+    iconBox: (bgColor) => ({ width: '48px', height: '48px', borderRadius: '14px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, backgroundColor: isDark ? 'rgba(92, 92, 252, 0.1)' : bgColor }), // Force dark mode bg consistency if needed
+    cardContent: { flex: 1 },
+    cardHeader: { display: 'flex', justifyContent: 'space-between', marginBottom: '2px', alignItems: 'center' },
+    mainTitle: { fontWeight: 'bold', color: isDark ? '#fff' : '#1e293b', fontSize: '16px', marginRight: '10px' },
+    time: { fontSize: '12px', color: '#94a3b8', whiteSpace: 'nowrap' },
+    subTitle: { display: 'block', fontSize: '13px', fontWeight: '700', color: '#5c5cfc', marginBottom: '4px' },
+    desc: { margin: 0, fontSize: '13px', color: '#64748b', lineHeight: '1.4' }
+  };
+
+  const handleNotificationClick = (eventId) => {
+    if (eventId) {
+      navigate(`/event-details/${eventId}`);
+    }
+  };
 
   return (
-    <div style={containerStyle}>
-      <div style={headerStyle}>
-        <ArrowLeft size={24} style={{ cursor: 'pointer' }} onClick={() => navigate('/')} />
-        <h2 style={{ marginLeft: '15px', fontSize: '18px' }}>Notifications</h2>
+    <div style={styles.container}>
+      <div style={styles.header}>
+        <ArrowLeft size={24} onClick={() => navigate(-1)} style={{ cursor: 'pointer', color: isDark ? '#fff' : '#1e293b' }} />
+        <h2 style={styles.pageTitle}>Notifications</h2>
       </div>
 
-      <div style={cardStyle}>
-        <div style={iconBox('#5c5cfc')}><CheckCircle color="white" size={20} /></div>
-        <div style={{ flex: 1 }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between' }}><b style={{ color: '#5c5cfc', fontSize: '14px' }}>Registration approved</b><span style={{ fontSize: '10px', color: '#aaa' }}>2h ago</span></div>
-          <p style={{ fontSize: '12px', color: '#666', marginTop: '4px' }}>Your account has been verified. You can now access all features.</p>
+      {notifications.map((note) => (
+        <div key={note.id} style={styles.card} onClick={() => handleNotificationClick(note.eventId)}>
+          <div style={styles.iconBox(note.bgColor)}>
+            {note.icon}
+          </div>
+          <div style={styles.cardContent}>
+            <div style={styles.cardHeader}>
+              <span style={styles.mainTitle}>{note.title}</span>
+              <span style={styles.time}>{note.time}</span>
+            </div>
+            <span style={styles.subTitle}>{note.typeLabel}</span>
+            <p style={styles.desc}>{note.desc}</p>
+          </div>
         </div>
-      </div>
-
-      <div style={cardStyle}>
-        <div style={iconBox('#f0f0ff')}><Calendar color="#5c5cfc" size={20} /></div>
-        <div style={{ flex: 1 }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between' }}><b style={{ color: '#333', fontSize: '14px' }}>New event added</b><span style={{ fontSize: '10px', color: '#aaa' }}>Yesterday</span></div>
-          <p style={{ fontSize: '12px', color: '#666', marginTop: '4px' }}>"Summer Workshop" has been added to your calendar.</p>
+      ))}
+      
+      {notifications.length === 0 && (
+        <div style={{ textAlign: 'center', marginTop: '100px', color: '#94a3b8' }}>
+          <p>No new notifications</p>
         </div>
-      </div>
-
-      <div style={cardStyle}>
-        <div style={iconBox('#f0f0ff')}><RefreshCw color="#5c5cfc" size={20} /></div>
-        <div style={{ flex: 1 }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between' }}><b style={{ color: '#333', fontSize: '14px' }}>Event updated</b><span style={{ fontSize: '10px', color: '#aaa' }}>Yesterday</span></div>
-          <p style={{ fontSize: '12px', color: '#666', marginTop: '4px' }}>The location for "Team Lunch" has been changed to Main Hall.</p>
-        </div>
-      </div>
-
-      <div style={cardStyle}>
-        <div style={iconBox('#f0f0ff')}><MessageSquare color="#5c5cfc" size={20} /></div>
-        <div style={{ flex: 1 }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between' }}><b style={{ color: '#333', fontSize: '14px' }}>New comment</b><span style={{ fontSize: '10px', color: '#aaa' }}>2d ago</span></div>
-          <p style={{ fontSize: '12px', color: '#666', marginTop: '4px' }}>Sarah replied to your post regarding the design updates.</p>
-        </div>
-      </div>
+      )}
     </div>
   );
 };

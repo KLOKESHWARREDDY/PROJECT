@@ -1,54 +1,73 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Home, Calendar, Ticket, User } from 'lucide-react';
+import { Ticket, Calendar, MapPin } from 'lucide-react';
+import GradientHeader from '../components/GradientHeader'; // <--- Import
 
-const MyEvents = ({ events }) => {
+const MyEvents = ({ theme, events, onCancel }) => {
   const navigate = useNavigate();
+  const isDark = theme === 'dark';
+
+  const styles = {
+    container: {
+      padding: 0,
+      backgroundColor: isDark ? '#0f172a' : '#f8fafc',
+      minHeight: '100vh',
+      maxWidth: '430px', margin: '0 auto',
+      fontFamily: 'sans-serif'
+    },
+    content: { padding: '20px' },
+    emptyState: { textAlign: 'center', marginTop: '60px' },
+    ticketCard: {
+      backgroundColor: isDark ? '#1e293b' : '#fff',
+      borderRadius: '16px',
+      padding: '16px',
+      marginBottom: '16px',
+      boxShadow: '0 4px 6px rgba(0,0,0,0.02)',
+      position: 'relative'
+    },
+    statusBadge: (status) => ({
+      position: 'absolute', top: '16px', right: '16px',
+      fontSize: '12px', fontWeight: 'bold', padding: '4px 10px', borderRadius: '20px',
+      backgroundColor: status === 'approved' ? '#dcfce7' : '#fef3c7',
+      color: status === 'approved' ? '#16a34a' : '#d97706'
+    })
+  };
 
   return (
     <div style={styles.container}>
-      <h2 style={styles.header}>My Events</h2>
-      
-      <div style={styles.content}>
-        <p style={styles.subLabel}>REGISTERED EVENTS ({events.length})</p>
-        
-        {events.map(event => (
-          <div key={event.id} style={styles.card}>
-            <div style={styles.cardHeader}>
-              <b style={{ fontSize: '16px' }}>{event.name}</b>
-              <span style={styles.regBadge}>REGISTERED</span>
-            </div>
-            <hr style={{ border: 'none', borderTop: '1px solid #f1f5f9', margin: '10px 0' }} />
-            <div style={styles.details}>
-              <p><strong>Date:</strong> {event.date}</p>
-              <p><strong>Venue:</strong> {event.venue}</p>
-            </div>
-          </div>
-        ))}
-      </div>
+      {/* HEADER MATCHING THE IMAGE */}
+      <GradientHeader 
+        title="My Tickets" 
+        subtitle={`${events.length} registered events`} 
+        showBack={true} 
+      />
 
-      <nav style={styles.bottomNav}>
-        <div style={styles.navItem} onClick={() => navigate('/')}><Home size={22} /><span>Home</span></div>
-        <div style={styles.navItem} onClick={() => navigate('/events')}><Calendar size={22} /><span>Events</span></div>
-        <div style={{ ...styles.navItem, color: '#2563eb', fontWeight: 'bold' }} onClick={() => navigate('/my-events')}><Ticket size={22} /><span>My Events</span></div>
-        {/* Profile Redirect */}
-        <div style={styles.navItem} onClick={() => navigate('/profile')}><User size={22} /><span>Profile</span></div>
-      </nav>
+      <div style={styles.content}>
+        {events.length === 0 ? (
+          <div style={styles.emptyState}>
+            <Ticket size={60} color="#cbd5e1" />
+            <p style={{ color: '#94a3b8', margin: '20px 0' }}>No tickets yet</p>
+            <button style={{ backgroundColor: '#2563eb', color: '#fff', border: 'none', padding: '12px 24px', borderRadius: '12px', fontWeight: 'bold' }} onClick={() => navigate('/events')}>
+              Browse Events
+            </button>
+          </div>
+        ) : (
+          events.map(event => (
+            <div key={event.id} style={styles.ticketCard}>
+              <span style={styles.statusBadge(event.status)}>{event.status}</span>
+              <h3 style={{ fontSize: '16px', margin: '0 0 10px 0', paddingRight: '70px', color: isDark ? '#fff' : '#1e293b' }}>{event.title}</h3>
+              <div style={{ color: '#64748b', fontSize: '13px', marginBottom: '5px' }}><Calendar size={14} /> {event.date}</div>
+              <div style={{ color: '#64748b', fontSize: '13px' }}><MapPin size={14} /> {event.location}</div>
+              <div style={{ marginTop: '15px', display: 'flex', gap: '10px' }}>
+                <button style={{ flex: 1, padding: '10px', borderRadius: '8px', border: 'none', backgroundColor: '#f1f5f9', fontWeight: 'bold', cursor: 'pointer' }} onClick={() => navigate(`/ticket-confirmation/${event.id}`)}>View</button>
+                <button style={{ flex: 1, padding: '10px', borderRadius: '8px', border: '1px solid #fee2e2', backgroundColor: '#fff', color: '#ef4444', fontWeight: 'bold', cursor: 'pointer' }} onClick={() => onCancel(event.id)}>Cancel</button>
+              </div>
+            </div>
+          ))
+        )}
+      </div>
     </div>
   );
-};
-
-const styles = {
-  container: { maxWidth: '375px', margin: '0 auto', backgroundColor: '#f8fafc', minHeight: '100vh', fontFamily: 'sans-serif' },
-  header: { textAlign: 'center', padding: '20px', backgroundColor: 'white', borderBottom: '1px solid #eee', margin: 0, fontSize: '18px' },
-  content: { padding: '20px' },
-  subLabel: { color: '#94a3b8', fontSize: '12px', fontWeight: 'bold', marginBottom: '15px' },
-  card: { backgroundColor: 'white', borderRadius: '12px', padding: '15px', marginBottom: '15px', boxShadow: '0 2px 4px rgba(0,0,0,0.05)' },
-  cardHeader: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' },
-  regBadge: { backgroundColor: '#5c5cfc', color: 'white', fontSize: '10px', padding: '4px 8px', borderRadius: '6px', fontWeight: 'bold' },
-  details: { fontSize: '12px', color: '#64748b', lineHeight: '1.8' },
-  bottomNav: { position: 'fixed', bottom: 0, left: '50%', transform: 'translateX(-50%)', width: '100%', maxWidth: '375px', backgroundColor: 'white', display: 'flex', justifyContent: 'space-around', padding: '12px 0', borderTop: '1px solid #f1f5f9' },
-  navItem: { display: 'flex', flexDirection: 'column', alignItems: 'center', color: '#94a3b8', cursor: 'pointer', fontSize: '11px' }
 };
 
 export default MyEvents;
