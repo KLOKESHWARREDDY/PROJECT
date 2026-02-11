@@ -1,62 +1,135 @@
-import React from 'react';
-import { ArrowLeft } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { ArrowLeft, Users, ClipboardList, XCircle, ChevronRight, Bell, CheckCircle } from 'lucide-react';
 
-const Notifications = ({ theme, notificationsList }) => {
+const Notifications = ({ theme, user, registrations = [], notificationsList = [] }) => {
   const navigate = useNavigate();
   const isDark = theme === 'dark';
+  const isTeacher = user?.role === 'teacher';
+  
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
-  // Use the list passed from App.js (or fallback to empty array)
-  const notifications = notificationsList || [];
+  // --- TEACHER STATS CALCULATION ---
+  const pendingCount = registrations.filter(r => r.status === 'Pending').length;
+  const approvedCount = registrations.filter(r => r.status === 'Approved').length;
+  const rejectedCount = registrations.filter(r => r.status === 'Rejected').length;
 
   const styles = {
-    container: { padding: '20px', backgroundColor: isDark ? '#0f172a' : '#fff', minHeight: '100vh', maxWidth: '430px', margin: '0 auto', boxSizing: 'border-box', fontFamily: 'sans-serif' },
-    header: { display: 'flex', alignItems: 'center', gap: '15px', marginBottom: '30px' },
-    pageTitle: { margin: 0, fontSize: '24px', fontWeight: 'bold', color: isDark ? '#fff' : '#1e293b' },
-    card: { display: 'flex', gap: '15px', padding: '16px', borderRadius: '20px', border: isDark ? '1px solid #334155' : '1px solid #f1f5f9', marginBottom: '15px', backgroundColor: isDark ? '#1e293b' : '#fff', boxShadow: '0 4px 10px rgba(0,0,0,0.02)', cursor: 'pointer', transition: 'transform 0.2s ease' },
-    iconBox: (bgColor) => ({ width: '48px', height: '48px', borderRadius: '14px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, backgroundColor: isDark ? 'rgba(92, 92, 252, 0.1)' : bgColor }), // Force dark mode bg consistency if needed
-    cardContent: { flex: 1 },
-    cardHeader: { display: 'flex', justifyContent: 'space-between', marginBottom: '2px', alignItems: 'center' },
-    mainTitle: { fontWeight: 'bold', color: isDark ? '#fff' : '#1e293b', fontSize: '16px', marginRight: '10px' },
-    time: { fontSize: '12px', color: '#94a3b8', whiteSpace: 'nowrap' },
-    subTitle: { display: 'block', fontSize: '13px', fontWeight: '700', color: '#5c5cfc', marginBottom: '4px' },
-    desc: { margin: 0, fontSize: '13px', color: '#64748b', lineHeight: '1.4' }
-  };
-
-  const handleNotificationClick = (eventId) => {
-    if (eventId) {
-      navigate(`/event-details/${eventId}`);
-    }
+    container: {
+      padding: isMobile ? '4vw' : '2vw',
+      maxWidth: isMobile ? '100vw' : '50vw',
+      margin: '0 auto',
+      backgroundColor: isDark ? '#0f172a' : '#f8fafc',
+      minHeight: '100vh',
+      fontFamily: "'Inter', sans-serif",
+      color: isDark ? '#fff' : '#1e293b'
+    },
+    header: { display: 'flex', alignItems: 'center', gap: '2vw', marginBottom: '4vh' },
+    backBtn: {
+      background: 'none', border: 'none', cursor: 'pointer',
+      color: isDark ? '#fff' : '#64748b', display: 'flex', alignItems: 'center'
+    },
+    pageTitle: { fontSize: isMobile ? '6vw' : '2vw', fontWeight: '800' },
+    
+    list: { display: 'flex', flexDirection: 'column', gap: '2vh' },
+    
+    // Card Style
+    item: {
+      display: 'flex', alignItems: 'center', gap: '3vw',
+      backgroundColor: isDark ? '#1e293b' : '#fff',
+      padding: isMobile ? '4vw' : '1.5vw',
+      borderRadius: isMobile ? '3vw' : '1vw',
+      cursor: 'pointer',
+      boxShadow: '0 2px 8px rgba(0,0,0,0.03)',
+      border: isDark ? '1px solid #334155' : '1px solid #e2e8f0',
+      transition: 'transform 0.2s'
+    },
+    iconBox: (color, bg) => ({
+      width: isMobile ? '12vw' : '3.5vw', height: isMobile ? '12vw' : '3.5vw',
+      borderRadius: '50%', backgroundColor: bg, color: color,
+      display: 'flex', alignItems: 'center', justifyContent: 'center'
+    }),
+    info: { flex: 1 },
+    title: { fontSize: isMobile ? '4vw' : '1.1vw', fontWeight: '600', marginBottom: '0.5vh' },
+    count: { fontSize: isMobile ? '3.5vw' : '0.9vw', color: '#64748b' },
+    time: { fontSize: isMobile ? '3vw' : '0.8vw', color: '#94a3b8', marginTop: '0.5vh' }
   };
 
   return (
     <div style={styles.container}>
       <div style={styles.header}>
-        <ArrowLeft size={24} onClick={() => navigate(-1)} style={{ cursor: 'pointer', color: isDark ? '#fff' : '#1e293b' }} />
-        <h2 style={styles.pageTitle}>Notifications</h2>
+        <button style={styles.backBtn} onClick={() => navigate(-1)}>
+          <ArrowLeft size={isMobile ? 24 : 24} />
+        </button>
+        <h1 style={styles.pageTitle}>Notifications</h1>
       </div>
 
-      {notifications.map((note) => (
-        <div key={note.id} style={styles.card} onClick={() => handleNotificationClick(note.eventId)}>
-          <div style={styles.iconBox(note.bgColor)}>
-            {note.icon}
-          </div>
-          <div style={styles.cardContent}>
-            <div style={styles.cardHeader}>
-              <span style={styles.mainTitle}>{note.title}</span>
-              <span style={styles.time}>{note.time}</span>
+      <div style={styles.list}>
+        
+        {/* --- TEACHER VIEW (Registration Stats) --- */}
+        {isTeacher ? (
+          <>
+            <div style={styles.item} onClick={() => navigate('/teacher-registrations')}>
+              <div style={styles.iconBox('#4f46e5', '#e0e7ff')}>
+                <Users size={isMobile ? 20 : 22} />
+              </div>
+              <div style={styles.info}>
+                <div style={styles.title}>New Registration</div>
+                <div style={styles.count}>{pendingCount} pending requests</div>
+              </div>
+              <ChevronRight size={20} color="#94a3b8" />
             </div>
-            <span style={styles.subTitle}>{note.typeLabel}</span>
-            <p style={styles.desc}>{note.desc}</p>
-          </div>
-        </div>
-      ))}
-      
-      {notifications.length === 0 && (
-        <div style={{ textAlign: 'center', marginTop: '100px', color: '#94a3b8' }}>
-          <p>No new notifications</p>
-        </div>
-      )}
+
+            <div style={styles.item} onClick={() => navigate('/teacher-registrations')}>
+              <div style={styles.iconBox('#16a34a', '#dcfce7')}>
+                <ClipboardList size={isMobile ? 20 : 22} />
+              </div>
+              <div style={styles.info}>
+                <div style={styles.title}>Registered Members</div>
+                <div style={styles.count}>{approvedCount} active members</div>
+              </div>
+              <ChevronRight size={20} color="#94a3b8" />
+            </div>
+
+            <div style={styles.item} onClick={() => navigate('/teacher-registrations')}>
+              <div style={styles.iconBox('#dc2626', '#fee2e2')}>
+                <XCircle size={isMobile ? 20 : 22} />
+              </div>
+              <div style={styles.info}>
+                <div style={styles.title}>Registration Rejected</div>
+                <div style={styles.count}>{rejectedCount} rejected</div>
+              </div>
+              <ChevronRight size={20} color="#94a3b8" />
+            </div>
+          </>
+        ) : (
+          /* --- STUDENT VIEW (General Notifications) --- */
+          notificationsList.length > 0 ? (
+            notificationsList.map((notif) => (
+              <div key={notif.id} style={styles.item}>
+                <div style={styles.iconBox('#4f46e5', notif.bgColor || '#e0e7ff')}>
+                  {notif.icon || <Bell size={20} />}
+                </div>
+                <div style={styles.info}>
+                  <div style={styles.title}>{notif.title}</div>
+                  <div style={styles.count}>{notif.desc}</div>
+                  <div style={styles.time}>{notif.time}</div>
+                </div>
+              </div>
+            ))
+          ) : (
+            <div style={{textAlign:'center', color:'#64748b', marginTop:'5vh'}}>
+              No new notifications
+            </div>
+          )
+        )}
+
+      </div>
     </div>
   );
 };

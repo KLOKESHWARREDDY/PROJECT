@@ -1,0 +1,138 @@
+import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { ArrowLeft, Calendar, Clock, MapPin, ChevronRight, Filter } from 'lucide-react';
+
+const TeacherMyEvents = ({ events, theme }) => {
+  const navigate = useNavigate();
+  const isDark = theme === 'dark';
+  const [activeFilter, setActiveFilter] = useState("All");
+
+  // RESPONSIVE CHECK
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  const filteredEvents = events.filter((event) => {
+    if (activeFilter === "All") return true;
+    return event.status === activeFilter;
+  });
+
+  const styles = {
+    container: {
+      padding: isMobile ? '4vw' : '2vw',
+      maxWidth: isMobile ? '100vw' : '60vw',
+      margin: '0 auto',
+      backgroundColor: isDark ? '#0f172a' : '#f8fafc',
+      minHeight: '100vh',
+      fontFamily: "'Inter', sans-serif",
+      color: isDark ? '#fff' : '#1e293b'
+    },
+    header: { display: 'flex', alignItems: 'center', gap: '2vw', marginBottom: '3vh' },
+    backBtn: {
+      background: 'none', border: 'none', cursor: 'pointer',
+      color: isDark ? '#fff' : '#64748b', display: 'flex', alignItems: 'center'
+    },
+    pageTitle: { fontSize: isMobile ? '6vw' : '2vw', fontWeight: '800' },
+
+    // Filter Bar
+    filterBar: {
+      display: 'flex', gap: '1vw', marginBottom: '3vh', overflowX: 'auto', paddingBottom: '1vh'
+    },
+    filterBtn: (isActive) => ({
+      padding: isMobile ? '1vh 4vw' : '0.8vh 1.5vw',
+      borderRadius: '2vw', border: 'none', cursor: 'pointer',
+      fontSize: isMobile ? '3.5vw' : '0.9vw', fontWeight: '600', whiteSpace: 'nowrap',
+      backgroundColor: isActive ? '#4f46e5' : (isDark ? '#1e293b' : '#fff'),
+      color: isActive ? '#fff' : (isDark ? '#94a3b8' : '#64748b'),
+      border: isActive ? 'none' : (isDark ? '1px solid #334155' : '1px solid #e2e8f0'),
+      transition: 'all 0.2s'
+    }),
+
+    // Event Card
+    eventCard: {
+      backgroundColor: isDark ? '#1e293b' : '#fff',
+      borderRadius: isMobile ? '3vw' : '1.2vw',
+      padding: isMobile ? '3vw' : '1.5vw',
+      marginBottom: '2vh',
+      display: 'flex', gap: '2vw', alignItems: 'center',
+      border: isDark ? '1px solid #334155' : '1px solid #e2e8f0',
+      cursor: 'pointer', transition: 'transform 0.1s',
+      boxShadow: '0 2px 8px rgba(0,0,0,0.02)'
+    },
+    eventImage: {
+      width: isMobile ? '18vw' : '5vw', height: isMobile ? '18vw' : '5vw',
+      borderRadius: isMobile ? '2vw' : '0.8vw', objectFit: 'cover'
+    },
+    eventInfo: { flex: 1 },
+    eventTitle: { fontSize: isMobile ? '4vw' : '1.1vw', fontWeight: 'bold', marginBottom: '0.5vh' },
+    eventMeta: { display: 'flex', gap: '2vw', color: '#64748b', fontSize: isMobile ? '3vw' : '0.85vw' },
+    metaItem: { display: 'flex', alignItems: 'center', gap: '0.5vw' },
+    
+    statusBadge: (status) => ({
+      padding: '0.4vh 1.5vw', borderRadius: '2vw',
+      fontSize: isMobile ? '2.5vw' : '0.7vw', fontWeight: '700', textTransform: 'uppercase',
+      backgroundColor: status === 'Active' ? '#dcfce7' : status === 'Completed' ? '#f1f5f9' : '#fff7ed',
+      color: status === 'Active' ? '#166534' : status === 'Completed' ? '#475569' : '#c2410c'
+    }),
+    arrow: { color: isDark ? '#475569' : '#cbd5e1' }
+  };
+
+  return (
+    <div style={styles.container}>
+      <div style={styles.header}>
+        <button style={styles.backBtn} onClick={() => navigate(-1)}>
+          <ArrowLeft size={isMobile ? 24 : 24} />
+        </button>
+        <h1 style={styles.pageTitle}>My Created Events</h1>
+      </div>
+
+      <div style={styles.filterBar}>
+        {['All', 'Active', 'Draft', 'Completed'].map((filter) => (
+          <button 
+            key={filter} 
+            style={styles.filterBtn(activeFilter === filter)}
+            onClick={() => setActiveFilter(filter)}
+          >
+            {filter}
+          </button>
+        ))}
+      </div>
+
+      <div>
+        {filteredEvents.length > 0 ? (
+          filteredEvents.map((event) => (
+            <div 
+              key={event.id} 
+              style={styles.eventCard}
+              onClick={() => navigate(`/teacher-event-details/${event.id}`)}
+            >
+              <img src={event.image} alt={event.title} style={styles.eventImage} />
+              
+              <div style={styles.eventInfo}>
+                <h3 style={styles.eventTitle}>{event.title}</h3>
+                <div style={styles.eventMeta}>
+                  <span style={styles.metaItem}><Calendar size={12}/> {event.date.split('·')[0]}</span>
+                  <span style={styles.metaItem}><Clock size={12}/> {event.date.split('·')[1] || '10:00 AM'}</span>
+                </div>
+              </div>
+
+              <div style={{display:'flex', flexDirection:'column', alignItems:'flex-end', gap:'0.5vh'}}>
+                <span style={styles.statusBadge(event.status)}>{event.status}</span>
+                <ChevronRight size={16} style={styles.arrow} />
+              </div>
+            </div>
+          ))
+        ) : (
+          <div style={{textAlign:'center', padding:'5vh', color:'#64748b'}}>
+            No {activeFilter !== 'All' ? activeFilter.toLowerCase() : ''} events found.
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+export default TeacherMyEvents;

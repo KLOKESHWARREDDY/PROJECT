@@ -1,266 +1,221 @@
 import React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Calendar, MapPin, Users, ArrowLeft, Clock, CheckCircle } from 'lucide-react';
+import { Calendar, MapPin, Share2, ArrowLeft, CheckCircle } from 'lucide-react';
 
 const EventDetails = ({ allEvents, theme, onRegister }) => {
   const { id } = useParams();
   const navigate = useNavigate();
   const isDark = theme === 'dark';
-  
-  // Find the event data based on the ID in the URL
+
+  // Find the specific event from the main list
   const event = allEvents.find(e => e.id === parseInt(id));
 
-  if (!event) return <div style={{ padding: '20px', color: isDark ? '#fff' : '#000' }}>Event not found</div>;
+  if (!event) return <div style={{ padding: '40px', textAlign: 'center', color: isDark ? '#fff' : '#333' }}>Event not found</div>;
+
+  // CHECK IF REGISTERED
+  const isRegistered = event.status === 'pending' || event.status === 'approved';
 
   const styles = {
     container: {
-      backgroundColor: isDark ? '#0f172a' : '#f8fafc',
-      minHeight: '100vh',
-      maxWidth: '430px', 
-      margin: '0 auto',   
-      position: 'relative',
-      paddingBottom: '160px', 
-      fontFamily: 'sans-serif',
-      boxShadow: '0 0 20px rgba(0,0,0,0.1)'
-    },
-    topHeader: {
-      padding: '16px',
-      textAlign: 'center',
-      backgroundColor: isDark ? '#1e293b' : '#fff',
-      fontWeight: 'bold',
-      fontSize: '18px',
+      maxWidth: '1000px',
+      margin: '0 auto',
+      padding: '24px',
+      fontFamily: "'Inter', sans-serif",
       color: isDark ? '#fff' : '#1e293b',
-      position: 'sticky',
-      top: 0,
-      zIndex: 10,
+      paddingBottom: '80px', 
+    },
+    headerNav: { 
+      display: 'flex', 
+      justifyContent: 'space-between', 
+      marginBottom: '20px' 
+    },
+    iconBtn: {
+      background: 'none', 
+      border: 'none', 
+      cursor: 'pointer',
+      color: isDark ? '#fff' : '#1e293b', 
+      padding: '10px',
+      borderRadius: '50%', 
+      backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)',
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center'
     },
-    bannerContainer: {
+    grid: {
+      display: 'grid',
+      gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
+      gap: '40px',
+      alignItems: 'start'
+    },
+    image: {
+      width: '100%', 
+      height: '400px', 
+      objectFit: 'cover',
+      borderRadius: '24px', 
+      boxShadow: '0 20px 40px rgba(0,0,0,0.1)'
+    },
+    infoCol: { 
+      display: 'flex', 
+      flexDirection: 'column', 
+      gap: '24px' 
+    },
+    title: { 
+      fontSize: '36px', 
+      fontWeight: '800', 
+      lineHeight: '1.2', 
+      marginBottom: '10px' 
+    },
+    row: { 
+      display: 'flex', 
+      alignItems: 'center', 
+      gap: '16px' 
+    },
+    iconBox: {
+      width: '56px', 
+      height: '56px', 
+      borderRadius: '16px',
+      backgroundColor: isDark ? '#1e293b' : '#eff6ff',
+      color: '#3b82f6', 
+      display: 'flex', 
+      alignItems: 'center', 
+      justifyContent: 'center',
+      border: isDark ? '1px solid #334155' : 'none'
+    },
+    label: { 
+      fontSize: '13px', 
+      color: '#64748b', 
+      fontWeight: '600', 
+      display: 'block', 
+      marginBottom: '4px' 
+    },
+    value: { 
+      fontSize: '16px', 
+      fontWeight: '700' 
+    },
+    descTitle: { 
+      fontSize: '22px', 
+      fontWeight: 'bold', 
+      marginBottom: '12px' 
+    },
+    descText: { 
+      lineHeight: '1.8', 
+      color: isDark ? '#cbd5e1' : '#475569', 
+      fontSize: '16px' 
+    },
+
+    // Dynamic Button Style
+    registerBtn: (registered) => ({
       width: '100%',
-      height: '260px',
-      position: 'relative'
-    },
-    bannerImage: {
-      width: '100%',
-      height: '100%',
-      objectFit: 'cover'
-    },
-    contentCard: {
-      backgroundColor: isDark ? '#1e293b' : '#fff',
-      borderTopLeftRadius: '30px',
-      borderTopRightRadius: '30px',
-      marginTop: '-40px', 
-      padding: '24px',
-      position: 'relative',
-      zIndex: 1,
-      minHeight: '500px'
-    },
-    badge: {
-      display: 'inline-block',
-      backgroundColor: '#5c5cfc',
+      padding: '18px',
+      // Green if registered, Blue if not
+      backgroundColor: registered ? '#10b981' : '#3b82f6', 
       color: '#fff',
-      padding: '6px 12px',
-      borderRadius: '20px',
-      fontSize: '12px',
-      fontWeight: 'bold',
-      marginBottom: '16px',
-      textTransform: 'uppercase'
-    },
-    title: {
-      fontSize: '24px',
-      fontWeight: '800',
-      color: isDark ? '#fff' : '#1e293b',
-      marginBottom: '20px',
-      lineHeight: '1.3'
-    },
-    infoRow: {
-      display: 'flex',
-      gap: '15px',
-      marginBottom: '20px',
-      alignItems: 'flex-start'
-    },
-    infoIcon: {
-      color: '#64748b',
-      marginTop: '2px',
-      flexShrink: 0
-    },
-    infoText: {
-      display: 'flex',
-      flexDirection: 'column'
-    },
-    label: {
-      fontWeight: 'bold',
-      fontSize: '15px',
-      color: isDark ? '#fff' : '#1e293b',
-      marginBottom: '2px'
-    },
-    subLabel: {
-      fontSize: '13px',
-      color: '#94a3b8'
-    },
-    divider: {
-      height: '1px',
-      backgroundColor: isDark ? '#334155' : '#f1f5f9',
-      margin: '24px 0'
-    },
-    aboutHeader: {
+      border: 'none',
+      borderRadius: '16px',
       fontSize: '18px',
       fontWeight: 'bold',
-      color: isDark ? '#fff' : '#1e293b',
-      marginBottom: '12px'
-    },
-    description: {
-      color: '#94a3b8',
-      fontSize: '14px',
-      lineHeight: '1.6'
-    },
-    footer: {
-      position: 'fixed',
-      bottom: 0,
-      left: '50%', 
-      transform: 'translateX(-50%)', 
-      width: '100%',
-      maxWidth: '430px', 
-      backgroundColor: isDark ? '#1e293b' : '#fff',
-      padding: '20px 24px',
-      borderTopLeftRadius: '24px',
-      borderTopRightRadius: '24px',
-      boxShadow: '0 -4px 20px rgba(0,0,0,0.08)',
-      zIndex: 100,
-      boxSizing: 'border-box'
-    },
-    btnBase: {
-      width: '100%',
-      padding: '16px',
-      borderRadius: '12px',
-      border: 'none',
-      fontSize: '16px',
-      fontWeight: 'bold',
-      marginBottom: '12px',
+      cursor: 'pointer',
+      boxShadow: registered ? '0 8px 25px rgba(16, 185, 129, 0.4)' : '0 8px 25px rgba(59, 130, 246, 0.4)',
+      marginTop: '20px',
+      transition: 'transform 0.2s',
+      textAlign: 'center',
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
       gap: '10px'
-    },
-    registerBtn: {
-      backgroundColor: '#5c5cfc',
-      color: '#fff',
-      cursor: 'pointer'
-    },
-    pendingBtn: {
-      backgroundColor: '#f59e0b', // Orange/Yellow
-      color: '#fff',
-      cursor: 'default'
-    },
-    approvedBtn: {
-      backgroundColor: '#22c55e', // Green
-      color: '#fff',
-      cursor: 'pointer'
-    },
-    backBtn: {
-      width: '100%',
-      backgroundColor: 'transparent',
-      color: isDark ? '#fff' : '#1e293b',
-      padding: '16px',
-      borderRadius: '12px',
-      border: isDark ? '1px solid #334155' : '1px solid #e2e8f0',
-      fontSize: '16px',
-      fontWeight: 'bold',
-      cursor: 'pointer'
+    })
+  };
+
+  const handleButtonClick = () => {
+    if (isRegistered) {
+      // If approved, show ticket. If pending, go to My Events.
+      if (event.status === 'approved') {
+        navigate(`/ticket-confirmation/${event.id}`);
+      } else {
+        navigate('/my-events');
+      }
+    } else {
+      // Register logic
+      onRegister(event.id);
+      // Wait a bit to show change, then navigate (optional)
+      setTimeout(() => navigate('/my-events'), 500);
     }
   };
 
   return (
     <div style={styles.container}>
-      <div style={styles.topHeader}>
-         Event Details
-      </div>
-
-      <div style={styles.bannerContainer}>
-        <img src={event.image} alt={event.title} style={styles.bannerImage} />
-        <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', background: 'linear-gradient(to bottom, rgba(0,0,0,0) 60%, rgba(0,0,0,0.4) 100%)' }}></div>
-      </div>
-
-      <div style={styles.contentCard}>
-        <span style={styles.badge}>{event.category || 'EVENT'}</span>
-        <h1 style={styles.title}>{event.title}</h1>
-
-        <div style={styles.infoRow}>
-          <Calendar size={20} style={styles.infoIcon} />
-          <div style={styles.infoText}>
-            <span style={styles.label}>{event.date.split('·')[0]}</span>
-            <span style={styles.subLabel}>{event.date.split('·')[1]}</span>
-          </div>
-        </div>
-
-        <div style={styles.infoRow}>
-          <MapPin size={20} style={styles.infoIcon} />
-          <div style={styles.infoText}>
-            <span style={styles.label}>{event.location}</span>
-            <span style={styles.subLabel}>Central Campus</span>
-          </div>
-        </div>
-
-        <div style={styles.infoRow}>
-          <Users size={20} style={styles.infoIcon} />
-          <div style={styles.infoText}>
-            <span style={styles.label}>45 Seats Left</span>
-            <span style={styles.subLabel}>Hurry up, filling fast!</span>
-          </div>
-        </div>
-
-        <div style={styles.divider}></div>
-
-        <h3 style={styles.aboutHeader}>About Event</h3>
-        <p style={styles.description}>
-          Join us for the biggest student tech summit of the year. Explore the latest in AI, Blockchain, and Cloud Computing with industry experts. Lunch and certificates provided for all attendees.
-        </p>
-      </div>
-
-      {/* --- THIS IS THE CRITICAL FIX --- */}
-      <div style={styles.footer}>
-        
-        {/* If Status is IDLE (Not registered), show 'Request Registration' */}
-        {(!event.status || event.status === 'idle') && (
-          <button 
-            style={{ ...styles.btnBase, ...styles.registerBtn }}
-            onClick={() => {
-              onRegister(event.id);
-              navigate('/my-events'); // Redirects to My Events to show "Processing"
-            }}
-          >
-            Request Registration
-          </button>
-        )}
-
-        {/* If Status is PENDING, show 'Waiting Approval' */}
-        {event.status === 'pending' && (
-          <button 
-            style={{ ...styles.btnBase, ...styles.pendingBtn }}
-            disabled
-          >
-            <Clock size={20} /> Waiting Approval...
-          </button>
-        )}
-
-        {/* If Status is APPROVED, show 'View Ticket' */}
-        {event.status === 'approved' && (
-          <button 
-            style={{ ...styles.btnBase, ...styles.approvedBtn }}
-            onClick={() => navigate(`/ticket-confirmation/${event.id}`)}
-          >
-            <CheckCircle size={20} /> View Ticket
-          </button>
-        )}
-
-        <button 
-          style={styles.backBtn} 
-          onClick={() => navigate(-1)} 
-        >
-          Back
+      
+      {/* Navigation Header */}
+      <div style={styles.headerNav}>
+        <button style={styles.iconBtn} onClick={() => navigate(-1)}>
+          <ArrowLeft size={24} />
         </button>
+        <button style={styles.iconBtn}>
+          <Share2 size={24} />
+        </button>
+      </div>
+
+      <div style={styles.grid}>
+        {/* Left Column: Image */}
+        <img src={event.image} alt={event.title} style={styles.image} />
+
+        {/* Right Column: Info */}
+        <div style={styles.infoCol}>
+          <div>
+            <h1 style={styles.title}>{event.title}</h1>
+            <span style={{ 
+              backgroundColor: isDark ? '#334155' : '#f1f5f9', 
+              padding: '6px 12px', 
+              borderRadius: '20px', 
+              fontSize: '14px', 
+              fontWeight: '600', 
+              color: isDark ? '#e2e8f0' : '#475569' 
+            }}>
+              {event.category}
+            </span>
+          </div>
+          
+          <div style={styles.row}>
+            <div style={styles.iconBox}><Calendar size={28} /></div>
+            <div>
+              <span style={styles.label}>Date & Time</span>
+              <span style={styles.value}>{event.date}</span>
+            </div>
+          </div>
+
+          <div style={styles.row}>
+            <div style={styles.iconBox}><MapPin size={28} /></div>
+            <div>
+              <span style={styles.label}>Location</span>
+              <span style={styles.value}>{event.location}</span>
+            </div>
+          </div>
+
+          <div>
+            <h3 style={styles.descTitle}>About Event</h3>
+            <p style={styles.descText}>
+              Join us for an immersive experience learning about the latest in technology. 
+              This workshop is suitable for all levels. Certificate provided upon completion.
+            </p>
+          </div>
+
+          {/* DYNAMIC REGISTER BUTTON */}
+          <button 
+            style={styles.registerBtn(isRegistered)} 
+            onClick={handleButtonClick}
+            onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(-2px)'}
+            onMouseLeave={(e) => e.currentTarget.style.transform = 'translateY(0)'}
+          >
+            {isRegistered ? (
+              <>
+                <CheckCircle size={22} />
+                {event.status === 'approved' ? 'View Ticket' : 'Registration Pending'}
+              </>
+            ) : (
+              'Register Now'
+            )}
+          </button>
+        </div>
       </div>
     </div>
   );
