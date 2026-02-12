@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Eye, EyeOff, ArrowLeft, LogIn, AlertCircle } from 'lucide-react';
+import axios from 'axios';
+
 
 const StudentSignIn = ({ onLogin }) => {
   const navigate = useNavigate();
@@ -231,39 +233,44 @@ const StudentSignIn = ({ onLogin }) => {
   };
 
   // ✅ UPDATED HANDLESUBMIT TO CHECK LOCALSTORAGE
-  const handleSubmit = () => {
-    if(validate()) {
-      
-      // 1. Get users from Local Storage
-      const existingUsers = JSON.parse(localStorage.getItem('users') || '[]');
-      
-      // 2. Find user
-      const user = existingUsers.find(
-        (u) => u.email === formData.email && u.password === formData.password
+ const handleSubmit = async () => {
+  if (validate()) {
+    try {
+      const response = await axios.post(
+        "http://localhost:5000/api/auth/login",
+        {
+          email: formData.email,
+          password: formData.password
+        }
       );
 
-      // 3. Check Credentials & Role
+      const userData = response.data;
+
       const selectedRole = isStudent ? 'student' : 'teacher';
 
-      if (user) {
-        if (user.role === selectedRole) {
-           // Success!
-           onLogin(user);
-           navigate('/');
-        } else {
-           // Wrong Role
-           setErrors({ 
-             password: `Incorrect role. This email is registered as a ${user.role}.` 
-           });
-        }
-      } else {
-        // Invalid details
-        setErrors({ 
-          email: "Invalid email or password" 
+      if (userData.role !== selectedRole) {
+        setErrors({
+          general: `This account is registered as ${userData.role}. Please use ${userData.role} login.`
         });
+        return;
       }
+
+      // Save user with token
+      localStorage.setItem("user", JSON.stringify(userData));
+      localStorage.setItem("isAuthenticated", "true");
+      localStorage.setItem("token", userData.token || "");
+
+      onLogin(userData);
+      navigate("/");
+
+    } catch (error) {
+      const errorMsg = error.response?.data?.message || "Login failed. Please try again.";
+      setErrors({
+        general: errorMsg
+      });
     }
-  };
+  }
+};
 
   return (
     <div style={styles.pageContainer}>
@@ -301,6 +308,13 @@ const StudentSignIn = ({ onLogin }) => {
           {/* FORM */}
           <div style={{animation: 'fadeIn 0.3s ease-in-out'}}>
             
+            {/* General Error */}
+            {errors.general && (
+              <div style={{...styles.errorText, marginBottom: '2vh', padding: '1vh', backgroundColor: '#fef2f2', borderRadius: '0.5vw'}}>
+                <AlertCircle size={isMobile ? 14 : 12}/> {errors.general}
+              </div>
+            )}
+
             <div style={styles.inputGroup}>
               <label style={styles.label}>Email Address</label>
               <input 

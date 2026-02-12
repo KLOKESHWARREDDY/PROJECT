@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { Eye, EyeOff, ArrowLeft, ArrowRight, AlertCircle, CheckCircle, Briefcase } from 'lucide-react';
+import { Eye, EyeOff, ArrowLeft, ArrowRight, AlertCircle, CheckCircle } from 'lucide-react';
+import axios from 'axios';
 
 const TeacherSignUp = ({ onLogin }) => {
   const navigate = useNavigate();
@@ -93,34 +94,39 @@ const TeacherSignUp = ({ onLogin }) => {
 
   const handleBack = () => { if(step > 1) setStep(step - 1); };
 
-  // ✅ TEACHER REGISTRATION LOGIC
-  const handleSubmit = () => {
+  // ✅ TEACHER REGISTRATION LOGIC - Using API
+  const handleSubmit = async () => {
     if(validateStep3()) {
-      
-      const existingUsers = JSON.parse(localStorage.getItem('users') || '[]');
+      try {
+        const response = await axios.post(
+          "http://localhost:5000/api/auth/register",
+          {
+            name: formData.fullName,
+            email: formData.email,
+            password: formData.password,
+            role: "teacher",
+            college: formData.collegeName,
+            department: formData.department,
+            regNo: formData.empId
+          }
+        );
 
-      if (existingUsers.find(u => u.email === formData.email)) {
-        setErrors({ ...errors, email: "Email already registered." });
+        const userData = response.data;
+
+        // Save logged in user with token
+        localStorage.setItem("user", JSON.stringify(userData));
+        localStorage.setItem("isAuthenticated", "true");
+        localStorage.setItem("token", userData.token || "");
+
+        onLogin(userData);
+        navigate("/");
+
+      } catch (error) {
+        setErrors({
+          email: error.response?.data?.message || "Registration failed"
+        });
         setStep(1);
-        return;
       }
-
-      const newTeacher = { 
-        name: formData.fullName,
-        email: formData.email,
-        password: formData.password,
-        college: formData.collegeName,
-        role: 'teacher', // ✅ Force Role to Teacher
-        department: formData.department,
-        regNo: formData.empId, 
-        profileImage: 'https://images.unsplash.com/photo-1531482615713-2afd69097998?w=200'
-      };
-
-      existingUsers.push(newTeacher);
-      localStorage.setItem('users', JSON.stringify(existingUsers));
-
-      onLogin(newTeacher);
-      navigate('/');
     }
   };
 

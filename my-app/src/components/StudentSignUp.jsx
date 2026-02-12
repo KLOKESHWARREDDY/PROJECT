@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Eye, EyeOff, ArrowLeft, ArrowRight, AlertCircle, CheckCircle } from 'lucide-react';
+import axios from 'axios';
+
 
 const StudentSignUp = ({ onLogin }) => {
   const navigate = useNavigate();
@@ -258,40 +260,41 @@ const StudentSignUp = ({ onLogin }) => {
   const handleBack = () => { if(step > 1) setStep(step - 1); };
 
   // ✅ LOGIC UPDATE: Save to Local Storage and Login
-  const handleSubmit = () => {
-    if(validateStep3()) {
-      
-      // 1. Get existing users
-      const existingUsers = JSON.parse(localStorage.getItem('users') || '[]');
+ const handleSubmit = async () => {
+  if (validateStep3()) {
+    try {
+      const response = await axios.post(
+        "http://localhost:5000/api/auth/register",
+        {
+          name: formData.fullName,
+          email: formData.email,
+          password: formData.password,
+          role: isStudent ? "student" : "teacher",
+          college: formData.collegeName,
+          department: formData.department,
+          regNo: formData.rollNo
+        }
+      );
 
-      // 2. Check if user already exists
-      if (existingUsers.find(u => u.email === formData.email)) {
-        setErrors({ ...errors, email: "This email is already registered." });
-        setStep(1); // Go back to step 1 to show error
-        return;
-      }
+      const userData = response.data;
 
-      // 3. Create User Object
-      const newUser = { 
-        name: formData.fullName,
-        email: formData.email,
-        password: formData.password, // Storing password (demo only)
-        college: formData.collegeName,
-        role: isStudent ? 'student' : 'teacher', 
-        department: formData.department,
-        regNo: formData.rollNo, 
-        profileImage: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=200'
-      };
+      // Save logged in user with token
+      localStorage.setItem("user", JSON.stringify(userData));
+      localStorage.setItem("isAuthenticated", "true");
+      localStorage.setItem("token", userData.token || "");
 
-      // 4. Save to Local Storage
-      existingUsers.push(newUser);
-      localStorage.setItem('users', JSON.stringify(existingUsers));
+      onLogin(userData);
+      navigate("/");
 
-      // 5. Login & Redirect
-      onLogin(newUser);
-      navigate('/');
+    } catch (error) {
+      setErrors({
+        email: error.response?.data?.message || "Registration failed"
+      });
+      setStep(1);
     }
-  };
+  }
+};
+
   
   // STEP 1: PERSONAL INFO
   const renderStep1 = () => (

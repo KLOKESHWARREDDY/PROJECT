@@ -1,16 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, useLocation, Navigate } from 'react-router-dom';
-import { CheckCircle, Calendar, XCircle } from 'lucide-react';
+import { CheckCircle, XCircle } from 'lucide-react';
 import './App.css'; 
 
 // --- COMPONENTS ---
 import Sidebar from './components/Sidebar'; 
 import BottomNav from './components/BottomNav';
 import LandingPage from './components/LandingPage'; 
+
+// --- AUTH PAGES ---
 import StudentSignIn from './components/StudentSignIn';
 import StudentSignUp from './components/StudentSignUp';
 import TeacherSignUp from './components/TeacherSignUp';
-import TeacherSignIn from './components/TeacherSignIn'; // ✅ Imported
+import TeacherSignIn from './components/TeacherSignIn';
 
 // --- STUDENT PAGES ---
 import Dashboard from './pages/Dashboard';
@@ -36,6 +38,17 @@ import EventDetails from './pages/EventDetails';
 import Notifications from './pages/Notifications';
 import PrivacyPolicy from './pages/PrivacyPolicy';
 import HelpCenter from './pages/HelpCenter'; 
+import axios from 'axios';
+
+// ✅ DEFAULT USER STATE
+const defaultUser = {
+  name: "Guest",
+  email: "",
+  college: "",
+  regNo: "",
+  role: "student",
+  profileImage: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200&q=80"
+};
 
 const AppContent = ({ 
   isAuthenticated, handleLogin, handleLogout, 
@@ -43,7 +56,6 @@ const AppContent = ({
   allEvents, handleRegister, handleCancel, 
   searchTerm, setSearchTerm, registeredEvents, filteredEvents, 
   notifications, unreadCount, markNotificationsRead,
-  // Teacher Props
   handleCreateEvent, handleDeleteEvent, handleUpdateEvent, 
   registrations, handleApproveReg, handleRejectReg
 }) => {
@@ -57,16 +69,17 @@ const AppContent = ({
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  React.useEffect(() => {
+  useEffect(() => {
     document.body.className = isDark ? 'dark-mode' : 'light-mode';
     document.body.style.backgroundColor = isDark ? '#0f172a' : '#f8fafc';
     document.body.style.margin = '0';
   }, [isDark]);
 
-  const isTeacher = user.role === 'teacher';
+  const isTeacher = user?.role === 'teacher';
   const showNavOn = ['/', '/events', '/my-events', '/profile', '/dashboard', '/teacher-events', '/teacher-registrations'];
   const shouldShowNav = showNavOn.includes(location.pathname) && isAuthenticated;
 
+  // ✅ UNAUTHENTICATED ROUTES
   if (!isAuthenticated) {
     return (
       <div style={{ minHeight: '100vh', backgroundColor: isDark ? '#0f172a' : '#fff' }}>
@@ -74,20 +87,18 @@ const AppContent = ({
           <Route path="/" element={<LandingPage />} />
           <Route path="/signin" element={<StudentSignIn onLogin={handleLogin} />} /> 
           <Route path="/signup" element={<StudentSignUp onLogin={handleLogin} />} />
-          
-          {/* ✅ TEACHER ROUTES */}
           <Route path="/teacher-signup" element={<TeacherSignUp onLogin={handleLogin} />} />
-          <Route path="/teacher-signin" element={<TeacherSignIn onLogin={handleLogin} />} /> {/* ✅ ADDED THIS LINE */}
-          
+          <Route path="/teacher-signin" element={<TeacherSignIn onLogin={handleLogin} />} />
           <Route path="*" element={<Navigate to="/" />} />
         </Routes>
       </div>
     );
   }
 
+  // ✅ AUTHENTICATED ROUTES
   return (
     <div className="app-layout" style={{ display: 'flex', minHeight: '100vh', width: '100%' }}>
-      {!isMobile && <Sidebar user={user} theme={theme} onLogout={handleLogout} />}
+      {!isMobile && <Sidebar key={user?._id || user?.profileImage || 'sidebar'} user={user} theme={theme} onLogout={handleLogout} />}
       <div className="main-content" style={{ 
         flex: 1, marginLeft: isMobile ? '0px' : '60px', width: isMobile ? '100%' : 'calc(100% - 60px)', 
         backgroundColor: isDark ? '#0f172a' : '#f8fafc', minHeight: '100vh', paddingBottom: '80px', transition: 'margin-left 0.3s ease' 
@@ -95,9 +106,9 @@ const AppContent = ({
         <Routes>
           <Route path="/" element={
             isTeacher ? (
-              <TeacherDashboard user={user} events={allEvents} registrations={registrations} theme={theme} toggleTheme={toggleTheme} onLogout={handleLogout} />
+              <TeacherDashboard key={user?._id || 'teacher-dash'} user={user} events={allEvents} registrations={registrations} theme={theme} toggleTheme={toggleTheme} onLogout={handleLogout} />
             ) : (
-              <Dashboard user={user} events={allEvents} theme={theme} toggleTheme={toggleTheme} regCount={registeredEvents.length} onRegister={handleRegister} unreadCount={unreadCount} onReadNotifications={markNotificationsRead} />
+              <Dashboard key={user?._id || 'student-dash'} user={user} events={allEvents} theme={theme} toggleTheme={toggleTheme} regCount={registeredEvents.length} onRegister={handleRegister} unreadCount={unreadCount} onReadNotifications={markNotificationsRead} />
             )
           } />
           
@@ -137,14 +148,100 @@ const AppContent = ({
 };
 
 function App() {
-  const [theme, setTheme] = useState('light'); 
+  const [theme, setTheme] = useState(() => {
+    // ✅ LOAD THEME FROM LOCALSTORAGE
+    const saved = localStorage.getItem('theme');
+    return saved || 'light';
+  });
+  
   const [searchTerm, setSearchTerm] = useState("");
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [user, setUser] = useState({ name: "Guest", email: "", college: "Engineering Tech Institute", regNo: "", role: "student", profileImage: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200&q=80" });
+  
+  // ✅ LOAD AUTH STATE FROM LOCALSTORAGE ON APP START
+  const [isAuthenticated, setIsAuthenticated] = useState(() => {
+    const saved = localStorage.getItem('isAuthenticated');
+    return saved === 'true';
+  });
+  
+  const [user, setUser] = useState(() => {
+    const saved = localStorage.getItem('user');
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch (e) {
+        return defaultUser;
+      }
+    }
+    return defaultUser;
+  });
 
-  const toggleTheme = () => setTheme((prev) => (prev === 'light' ? 'dark' : 'light'));
-  const handleLogin = (userData) => { if (userData) setUser(prev => ({ ...prev, ...userData })); setIsAuthenticated(true); };
-  const handleLogout = () => { setIsAuthenticated(false); setUser({ name: "Guest", email: "", role: "student", profileImage: "" }); };
+  // ✅ SAVE THEME TO LOCALSTORAGE
+  useEffect(() => {
+    localStorage.setItem('theme', theme);
+  }, [theme]);
+
+  // ✅ SAVE AUTH STATE TO LOCALSTORAGE
+  useEffect(() => {
+    localStorage.setItem('isAuthenticated', isAuthenticated.toString());
+  }, [isAuthenticated]);
+
+  // ✅ SAVE USER TO LOCALSTORAGE
+  useEffect(() => {
+    if (user && user.name !== "Guest") {
+      localStorage.setItem('user', JSON.stringify(user));
+    }
+  }, [user]);
+
+  // ✅ VALIDATE TOKEN ON APP START (Optional: verify token is still valid)
+  useEffect(() => {
+    const validateToken = async () => {
+      const savedUser = localStorage.getItem('user');
+      if (savedUser && !isAuthenticated) {
+        try {
+          const userData = JSON.parse(savedUser);
+          if (userData.token) {
+            // Optionally verify token with backend
+            // const response = await axios.get('http://localhost:5000/api/auth/profile', {
+            //   headers: { Authorization: `Bearer ${userData.token}` }
+            // });
+            // if (response.data) {
+            //   setIsAuthenticated(true);
+            //   setUser(userData);
+            // }
+          }
+        } catch (e) {
+          console.log('Token validation skipped');
+        }
+      }
+    };
+    validateToken();
+  }, []);
+
+  const toggleTheme = () => {
+    setTheme((prev) => {
+      const newTheme = prev === 'light' ? 'dark' : 'light';
+      localStorage.setItem('theme', newTheme);
+      return newTheme;
+    });
+  };
+
+  // ✅ LOGIN: Save to localStorage
+  const handleLogin = (userData) => {
+    if (userData) {
+      setUser(userData);
+      setIsAuthenticated(true);
+      localStorage.setItem('user', JSON.stringify(userData));
+      localStorage.setItem('isAuthenticated', 'true');
+    }
+  };
+
+  // ✅ LOGOUT: Clear localStorage
+  const handleLogout = () => {
+    setIsAuthenticated(false);
+    setUser(defaultUser);
+    localStorage.removeItem('user');
+    localStorage.removeItem('isAuthenticated');
+    localStorage.removeItem('token');
+  };
 
   // --- EVENTS DATA ---
   const [allEvents, setAllEvents] = useState([

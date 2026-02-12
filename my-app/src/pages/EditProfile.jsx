@@ -1,13 +1,15 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Camera, Save } from 'lucide-react';
+import { ArrowLeft, Camera } from 'lucide-react';
 
 const EditProfile = ({ user, setUser, theme }) => {
   const navigate = useNavigate();
   const isDark = theme === 'dark';
   
-  // 1. REF FOR HIDDEN FILE INPUT
-  const fileInputRef = useRef(null); 
+  const fileInputRef = useRef(null);
+  const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState('');
+  const [previewUrl, setPreviewUrl] = useState(user?.profileImage || '');
 
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   useEffect(() => {
@@ -16,69 +18,160 @@ const EditProfile = ({ user, setUser, theme }) => {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  // Local state for editing
   const [formData, setFormData] = useState({
-    name: user.name || "",
-    college: user.college || "",
-    regNo: user.regNo || "",
-    email: user.email || "",
-    profileImage: user.profileImage || "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200&q=80"
+    name: user?.name || '',
+    college: user?.college || '',
+    regNo: user?.regNo || '',
+    email: user?.email || '',
   });
 
-  // Handle Text Inputs
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+  // ✅ HELPER: Get token from localStorage or user prop
+  const getToken = () => {
+    const savedUser = localStorage.getItem('user');
+    if (savedUser) {
+      try {
+        const parsed = JSON.parse(savedUser);
+        if (parsed.token) return parsed.token;
+      } catch (e) {
+        console.error('Error parsing user from localStorage:', e);
+      }
+    }
+    if (user?.token) return user.token;
+    return null;
   };
 
-  // 2. TRIGGER FILE PICKER
-  const handleImageClick = () => {
-    fileInputRef.current.click();
-  };
+  // ✅ DEBUG: Log token availability
+  useEffect(() => {
+    const token = getToken();
+    console.log('🔐 EditProfile - Token available:', !!token);
+    console.log('🔐 EditProfile - User role:', user?.role);
+  }, [user]);
 
-  // 3. HANDLE FILE SELECTION
-  const handleFileChange = (e) => {
+  const handleFileChange = async (e) => {
     const file = e.target.files[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        // Update local state with new image preview
-        setFormData(prev => ({ ...prev, profileImage: reader.result }));
-      };
-      reader.readAsDataURL(file);
+    if (!file) return;
+
+    setLoading(true);
+    setMessage('');
+
+    try {
+      const token = getToken();
+      if (!token) {
+        throw new Error('No token found. Please login again.');
+      }
+
+      const imageFormData = new FormData();
+      imageFormData.append('profileImage', file);
+
+      const response = await fetch('http://localhost:5000/api/auth/upload-profile-image', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        },
+        body: imageFormData
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Upload failed');
+      }
+
+      setPreviewUrl(data.profileImage);
+      setMessage('Image uploaded! Now save other changes.');
+
+    } catch (error) {
+      console.error('Upload error:', error);
+      setMessage('Error uploading image: ' + error.message);
+    } finally {
+      setLoading(false);
     }
   };
 
-  // Save changes to global user state
-  const handleSave = () => {
-    setUser({ ...user, ...formData });
-    navigate('/profile');
+  const handleSave = async () => {
+    setLoading(true);
+    setMessage('');
+
+    try {
+      const token = getToken();
+      if (!token) {
+        throw new Error('No token found. Please login again.');
+      }
+
+      const response = await fetch('http://localhost:5000/api/auth/profile', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          name: formData.name,
+          college: formData.college,
+          regNo: formData.regNo,
+          profileImage: previewUrl
+        })
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Save failed');
+      }
+
+      // ✅ Update localStorage with new user data
+      const savedUser = localStorage.getItem('user');
+      let updatedUserData = data;
+      
+      if (savedUser) {
+        const parsed = JSON.parse(savedUser);
+        updatedUserData = {
+          ...parsed,
+          ...data,
+          token: token
+        };
+      }
+      
+      localStorage.setItem('user', JSON.stringify(updatedUserData));
+
+      if (setUser) {
+        setUser(updatedUserData);
+      }
+
+      setMessage('Profile saved successfully!');
+      
+      setTimeout(() => {
+        navigate('/profile');
+      }, 1000);
+
+    } catch (error) {
+      console.error('Save error:', error);
+      setMessage('Error saving profile: ' + error.message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const styles = {
     container: {
-      padding: isMobile ? '4vw' : '2vw',
-      maxWidth: isMobile ? '100vw' : '50vw',
+      padding: isMobile ? 20 : 30,
+      maxWidth: isMobile ? '100%' : 500,
       margin: '0 auto',
       backgroundColor: isDark ? '#0f172a' : '#f8fafc',
       minHeight: '100vh',
       fontFamily: "'Inter', sans-serif",
       color: isDark ? '#fff' : '#1e293b'
     },
-    header: { display: 'flex', alignItems: 'center', gap: '2vw', marginBottom: '4vh' },
+    header: { display: 'flex', alignItems: 'center', gap: 20, marginBottom: 30 },
     backBtn: {
       background: 'none', border: 'none', cursor: 'pointer',
       color: isDark ? '#fff' : '#64748b', display: 'flex', alignItems: 'center'
     },
-    pageTitle: { fontSize: isMobile ? '6vw' : '2vw', fontWeight: '800' },
-
-    // Avatar Section
+    pageTitle: { fontSize: isMobile ? 24 : 32, fontWeight: '800' },
     avatarContainer: {
-      display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: '4vh',
-      position: 'relative'
+      display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: 30
     },
     avatarWrapper: {
-      position: 'relative', width: isMobile ? '25vw' : '8vw', height: isMobile ? '25vw' : '8vw',
+      position: 'relative', width: isMobile ? 100 : 120, height: isMobile ? 100 : 120
     },
     avatar: {
       width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover',
@@ -86,67 +179,82 @@ const EditProfile = ({ user, setUser, theme }) => {
       boxShadow: '0 4px 10px rgba(0,0,0,0.1)'
     },
     cameraBtn: {
-      position: 'absolute', bottom: '0', right: '0',
+      position: 'absolute', bottom: 0, right: 0,
       backgroundColor: '#4f46e5', color: '#fff',
-      width: isMobile ? '8vw' : '2.5vw', height: isMobile ? '8vw' : '2.5vw',
+      width: isMobile ? 32 : 40, height: isMobile ? 32 : 40,
       borderRadius: '50%', border: `3px solid ${isDark ? '#0f172a' : '#fff'}`,
       display: 'flex', alignItems: 'center', justifyContent: 'center',
       cursor: 'pointer', boxShadow: '0 2px 5px rgba(0,0,0,0.2)'
     },
     changeText: {
-      marginTop: '1vh', color: '#4f46e5', fontWeight: '600', fontSize: isMobile ? '3.5vw' : '0.9vw', cursor: 'pointer'
+      marginTop: 10, color: '#4f46e5', fontWeight: '600', fontSize: isMobile ? 14 : 16, cursor: 'pointer'
     },
-
-    // Form
-    form: { display: 'flex', flexDirection: 'column', gap: '2.5vh' },
+    form: { display: 'flex', flexDirection: 'column', gap: 20 },
     label: { 
-      fontSize: isMobile ? '3.5vw' : '0.9vw', fontWeight: '600', marginBottom: '0.8vh', 
+      fontSize: isMobile ? 14 : 16, fontWeight: '600', marginBottom: 8, 
       color: isDark ? '#cbd5e1' : '#475569' 
     },
     input: {
-      width: '100%', padding: isMobile ? '1.5vh 3vw' : '1.2vh 1vw',
-      borderRadius: isMobile ? '2vw' : '0.6vw',
+      width: '100%', padding: isMobile ? 12 : 14,
+      borderRadius: isMobile ? 10 : 12,
       border: isDark ? '1px solid #334155' : '1px solid #e2e8f0',
       backgroundColor: isDark ? '#1e293b' : '#fff',
       color: isDark ? '#fff' : '#1e293b',
-      fontSize: isMobile ? '4vw' : '1vw',
-      outline: 'none', transition: 'border-color 0.2s'
+      fontSize: isMobile ? 16 : 16,
+      outline: 'none'
     },
     saveBtn: {
-      marginTop: '3vh', width: '100%', padding: isMobile ? '2vh' : '1.5vh',
-      backgroundColor: '#4f46e5', color: '#fff',
-      border: 'none', borderRadius: isMobile ? '2vw' : '0.8vw',
-      fontSize: isMobile ? '4vw' : '1.1vw', fontWeight: 'bold',
-      cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5vw',
-      boxShadow: '0 4px 12px rgba(79, 70, 229, 0.3)'
+      marginTop: 25, width: '100%', padding: isMobile ? 16 : 18,
+      backgroundColor: loading ? '#94a3b8' : '#4f46e5',
+      color: '#fff', border: 'none', borderRadius: isMobile ? 12 : 14,
+      fontSize: isMobile ? 16 : 18, fontWeight: 'bold',
+      cursor: loading ? 'not-allowed' : 'pointer',
+      display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8
+    },
+    message: {
+      marginTop: 15, padding: 12,
+      backgroundColor: message.includes('saved') ? '#dcfce7' : '#fee2e2',
+      color: message.includes('saved') ? '#166534' : '#991b1b',
+      borderRadius: 8, fontSize: isMobile ? 14 : 14, textAlign: 'center'
     }
+  };
+
+  const getImageUrl = (url) => {
+    if (!url) return 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200&q=80';
+    if (url.startsWith('http')) return url;
+    if (url.startsWith('/uploads')) return `http://localhost:5000${url}`;
+    return url;
   };
 
   return (
     <div style={styles.container}>
-      {/* Header */}
       <div style={styles.header}>
         <button style={styles.backBtn} onClick={() => navigate(-1)}>
-          <ArrowLeft size={isMobile ? 24 : 24} />
+          <ArrowLeft size={24} />
         </button>
         <h1 style={styles.pageTitle}>Edit Profile</h1>
       </div>
 
-      {/* Avatar Upload */}
       <div style={styles.avatarContainer}>
         <div style={styles.avatarWrapper}>
-          <img src={formData.profileImage} alt="Profile" style={styles.avatar} />
-          
-          {/* ✅ CLICKABLE CAMERA BUTTON */}
-          <div style={styles.cameraBtn} onClick={handleImageClick}>
+          <img 
+            src={getImageUrl(previewUrl)} 
+            alt="Profile" 
+            style={styles.avatar}
+            onError={(e) => {
+              e.target.src = 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200&q=80';
+            }}
+          />
+          <div 
+            style={{...styles.cameraBtn, opacity: loading ? 0.7 : 1}}
+            onClick={() => fileInputRef.current.click()}
+          >
             <Camera size={isMobile ? 16 : 18} />
           </div>
         </div>
-        
-        {/* Clickable Text */}
-        <span style={styles.changeText} onClick={handleImageClick}>Change Profile Photo</span>
-
-        {/* ✅ HIDDEN INPUT */}
+        <span style={styles.changeText} onClick={() => fileInputRef.current.click()}>
+          {loading ? 'Uploading...' : 'Change Photo'}
+        </span>
         <input 
           type="file" 
           ref={fileInputRef} 
@@ -156,7 +264,8 @@ const EditProfile = ({ user, setUser, theme }) => {
         />
       </div>
 
-      {/* Form Fields */}
+      {message && <div style={styles.message}>{message}</div>}
+
       <div style={styles.form}>
         <div>
           <label style={styles.label}>Full Name</label>
@@ -164,7 +273,7 @@ const EditProfile = ({ user, setUser, theme }) => {
             style={styles.input} 
             name="name" 
             value={formData.name} 
-            onChange={handleChange} 
+            onChange={(e) => setFormData({ ...formData, name: e.target.value })} 
           />
         </div>
 
@@ -174,32 +283,36 @@ const EditProfile = ({ user, setUser, theme }) => {
             style={styles.input} 
             name="college" 
             value={formData.college} 
-            onChange={handleChange} 
+            onChange={(e) => setFormData({ ...formData, college: e.target.value })} 
           />
         </div>
 
         <div>
-          <label style={styles.label}>Register Number / ID</label>
+          <label style={styles.label}>Register Number</label>
           <input 
             style={styles.input} 
             name="regNo" 
             value={formData.regNo} 
-            onChange={handleChange} 
+            onChange={(e) => setFormData({ ...formData, regNo: e.target.value })} 
           />
         </div>
 
         <div>
-          <label style={styles.label}>Email Address</label>
+          <label style={styles.label}>Email (cannot change)</label>
           <input 
-            style={styles.input} 
+            style={{...styles.input, opacity: 0.7}} 
             name="email" 
             value={formData.email} 
-            onChange={handleChange} 
+            disabled 
           />
         </div>
 
-        <button style={styles.saveBtn} onClick={handleSave}>
-          Save Changes
+        <button 
+          style={styles.saveBtn} 
+          onClick={handleSave}
+          disabled={loading}
+        >
+          {loading ? 'Saving...' : 'Save Changes'}
         </button>
       </div>
     </div>

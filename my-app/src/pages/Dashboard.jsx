@@ -1,13 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Search, Bell, Calendar, MapPin, Clock, ArrowRight, Sun, Moon } from 'lucide-react';
+import axios from 'axios';
 
 const Dashboard = ({ user, events, theme, regCount, unreadCount, onReadNotifications, toggleTheme }) => {
   const navigate = useNavigate();
   const isDark = theme === 'dark';
-
-  // 1. RESPONSIVE CHECK
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+  const [currentUser, setCurrentUser] = useState(user);
+  const [imageError, setImageError] = useState(false);
 
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth < 768);
@@ -15,82 +16,102 @@ const Dashboard = ({ user, events, theme, regCount, unreadCount, onReadNotificat
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
+  // ✅ FETCH FRESH USER DATA ON MOUNT
+  useEffect(() => {
+    const fetchLatestUserData = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        if (!token) return;
+        
+        const response = await axios.get('http://localhost:5000/api/auth/profile', {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        
+        setCurrentUser(response.data);
+        localStorage.setItem('user', JSON.stringify(response.data));
+      } catch (error) {
+        console.log('Could not fetch latest user data:', error.message);
+      }
+    };
+    
+    fetchLatestUserData();
+  }, []);
+
+  // ✅ GET FULL IMAGE URL
+  const getImageUrl = (url) => {
+    if (!url) return 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200&q=80';
+    if (url.startsWith('http')) return url;
+    if (url.startsWith('/uploads')) return `http://localhost:5000${url}`;
+    return url;
+  };
+
+  // ✅ HANDLE IMAGE ERROR
+  const handleImageError = () => {
+    setImageError(true);
+  };
+
   const styles = {
-    // 1. CONTAINER
     container: {
-      padding: isMobile ? '4vw' : '2vw', 
+      padding: isMobile ? '16px' : '30px',
       backgroundColor: isDark ? '#0f172a' : '#f8fafc',
       minHeight: '100vh',
       fontFamily: "'Inter', sans-serif",
       maxWidth: isMobile ? '100vw' : '95vw',
       margin: '0 auto'
     },
-    // HEADER
     header: { 
       display: 'flex', 
       justifyContent: 'space-between', 
       alignItems: 'center', 
-      marginBottom: '3vh', 
+      marginBottom: '30px', 
       flexWrap: 'wrap', 
-      gap: isMobile ? '3vw' : '2vw' 
+      gap: isMobile ? '12px' : '30px' 
     },
     profileSection: { 
       display: 'flex', 
       alignItems: 'center', 
-      gap: isMobile ? '3vw' : '1vw', 
+      gap: isMobile ? '12px' : '15px', 
       cursor: 'pointer' 
     },
     avatar: { 
-      width: isMobile ? '12vw' : '4vw', 
-      height: isMobile ? '12vw' : '4vw', 
+      width: isMobile ? '48px' : '60px', 
+      height: isMobile ? '48px' : '60px', 
       borderRadius: '50%', 
       objectFit: 'cover', 
-      border: '2px solid #6366f1' 
+      border: '2px solid #6366f1',
+      backgroundColor: '#f3f4f6'
     },
     welcomeText: { display: 'flex', flexDirection: 'column' },
     hello: { 
-      fontSize: isMobile ? '3vw' : '0.9vw', 
+      fontSize: isMobile ? '14px' : '16px', 
       color: '#64748b', 
       fontWeight: '500' 
     },
     name: { 
-      fontSize: isMobile ? '4.5vw' : '1.2vw', 
+      fontSize: isMobile ? '18px' : '22px', 
       fontWeight: '800', 
       color: isDark ? '#fff' : '#1e293b' 
     },
-
-    rightHeader: { display: 'flex', alignItems: 'center', gap: isMobile ? '3vw' : '1vw' },
-    
-    // SEARCH BAR
+    rightHeader: { display: 'flex', alignItems: 'center', gap: isMobile ? '12px' : '15px' },
     searchContainer: {
       display: 'flex', 
       alignItems: 'center', 
       backgroundColor: isDark ? '#1e293b' : '#ffffff',
       borderRadius: '50px', 
-      padding: isMobile ? '1.5vh 3vw' : '0.8vh 1.5vw', 
+      padding: isMobile ? '12px 16px' : '10px 24px', 
       boxShadow: '0 4px 15px rgba(0,0,0,0.05)',
-      width: isMobile ? '40vw' : '25vw', // Wider on mobile relative to icons
+      width: isMobile ? '40vw' : '25vw',
       border: isDark ? '1px solid #334155' : '1px solid #e2e8f0',
-      display: isMobile ? 'none' : 'flex' // Hide search on very small screens if needed, or adjust
+      display: isMobile ? 'none' : 'flex'
     },
-    // Mobile Search Icon Button (if hiding full bar)
-    mobileSearchBtn: {
-      display: isMobile ? 'flex' : 'none',
-      width: '10vw', height: '10vw', borderRadius: '50%',
-      backgroundColor: isDark ? '#1e293b' : '#fff',
-      alignItems: 'center', justifyContent: 'center',
-      border: isDark ? '1px solid #334155' : '1px solid #e2e8f0'
-    },
-
-    searchIcon: { color: '#94a3b8', marginRight: '0.5vw', width: '1.2vw' },
+    searchIcon: { color: '#94a3b8', marginRight: '10px', width: '20px' },
     input: { 
       border: 'none', outline: 'none', background: 'transparent', 
-      fontSize: '0.9vw', color: isDark ? '#fff' : '#334155', flex: 1, fontWeight: '500' 
+      fontSize: '14px', color: isDark ? '#fff' : '#334155', flex: 1, fontWeight: '500' 
     },
-
     iconBtn: {
-      width: isMobile ? '10vw' : '3.5vw', 
-      height: isMobile ? '10vw' : '3.5vw', 
+      width: isMobile ? '40px' : '50px', 
+      height: isMobile ? '40px' : '50px', 
       borderRadius: '50%', 
       backgroundColor: isDark ? '#1e293b' : '#fff',
       border: isDark ? '1px solid #334155' : '1px solid #e2e8f0', 
@@ -101,95 +122,86 @@ const Dashboard = ({ user, events, theme, regCount, unreadCount, onReadNotificat
     },
     badge: { 
       position: 'absolute', top: '0', right: '0', 
-      width: isMobile ? '2.5vw' : '0.8vw', 
-      height: isMobile ? '2.5vw' : '0.8vw', 
+      width: '12px', height: '12px', 
       backgroundColor: '#ef4444', borderRadius: '50%', border: '2px solid #fff' 
     },
-
-    // HERO BANNER
     heroBanner: {
       display: 'flex', justifyContent: 'space-between', alignItems: 'center', 
       backgroundColor: isDark ? '#312e81' : '#e0e7ff',
-      borderRadius: isMobile ? '4vw' : '1.5vw', 
-      padding: isMobile ? '5vw' : '3vw', 
-      marginBottom: '4vh', position: 'relative', overflow: 'hidden', 
+      borderRadius: isMobile ? '20px' : '25px', 
+      padding: isMobile ? '20px' : '45px', 
+      marginBottom: '40px', position: 'relative', overflow: 'hidden', 
       boxShadow: '0 10px 30px rgba(0,0,0,0.05)',
-      height: isMobile ? 'auto' : '25vh',
-      minHeight: isMobile ? '25vh' : 'auto'
+      height: isMobile ? 'auto' : '180px',
+      minHeight: isMobile ? '180px' : 'auto'
     },
-    heroContent: { maxWidth: isMobile ? '100%' : '40vw', zIndex: 2 },
+    heroContent: { maxWidth: isMobile ? '100%' : '500px', zIndex: 2 },
     heroTitle: { 
-      fontSize: isMobile ? '6vw' : '2.5vw', 
-      fontWeight: '800', marginBottom: '1vh', 
+      fontSize: isMobile ? '24px' : '36px', 
+      fontWeight: '800', marginBottom: '12px', 
       color: isDark ? '#fff' : '#1e1b4b', lineHeight: '1.2' 
     },
     heroText: { 
-      fontSize: isMobile ? '3.5vw' : '1.1vw', 
-      marginBottom: '2vh', color: isDark ? '#c7d2fe' : '#4338ca', lineHeight: '1.6' 
+      fontSize: isMobile ? '14px' : '18px', 
+      marginBottom: '20px', color: isDark ? '#c7d2fe' : '#4338ca', lineHeight: '1.6' 
     },
     heroBtn: { 
       backgroundColor: '#1e1b4b', color: '#fff', border: 'none', 
-      padding: isMobile ? '1.5vh 5vw' : '1vh 2vw', 
-      borderRadius: isMobile ? '2vw' : '0.8vw', 
-      fontWeight: 'bold', fontSize: isMobile ? '3.5vw' : '1vw', 
+      padding: isMobile ? '12px 24px' : '12px 30px', 
+      borderRadius: isMobile ? '12px' : '14px', 
+      fontWeight: 'bold', fontSize: isMobile ? '14px' : '16px', 
       cursor: 'pointer', boxShadow: '0 4px 12px rgba(30, 27, 75, 0.3)' 
     },
     heroImage: { 
-      height: '22vh', objectFit: 'contain', 
-      display: isMobile ? 'none' : 'block' // Hide image on mobile to save space
+      height: '160px', objectFit: 'contain', 
+      display: isMobile ? 'none' : 'block' 
     },
-
-    // STATS ROW
     statsRow: { 
-      display: 'flex', gap: isMobile ? '3vw' : '2vw', marginBottom: '4vh', flexWrap: 'wrap' 
+      display: 'flex', gap: isMobile ? '12px' : '30px', marginBottom: '40px', flexWrap: 'wrap' 
     },
     statCard: { 
-      flex: 1, minWidth: isMobile ? '40vw' : '15vw', 
+      flex: 1, minWidth: isMobile ? '150px' : '200px', 
       backgroundColor: isDark ? '#1e293b' : '#fff', 
-      padding: isMobile ? '4vw' : '2vw', 
-      borderRadius: isMobile ? '3vw' : '1.2vw', 
+      padding: isMobile ? '16px' : '24px', 
+      borderRadius: isMobile ? '16px' : '20px', 
       border: isDark ? '1px solid #334155' : '1px solid #e2e8f0', 
-      display: 'flex', alignItems: 'center', gap: isMobile ? '3vw' : '1.5vw', 
+      display: 'flex', alignItems: 'center', gap: isMobile ? '12px' : '20px', 
       boxShadow: '0 4px 6px rgba(0,0,0,0.02)' 
     },
     statIconBox: (bg, color) => ({ 
-      width: isMobile ? '10vw' : '4vw', 
-      height: isMobile ? '10vw' : '4vw', 
-      borderRadius: isMobile ? '2.5vw' : '1vw', 
+      width: isMobile ? '40px' : '60px', 
+      height: isMobile ? '40px' : '60px', 
+      borderRadius: isMobile ? '12px' : '16px', 
       backgroundColor: bg, color: color, display: 'flex', alignItems: 'center', justifyContent: 'center' 
     }),
-    
     statNumber: { 
-      fontSize: isMobile ? '5vw' : '1.5vw', 
+      fontSize: isMobile ? '20px' : '28px', 
       fontWeight: 'bold', 
       color: isDark ? '#fff' : '#1e293b' 
     },
     statLabel: { 
       color: isDark ? '#cbd5e1' : '#64748b', 
-      fontSize: isMobile ? '3vw' : '1vw' 
+      fontSize: isMobile ? '12px' : '14px' 
     },
-    
     sectionHeader: { 
-      display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2vh' 
+      display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' 
     },
     sectionTitle: { 
-      fontSize: isMobile ? '5vw' : '1.5vw', 
+      fontSize: isMobile ? '20px' : '24px', 
       fontWeight: 'bold', color: isDark ? '#fff' : '#1e293b' 
     },
     seeAll: { 
-      fontSize: isMobile ? '3.5vw' : '1vw', 
-      color: '#4f46e5', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.3vw', fontWeight: '600' 
+      fontSize: isMobile ? '14px' : '16px', 
+      color: '#4f46e5', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px', fontWeight: '600' 
     },
-    
-    // GRID
     grid: { 
       display: 'grid', 
-      gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fill, minmax(20vw, 1fr))', 
-      gap: isMobile ? '4vw' : '2vw' 
+      gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fill, minmax(280px, 1fr))', 
+      gap: isMobile ? '16px' : '30px' 
     },
     eventCard: { 
       backgroundColor: isDark ? '#1e293b' : '#fff', 
-      borderRadius: isMobile ? '3vw' : '1.2vw', 
+      borderRadius: isMobile ? '16px' : '20px', 
       overflow: 'hidden', 
       border: isDark ? '1px solid #334155' : '1px solid #e2e8f0', 
       transition: 'all 0.2s', cursor: 'pointer', display: 'flex', flexDirection: 'column', 
@@ -197,36 +209,42 @@ const Dashboard = ({ user, events, theme, regCount, unreadCount, onReadNotificat
     },
     cardImage: { 
       width: '100%', 
-      height: isMobile ? '25vh' : '18vh', 
+      height: isMobile ? '140px' : '180px', 
       objectFit: 'cover' 
     },
     cardBody: { 
-      padding: isMobile ? '4vw' : '1.5vw', 
+      padding: isMobile ? '16px' : '20px', 
       flex: 1, display: 'flex', flexDirection: 'column' 
     },
     cardTitle: { 
-      fontSize: isMobile ? '4.5vw' : '1.2vw', 
-      fontWeight: 'bold', marginBottom: '1vh', color: isDark ? '#fff' : '#1e293b' 
+      fontSize: isMobile ? '16px' : '18px', 
+      fontWeight: 'bold', marginBottom: '8px', color: isDark ? '#fff' : '#1e293b' 
     },
     cardMeta: { 
-      fontSize: isMobile ? '3.5vw' : '0.9vw', 
-      color: '#64748b', marginBottom: '0.5vh', display: 'flex', alignItems: 'center', gap: '0.5vw' 
+      fontSize: isMobile ? '12px' : '14px', 
+      color: '#64748b', marginBottom: '6px', display: 'flex', alignItems: 'center', gap: '8px' 
     }
   };
+
+  const imageUrl = getImageUrl(currentUser?.profileImage);
 
   return (
     <div style={styles.container}>
       <div style={styles.header}>
         <div style={styles.profileSection} onClick={() => navigate('/profile')}>
-          <img src={user.profileImage} alt="Profile" style={styles.avatar} />
+          <img 
+            src={imageError ? 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200&q=80' : imageUrl} 
+            alt="Profile" 
+            style={styles.avatar}
+            onError={handleImageError}
+          />
           <div style={styles.welcomeText}>
             <span style={styles.hello}>Welcome back,</span>
-            <span style={styles.name}>{user.name.split(' ')[0]}</span>
+            <span style={styles.name}>{currentUser?.name ? currentUser.name.split(' ')[0] : 'User'}</span>
           </div>
         </div>
 
         <div style={styles.rightHeader}>
-          {/* Desktop Search */}
           {!isMobile && (
             <div style={styles.searchContainer}>
               <Search style={styles.searchIcon} />
@@ -234,7 +252,6 @@ const Dashboard = ({ user, events, theme, regCount, unreadCount, onReadNotificat
             </div>
           )}
           
-          {/* Mobile Search Icon (Placeholder action) */}
           {isMobile && (
             <div style={styles.iconBtn} onClick={() => navigate('/events')}>
                <Search size={20} />
@@ -263,14 +280,14 @@ const Dashboard = ({ user, events, theme, regCount, unreadCount, onReadNotificat
 
       <div style={styles.statsRow}>
         <div style={styles.statCard}>
-          <div style={styles.statIconBox('#e0e7ff', '#4338ca')}><Calendar size={isMobile ? 24 : 24} /></div>
+          <div style={styles.statIconBox('#e0e7ff', '#4338ca')}><Calendar size={24} /></div>
           <div>
             <div style={styles.statNumber}>{events.length}</div>
             <div style={styles.statLabel}>Total Events</div>
           </div>
         </div>
         <div style={styles.statCard}>
-          <div style={styles.statIconBox('#dcfce7', '#15803d')}><Clock size={isMobile ? 24 : 24} /></div>
+          <div style={styles.statIconBox('#dcfce7', '#15803d')}><Clock size={24} /></div>
           <div>
             <div style={styles.statNumber}>{regCount}</div>
             <div style={styles.statLabel}>Registered</div>
@@ -291,8 +308,8 @@ const Dashboard = ({ user, events, theme, regCount, unreadCount, onReadNotificat
                 <h3 style={styles.cardTitle}>{event.title}</h3>
                 <div style={styles.cardMeta}><Calendar size={16} /> {event.date.split('·')[0]}</div>
                 <div style={styles.cardMeta}><MapPin size={16} /> {event.location}</div>
-                <div style={{ marginTop: 'auto', paddingTop: '1vh' }}>
-                  <span style={{ backgroundColor: '#f1f5f9', padding: isMobile ? '1vh 3vw' : '0.4vh 0.8vw', borderRadius: '1vw', fontSize: isMobile ? '3vw' : '0.8vw', fontWeight: '600', color: '#475569' }}>{event.category}</span>
+                <div style={{ marginTop: 'auto', paddingTop: '12px' }}>
+                  <span style={{ backgroundColor: '#f1f5f9', padding: '6px 12px', borderRadius: '8px', fontSize: '12px', fontWeight: '600', color: '#475569' }}>{event.category}</span>
                 </div>
               </div>
             </div>

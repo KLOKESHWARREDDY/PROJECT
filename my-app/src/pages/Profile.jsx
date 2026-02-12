@@ -1,13 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { User, Lock, LogOut } from 'lucide-react';
+import axios from 'axios';
 
-const Profile = ({ user, theme, onLogout }) => {
+const Profile = ({ user: initialUser, theme, onLogout, setUser }) => {
   const navigate = useNavigate();
   const isDark = theme === 'dark';
 
-  // Cross-platform check: Detect if screen is mobile
+  const [user, setLocalUser] = useState(initialUser);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+  const [imageError, setImageError] = useState(false);
 
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth < 768);
@@ -15,140 +17,198 @@ const Profile = ({ user, theme, onLogout }) => {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
+  // ✅ HELPER: Get token from localStorage
+  const getToken = () => {
+    const savedUser = localStorage.getItem('user');
+    if (savedUser) {
+      try {
+        const parsed = JSON.parse(savedUser);
+        if (parsed.token) return parsed.token;
+      } catch (e) {
+        console.error('Error parsing user:', e);
+      }
+    }
+    return null;
+  };
+
+  // ✅ FETCH LATEST USER DATA FROM BACKEND
+  useEffect(() => {
+    const fetchLatestUserData = async () => {
+      try {
+        const token = getToken();
+        if (!token) return;
+
+        const response = await axios.get('http://localhost:5000/api/auth/profile', {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+
+        const latestUser = response.data;
+        
+        // Update local state
+        setLocalUser(latestUser);
+        
+        // Also update parent state if provided
+        if (setUser) {
+          setUser({ ...latestUser, token: token });
+        }
+
+        // Update localStorage
+        const savedUser = localStorage.getItem('user');
+        if (savedUser) {
+          const parsed = JSON.parse(savedUser);
+          localStorage.setItem('user', JSON.stringify({ ...parsed, ...latestUser, token: token }));
+        }
+        
+        console.log('✅ Profile data fetched:', latestUser.email, '- Role:', latestUser.role);
+        
+      } catch (error) {
+        console.error('Error fetching user data:', error.response?.data?.message || error.message);
+      }
+    };
+
+    fetchLatestUserData();
+  }, [setUser]);
+
+  // ✅ GET FULL IMAGE URL
+  const getImageUrl = (url) => {
+    if (!url) return 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200&q=80';
+    if (url.startsWith('http')) return url;
+    if (url.startsWith('/uploads')) return `http://localhost:5000${url}`;
+    return url;
+  };
+
+  // ✅ HANDLE IMAGE ERROR
+  const handleImageError = () => {
+    setImageError(true);
+  };
+
   const styles = {
     container: {
-      padding: isMobile ? '5vw' : '2vw',
+      padding: isMobile ? 20 : 30,
       fontFamily: "'Inter', sans-serif",
       color: isDark ? '#fff' : '#1e293b',
-      maxWidth: isMobile ? '100vw' : '90vw',
+      maxWidth: isMobile ? '100%' : 900,
       margin: '0 auto',
       minHeight: '100vh',
-      paddingBottom: '10vh'
+      paddingBottom: 80
     },
     header: {
-      marginBottom: '4vh',
+      marginBottom: 30,
       textAlign: isMobile ? 'center' : 'left'
     },
     pageTitle: {
-      fontSize: isMobile ? '7vw' : '2.5vw', // Larger on mobile
+      fontSize: isMobile ? 28 : 36,
       fontWeight: '800',
-      marginBottom: '1vh'
+      marginBottom: 8
     },
     subTitle: {
       color: '#64748b',
-      fontSize: isMobile ? '3.5vw' : '1vw'
+      fontSize: isMobile ? 14 : 16
     },
     mainGrid: {
       display: 'grid',
-      // Mobile: 1 Column | Desktop: 2 Columns
-      gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fit, minmax(30vw, 1fr))',
-      gap: isMobile ? '4vh' : '2vw',
+      gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr',
+      gap: isMobile ? 20 : 30,
       alignItems: 'start'
     },
-
-    // --- LEFT CARD: User Info ---
     profileCard: {
       backgroundColor: isDark ? '#1e293b' : '#fff',
-      borderRadius: isMobile ? '4vw' : '2vw',
-      padding: isMobile ? '6vw' : '3vw',
+      borderRadius: isMobile ? 16 : 24,
+      padding: isMobile ? 24 : 40,
       display: 'flex',
       flexDirection: 'column',
       alignItems: 'center',
       textAlign: 'center',
       border: isDark ? '1px solid #334155' : '1px solid #e2e8f0',
-      boxShadow: '0 0.5vh 1vh rgba(0,0,0,0.02)'
+      boxShadow: '0 2px 8px rgba(0,0,0,0.05)'
     },
     avatarContainer: {
       position: 'relative',
-      marginBottom: '2vh'
+      marginBottom: 16
     },
     avatar: {
-      width: isMobile ? '25vw' : '10vw', // Responsive Avatar
-      height: isMobile ? '25vw' : '10vw',
+      width: isMobile ? 100 : 150,
+      height: isMobile ? 100 : 150,
       borderRadius: '50%',
       objectFit: 'cover',
       border: '4px solid #6366f1',
-      padding: '4px'
+      padding: 4,
+      backgroundColor: '#f3f4f6'
     },
     name: {
-      fontSize: isMobile ? '5vw' : '1.8vw',
+      fontSize: isMobile ? 20 : 28,
       fontWeight: 'bold',
-      marginBottom: '0.5vh',
+      marginBottom: 4,
       color: isDark ? '#fff' : '#1e293b'
     },
     email: {
-      fontSize: isMobile ? '3.5vw' : '1vw',
+      fontSize: isMobile ? 14 : 16,
       color: '#64748b',
-      marginBottom: '2.5vh'
+      marginBottom: 20
     },
     badge: {
       backgroundColor: '#e0e7ff',
       color: '#4338ca',
-      padding: isMobile ? '1vh 4vw' : '0.5vh 1.5vw',
+      padding: '8px 20px',
       borderRadius: '50px',
-      fontSize: isMobile ? '3vw' : '0.9vw',
+      fontSize: isMobile ? 12 : 14,
       fontWeight: '600'
     },
-
-    // --- RIGHT SIDE: Details & Settings ---
     rightColumn: {
       display: 'flex',
       flexDirection: 'column',
-      gap: isMobile ? '3vh' : '2vw'
+      gap: isMobile ? 16 : 20
     },
     detailsCard: {
       backgroundColor: isDark ? '#1e293b' : '#fff',
-      borderRadius: isMobile ? '4vw' : '1.5vw',
-      padding: isMobile ? '5vw' : '2vw',
+      borderRadius: isMobile ? 16 : 20,
+      padding: isMobile ? 20 : 24,
       border: isDark ? '1px solid #334155' : '1px solid #e2e8f0'
     },
     sectionTitle: {
-      fontSize: isMobile ? '4.5vw' : '1.2vw',
+      fontSize: isMobile ? 18 : 20,
       fontWeight: '700',
-      marginBottom: '2vh',
+      marginBottom: 16,
       borderBottom: isDark ? '1px solid #334155' : '1px solid #f1f5f9',
-      paddingBottom: '1vh'
+      paddingBottom: 12
     },
     infoRow: {
       display: 'flex',
       justifyContent: 'space-between',
-      padding: '1.5vh 0',
+      padding: '12px 0',
       borderBottom: isDark ? '1px solid #334155' : '1px solid #f8fafc'
     },
     infoLabel: {
       color: '#94a3b8',
-      fontSize: isMobile ? '3.5vw' : '1vw',
+      fontSize: isMobile ? 14 : 15,
       fontWeight: '500'
     },
     infoValue: {
       fontWeight: '600',
-      fontSize: isMobile ? '3.5vw' : '1vw',
+      fontSize: isMobile ? 14 : 15,
       color: isDark ? '#fff' : '#334155',
       textAlign: 'right'
     },
-    
-    // --- SETTINGS GRID ---
     settingsGrid: {
       display: 'grid',
-      // Mobile: 1 Column (Full Width) | Desktop: 3 Columns
-      gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fit, minmax(10vw, 1fr))',
-      gap: isMobile ? '2vh' : '1.5vw'
+      gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, 1fr)',
+      gap: isMobile ? 12 : 16
     },
     settingCard: (bg, color) => ({
       backgroundColor: isDark ? '#1e293b' : '#fff',
       border: isDark ? '1px solid #334155' : '1px solid #e2e8f0',
-      padding: isMobile ? '4vw' : '1.5vw',
-      borderRadius: isMobile ? '3vw' : '1.2vw',
+      padding: isMobile ? 16 : 20,
+      borderRadius: isMobile ? 12 : 16,
       cursor: 'pointer',
       display: 'flex',
       alignItems: 'center',
-      gap: isMobile ? '4vw' : '1vw',
+      gap: isMobile ? 12 : 16,
       transition: 'transform 0.2s'
     }),
     iconBox: (bg, color) => ({
-      width: isMobile ? '10vw' : '3vw',
-      height: isMobile ? '10vw' : '3vw',
-      borderRadius: isMobile ? '2.5vw' : '0.8vw',
+      width: isMobile ? 40 : 48,
+      height: isMobile ? 40 : 48,
+      borderRadius: isMobile ? 10 : 12,
       backgroundColor: bg,
       color: color,
       display: 'flex',
@@ -157,12 +217,11 @@ const Profile = ({ user, theme, onLogout }) => {
     })
   };
 
-  // Options Array - PREFERENCES REMOVED
   const settingsOptions = [
     { 
       label: 'Edit Profile', 
       sub: 'Update personal info', 
-      icon: <User size={isMobile ? 24 : 20} />, 
+      icon: <User size={isMobile ? 20 : 24} />, 
       path: '/edit-profile', 
       color: '#6366f1', 
       bg: '#e0e7ff' 
@@ -170,7 +229,7 @@ const Profile = ({ user, theme, onLogout }) => {
     { 
       label: 'Security', 
       sub: 'Change password', 
-      icon: <Lock size={isMobile ? 24 : 20} />, 
+      icon: <Lock size={isMobile ? 20 : 24} />, 
       path: '/change-password', 
       color: '#10b981', 
       bg: '#d1fae5' 
@@ -178,56 +237,56 @@ const Profile = ({ user, theme, onLogout }) => {
     { 
       label: 'Log Out', 
       sub: 'Sign out of account', 
-      icon: <LogOut size={isMobile ? 24 : 20} />, 
+      icon: <LogOut size={isMobile ? 20 : 24} />, 
       action: onLogout, 
       color: '#ef4444', 
       bg: '#fee2e2' 
     }
   ];
 
+  const imageUrl = getImageUrl(user?.profileImage);
+
   return (
     <div style={styles.container}>
-      
       <div style={styles.header}>
         <h1 style={styles.pageTitle}>My Profile</h1>
         <p style={styles.subTitle}>Manage your account details</p>
       </div>
 
       <div style={styles.mainGrid}>
-        
-        {/* LEFT: Profile Card */}
         <div style={styles.profileCard}>
           <div style={styles.avatarContainer}>
-            <img src={user.profileImage} alt="Profile" style={styles.avatar} />
+            <img 
+              src={imageError ? 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200&q=80' : imageUrl} 
+              alt="Profile" 
+              style={styles.avatar}
+              onError={handleImageError}
+            />
           </div>
-          <h2 style={styles.name}>{user.name}</h2>
-          <p style={styles.email}>{user.email}</p>
-          <span style={styles.badge}>{user.role === 'student' ? 'Student Account' : 'Teacher Account'}</span>
+          <h2 style={styles.name}>{user?.name || 'Loading...'}</h2>
+          <p style={styles.email}>{user?.email || 'Loading...'}</p>
+          <span style={styles.badge}>{user?.role === 'student' ? 'Student Account' : 'Teacher Account'}</span>
         </div>
 
-        {/* RIGHT: Details & Actions */}
         <div style={styles.rightColumn}>
-          
-          {/* Academic Info */}
           <div style={styles.detailsCard}>
             <h3 style={styles.sectionTitle}>Academic Information</h3>
             <div style={styles.infoRow}>
               <span style={styles.infoLabel}>College Name</span>
-              <span style={styles.infoValue}>{user.college}</span>
+              <span style={styles.infoValue}>{user?.college || 'N/A'}</span>
             </div>
             <div style={styles.infoRow}>
               <span style={styles.infoLabel}>Department</span>
-              <span style={styles.infoValue}>CSE</span>
+              <span style={styles.infoValue}>{user?.department || 'N/A'}</span>
             </div>
             <div style={{ ...styles.infoRow, borderBottom: 'none' }}>
               <span style={styles.infoLabel}>Registration ID</span>
-              <span style={styles.infoValue}>{user.regNo}</span>
+              <span style={styles.infoValue}>{user?.regNo || 'N/A'}</span>
             </div>
           </div>
 
-          {/* Account Settings Grid */}
           <div>
-            <h3 style={{ ...styles.sectionTitle, borderBottom: 'none', marginBottom: '1vh' }}>Account Settings</h3>
+            <h3 style={{ ...styles.sectionTitle, borderBottom: 'none', marginBottom: 12 }}>Account Settings</h3>
             <div style={styles.settingsGrid}>
               {settingsOptions.map((opt, index) => (
                 <div 
@@ -241,10 +300,10 @@ const Profile = ({ user, theme, onLogout }) => {
                     {opt.icon}
                   </div>
                   <div>
-                    <div style={{ fontWeight: 'bold', fontSize: isMobile ? '4vw' : '1vw', color: isDark ? '#fff' : '#1e293b' }}>
+                    <div style={{ fontWeight: 'bold', fontSize: isMobile ? 14 : 16, color: isDark ? '#fff' : '#1e293b' }}>
                       {opt.label}
                     </div>
-                    <div style={{ fontSize: isMobile ? '3vw' : '0.8vw', color: '#64748b' }}>
+                    <div style={{ fontSize: isMobile ? 11 : 12, color: '#64748b' }}>
                       {opt.sub}
                     </div>
                   </div>
@@ -252,7 +311,6 @@ const Profile = ({ user, theme, onLogout }) => {
               ))}
             </div>
           </div>
-
         </div>
       </div>
     </div>
