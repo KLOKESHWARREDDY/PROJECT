@@ -1,14 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Search, Bell, Calendar, MapPin, Clock, ArrowRight, Sun, Moon } from 'lucide-react';
-import axios from 'axios';
+import { authAPI, registrationAPI } from '../api';
 
-const Dashboard = ({ user, events, theme, regCount, unreadCount, onReadNotifications, toggleTheme }) => {
+const Dashboard = ({ user, events, theme, unreadCount, onReadNotifications, toggleTheme }) => {
   const navigate = useNavigate();
   const isDark = theme === 'dark';
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   const [currentUser, setCurrentUser] = useState(user);
   const [imageError, setImageError] = useState(false);
+  const [realRegCount, setRealRegCount] = useState(0);
+  const [loadingRegs, setLoadingRegs] = useState(true);
 
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth < 768);
@@ -20,21 +22,53 @@ const Dashboard = ({ user, events, theme, regCount, unreadCount, onReadNotificat
   useEffect(() => {
     const fetchLatestUserData = async () => {
       try {
+        const savedUser = localStorage.getItem('user');
         const token = localStorage.getItem('token');
         if (!token) return;
         
-        const response = await axios.get('http://localhost:5000/api/auth/profile', {
-          headers: { Authorization: `Bearer ${token}` }
-        });
+        const response = await authAPI.getProfile();
         
-        setCurrentUser(response.data);
-        localStorage.setItem('user', JSON.stringify(response.data));
+        // Merge new data with existing token
+        const updatedUser = {
+          ...JSON.parse(savedUser),
+          ...response.data,
+          token: token // Always preserve token
+        };
+        
+        setCurrentUser(updatedUser);
+        localStorage.setItem('user', JSON.stringify(updatedUser));
       } catch (error) {
         console.log('Could not fetch latest user data:', error.message);
       }
     };
     
     fetchLatestUserData();
+  }, []);
+
+  // ✅ FETCH REAL REGISTRATION COUNT
+  useEffect(() => {
+    const fetchRegistrations = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        if (!token) {
+          setRealRegCount(0);
+          setLoadingRegs(false);
+          return;
+        }
+        
+        const response = await registrationAPI.getMyRegistrations();
+        
+        const registrations = response.data || [];
+        setRealRegCount(registrations.length);
+      } catch (error) {
+        console.log('Error fetching registrations:', error.message);
+        setRealRegCount(0);
+      } finally {
+        setLoadingRegs(false);
+      }
+    };
+    
+    fetchRegistrations();
   }, []);
 
   // ✅ GET FULL IMAGE URL
@@ -289,7 +323,7 @@ const Dashboard = ({ user, events, theme, regCount, unreadCount, onReadNotificat
         <div style={styles.statCard}>
           <div style={styles.statIconBox('#dcfce7', '#15803d')}><Clock size={24} /></div>
           <div>
-            <div style={styles.statNumber}>{regCount}</div>
+            <div style={styles.statNumber}>{loadingRegs ? '...' : realRegCount}</div>
             <div style={styles.statLabel}>Registered</div>
           </div>
         </div>

@@ -1,11 +1,22 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, Eye, EyeOff, Lock, CheckCircle } from 'lucide-react';
+import { ArrowLeft, Eye, EyeOff, Lock, CheckCircle, AlertCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
 
 const ChangePassword = ({ theme }) => {
   const navigate = useNavigate();
   const isDark = theme === 'dark';
   const [show, setShow] = useState(false);
+  const [showNew, setShowNew] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
+  
+  // Form state
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
+  const [loading, setLoading] = useState(false);
 
   // RESPONSIVE CHECK
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
@@ -105,14 +116,96 @@ const ChangePassword = ({ theme }) => {
       borderRadius: isMobile ? '2vw' : '0.8vw', 
       fontWeight: 'bold', 
       fontSize: isMobile ? '4vw' : '1.2vw', 
-      cursor: 'pointer', 
+      cursor: loading ? 'not-allowed' : 'pointer', 
       marginTop: '2vh',
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
       gap: '0.5vw',
       transition: 'transform 0.1s',
-      boxShadow: '0 4px 12px rgba(59, 130, 246, 0.3)'
+      boxShadow: '0 4px 12px rgba(59, 130, 246, 0.3)',
+      opacity: loading ? 0.7 : 1
+    },
+    
+    // ERROR & SUCCESS
+    message: {
+      padding: '1vh',
+      borderRadius: '0.5vw',
+      fontSize: isMobile ? '3.5vw' : '0.9vw',
+      display: 'flex',
+      alignItems: 'center',
+      gap: '0.5vw',
+      marginTop: '1vh'
+    },
+    error: {
+      backgroundColor: isDark ? 'rgba(239, 68, 68, 0.1)' : '#fef2f2',
+      color: '#ef4444',
+      border: `1px solid ${isDark ? 'rgba(239, 68, 68, 0.3)' : '#fecaca'}`
+    },
+    success: {
+      backgroundColor: isDark ? 'rgba(34, 197, 94, 0.1)' : '#dcfce7',
+      color: '#22c55e',
+      border: `1px solid ${isDark ? 'rgba(34, 197, 94, 0.3)' : '#bbf7d0'}`
+    }
+  };
+
+  // Handle password update
+  const handleUpdatePassword = async () => {
+    setError('');
+    setSuccess('');
+    
+    // Validate inputs
+    if (!currentPassword || !newPassword || !confirmPassword) {
+      setError('Please fill all fields');
+      return;
+    }
+
+    if (newPassword !== confirmPassword) {
+      setError('New passwords do not match');
+      return;
+    }
+
+    if (newPassword.length < 6) {
+      setError('Password must be at least 6 characters');
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      const user = JSON.parse(localStorage.getItem('user'));
+      const token = localStorage.getItem('token');
+      
+      const response = await axios.put(
+        'http://localhost:5000/api/auth/change-password',
+        {
+          currentPassword,
+          newPassword
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token || user?.token}`
+          }
+        }
+      );
+
+      setSuccess('Password updated successfully');
+      
+      // Clear form
+      setCurrentPassword('');
+      setNewPassword('');
+      setConfirmPassword('');
+      
+      // Navigate back after 2 seconds
+      setTimeout(() => {
+        navigate(-1);
+      }, 2000);
+
+    } catch (err) {
+      const errorMessage = err.response?.data?.message || 'Error updating password';
+      setError(errorMessage);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -131,10 +224,32 @@ const ChangePassword = ({ theme }) => {
       </div>
 
       <div style={styles.form}>
+        {/* Error Message */}
+        {error && (
+          <div style={{...styles.message, ...styles.error}}>
+            <AlertCircle size={isMobile ? 16 : 14} />
+            {error}
+          </div>
+        )}
+
+        {/* Success Message */}
+        {success && (
+          <div style={{...styles.message, ...styles.success}}>
+            <CheckCircle size={isMobile ? 16 : 14} />
+            {success}
+          </div>
+        )}
+
         <div style={styles.inputGroup}>
           <label style={styles.label}>Current Password</label>
           <div style={styles.inputContainer}>
-            <input style={styles.input} type="password" placeholder="••••••••" />
+            <input 
+              style={styles.input} 
+              type="password" 
+              placeholder="••••••••" 
+              value={currentPassword}
+              onChange={(e) => setCurrentPassword(e.target.value)}
+            />
             <div style={styles.eyeIcon}><Lock size={isMobile ? 20 : 18} /></div>
           </div>
         </div>
@@ -142,9 +257,15 @@ const ChangePassword = ({ theme }) => {
         <div style={styles.inputGroup}>
           <label style={styles.label}>New Password</label>
           <div style={styles.inputContainer}>
-            <input style={styles.input} type={show ? "text" : "password"} placeholder="Enter new password" />
-            <div style={styles.eyeIcon} onClick={() => setShow(!show)}>
-              {show ? <EyeOff size={isMobile ? 20 : 20}/> : <Eye size={isMobile ? 20 : 20}/>}
+            <input 
+              style={styles.input} 
+              type={showNew ? "text" : "password"} 
+              placeholder="Enter new password"
+              value={newPassword}
+              onChange={(e) => setNewPassword(e.target.value)}
+            />
+            <div style={styles.eyeIcon} onClick={() => setShowNew(!showNew)}>
+              {showNew ? <EyeOff size={isMobile ? 20 : 20}/> : <Eye size={isMobile ? 20 : 20}/>}
             </div>
           </div>
         </div>
@@ -152,17 +273,25 @@ const ChangePassword = ({ theme }) => {
         <div style={styles.inputGroup}>
           <label style={styles.label}>Confirm New Password</label>
           <div style={styles.inputContainer}>
-            <input style={styles.input} type="password" placeholder="Repeat new password" />
+            <input 
+              style={styles.input} 
+              type="password" 
+              placeholder="Repeat new password"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+            />
             <div style={styles.eyeIcon}><Lock size={isMobile ? 20 : 18} /></div>
           </div>
         </div>
 
         <button 
           style={styles.btn}
-          onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.02)'}
-          onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
+          onClick={handleUpdatePassword}
+          disabled={loading}
+          onMouseEnter={(e) => !loading && (e.currentTarget.style.transform = 'scale(1.02)')}
+          onMouseLeave={(e) => !loading && (e.currentTarget.style.transform = 'scale(1)')}
         >
-          <CheckCircle size={isMobile ? 20 : 18} /> Update Password
+          {loading ? 'Updating...' : <><CheckCircle size={isMobile ? 20 : 18} /> Update Password</>}
         </button>
       </div>
     </div>

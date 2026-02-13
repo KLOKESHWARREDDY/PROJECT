@@ -1,13 +1,16 @@
-const express = require('express');
+const express = require("express");
 const router = express.Router();
 const { createEvent, getEvents } = require('../controllers/eventController');
 const { protect } = require('../middleware/authMiddleware');
-const { authorize } = require('../middleware/roleMiddleware');
+const { isTeacher } = require('../middleware/roleMiddleware');
 
-// Get all events (Student & Teacher)
+// Event Routes
 router.get('/', protect, getEvents);
+router.post('/', protect, isTeacher, createEvent);
 
-// Create event (Teacher only)
-router.post('/', protect, authorize('teacher'), createEvent);
+// Test route
+router.get("/test", (req, res) => {
+  res.json({ message: "Events routes working" });
+});
 
 module.exports = router;

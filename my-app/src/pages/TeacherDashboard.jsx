@@ -1,14 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Bell, Calendar, MapPin, Users, Plus, Sun, Moon, ArrowRight, CheckSquare } from 'lucide-react';
-import axios from 'axios';
+import { authAPI, registrationAPI } from '../api';
 
-const TeacherDashboard = ({ user, events, registrations = [], theme, toggleTheme, onLogout }) => {
+const TeacherDashboard = ({ user, events, theme, toggleTheme, onLogout }) => {
   const navigate = useNavigate();
   const isDark = theme === 'dark';
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   const [currentUser, setCurrentUser] = useState(user);
   const [imageError, setImageError] = useState(false);
+  const [realPendingCount, setRealPendingCount] = useState(0);
+  const [loadingRegs, setLoadingRegs] = useState(true);
 
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth < 768);
@@ -23,9 +25,7 @@ const TeacherDashboard = ({ user, events, registrations = [], theme, toggleTheme
         const token = localStorage.getItem('token');
         if (!token) return;
         
-        const response = await axios.get('http://localhost:5000/api/auth/profile', {
-          headers: { Authorization: `Bearer ${token}` }
-        });
+        const response = await authAPI.getProfile();
         
         setCurrentUser(response.data);
         localStorage.setItem('user', JSON.stringify(response.data));
@@ -35,6 +35,33 @@ const TeacherDashboard = ({ user, events, registrations = [], theme, toggleTheme
     };
     
     fetchLatestUserData();
+  }, []);
+
+  // ✅ FETCH REAL PENDING REGISTRATION COUNT
+  useEffect(() => {
+    const fetchPendingRegistrations = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        if (!token) {
+          setRealPendingCount(0);
+          setLoadingRegs(false);
+          return;
+        }
+        
+        const response = await registrationAPI.getAllPendingRegistrations();
+        
+        const registrations = response.data || [];
+        const pendingCount = registrations.length;
+        setRealPendingCount(pendingCount);
+      } catch (error) {
+        console.log('Error fetching registrations:', error.message);
+        setRealPendingCount(0);
+      } finally {
+        setLoadingRegs(false);
+      }
+    };
+    
+    fetchPendingRegistrations();
   }, []);
 
   // ✅ GET FULL IMAGE URL
@@ -52,7 +79,6 @@ const TeacherDashboard = ({ user, events, registrations = [], theme, toggleTheme
 
   const recentEvents = events.slice(0, 4); 
   const totalParticipants = events.reduce((sum, event) => sum + (event.registrations || 0), 0);
-  const pendingRegistrations = registrations ? registrations.filter(r => r.status === 'Pending').length : 0;
 
   const styles = {
     container: { 
@@ -336,7 +362,7 @@ const TeacherDashboard = ({ user, events, registrations = [], theme, toggleTheme
         <div style={styles.statCard} onClick={() => navigate('/teacher-registrations')}>
           <div style={styles.statIconBox('#ffedd5', '#c2410c')}><CheckSquare size={24} /></div>
           <div>
-            <div style={styles.statNumber}>{pendingRegistrations}</div>
+            <div style={styles.statNumber}>{loadingRegs ? '...' : realPendingCount}</div>
             <div style={styles.statLabel}>New Registrations</div>
           </div>
         </div>

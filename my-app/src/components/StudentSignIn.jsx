@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Eye, EyeOff, ArrowLeft, LogIn, AlertCircle } from 'lucide-react';
-import axios from 'axios';
+import { authAPI } from '../api';
+
+
 
 
 const StudentSignIn = ({ onLogin }) => {
@@ -232,45 +234,41 @@ const StudentSignIn = ({ onLogin }) => {
     return Object.keys(newErrors).length === 0;
   };
 
-  // ✅ UPDATED HANDLESUBMIT TO CHECK LOCALSTORAGE
- const handleSubmit = async () => {
-  if (validate()) {
-    try {
-      const response = await axios.post(
-        "http://localhost:5000/api/auth/login",
-        {
+  const handleSubmit = async () => {
+    if (validate()) {
+      try {
+        const response = await authAPI.login({
           email: formData.email,
           password: formData.password
-        }
-      );
-
-      const userData = response.data;
-
-      const selectedRole = isStudent ? 'student' : 'teacher';
-
-      if (userData.role !== selectedRole) {
-        setErrors({
-          general: `This account is registered as ${userData.role}. Please use ${userData.role} login.`
         });
-        return;
+
+        const userData = response.data;
+
+        const selectedRole = isStudent ? 'student' : 'teacher';
+
+        if (userData.role !== selectedRole) {
+          setErrors({
+            general: `This account is registered as ${userData.role}. Please use ${userData.role} login.`
+          });
+          return;
+        }
+
+        // Save user with token
+        localStorage.setItem("user", JSON.stringify(userData));
+        localStorage.setItem("isAuthenticated", "true");
+        localStorage.setItem("token", userData.token || "");
+
+        onLogin(userData);
+        navigate("/");
+
+      } catch (error) {
+        const errorMsg = error.response?.data?.message || "Login failed. Please try again.";
+        setErrors({
+          general: errorMsg
+        });
       }
-
-      // Save user with token
-      localStorage.setItem("user", JSON.stringify(userData));
-      localStorage.setItem("isAuthenticated", "true");
-      localStorage.setItem("token", userData.token || "");
-
-      onLogin(userData);
-      navigate("/");
-
-    } catch (error) {
-      const errorMsg = error.response?.data?.message || "Login failed. Please try again.";
-      setErrors({
-        general: errorMsg
-      });
     }
-  }
-};
+  };
 
   return (
     <div style={styles.pageContainer}>
@@ -347,7 +345,7 @@ const StudentSignIn = ({ onLogin }) => {
               {errors.password && <div style={styles.errorText}><AlertCircle size={isMobile ? 14 : 12}/> {errors.password}</div>}
             </div>
 
-            <div style={styles.forgotPass}>Forgot Password?</div>
+            <Link to="/forgot-password" style={styles.forgotPass}>Forgot Password?</Link>
 
             <button 
               style={styles.actionBtn} 

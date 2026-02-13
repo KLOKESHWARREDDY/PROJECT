@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Eye, EyeOff, ArrowLeft, ArrowRight, AlertCircle, CheckCircle } from 'lucide-react';
-import axios from 'axios';
+import { authAPI } from '../api';
 
 const TeacherSignUp = ({ onLogin }) => {
   const navigate = useNavigate();
@@ -98,9 +98,7 @@ const TeacherSignUp = ({ onLogin }) => {
   const handleSubmit = async () => {
     if(validateStep3()) {
       try {
-        const response = await axios.post(
-          "http://localhost:5000/api/auth/register",
-          {
+        const response = await authAPI.register({
             name: formData.fullName,
             email: formData.email,
             password: formData.password,
@@ -108,8 +106,7 @@ const TeacherSignUp = ({ onLogin }) => {
             college: formData.collegeName,
             department: formData.department,
             regNo: formData.empId
-          }
-        );
+          });
 
         const userData = response.data;
 

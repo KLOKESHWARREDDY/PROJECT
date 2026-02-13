@@ -1,13 +1,19 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft, Check, X, User, Mail, Calendar, Phone, Filter, Search } from 'lucide-react';
+import { registrationAPI } from '../api';
 
-const TeacherRegistrations = ({ registrations, onApprove, onReject, theme }) => {
+const TeacherRegistrations = ({ theme }) => {
   const navigate = useNavigate();
   const isDark = theme === 'dark';
   
+  // State for registrations data
+  const [registrations, setRegistrations] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  
   // State for Filter
-  const [activeFilter, setActiveFilter] = useState("Pending"); // Default to 'Pending' (New)
+  const [activeFilter, setActiveFilter] = useState("Pending");
 
   // RESPONSIVE CHECK
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
@@ -17,8 +23,65 @@ const TeacherRegistrations = ({ registrations, onApprove, onReject, theme }) => 
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
+  // FETCH REAL REGISTRATIONS FROM BACKEND
+  useEffect(() => {
+    const fetchRegistrations = async () => {
+      try {
+        setLoading(true);
+        const response = await registrationAPI.getAll();
+        
+        console.log('Registrations fetched:', response.data);
+        setRegistrations(response.data);
+        setError(null);
+      } catch (err) {
+        console.error('Error fetching registrations:', err);
+        setError(err.response?.data?.message || 'Failed to fetch registrations');
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchRegistrations();
+  }, []);
+
   // Filter Logic
   const filteredList = registrations.filter(reg => reg.status === activeFilter);
+
+  // APPROVE REGISTRATION
+  const handleApprove = async (regId) => {
+    try {
+      const response = await registrationAPI.approve(regId);
+      
+      console.log('Approved:', response.data);
+      
+      // Update local state
+      setRegistrations(prev => prev.map(reg => 
+        reg._id === regId ? { ...reg, status: 'approved', ticketId: response.data.registration.ticketId } : reg
+      ));
+      
+      alert('Registration approved! Ticket generated.');
+    } catch (err) {
+      console.error('Approve error:', err);
+      alert(err.response?.data?.message || 'Failed to approve');
+    }
+  };
+
+  // REJECT REGISTRATION
+  const handleReject = async (regId) => {
+    try {
+      const response = await registrationAPI.reject(regId);
+      
+      console.log('Rejected:', response.data);
+      
+      // Update local state
+      setRegistrations(prev => prev.map(reg => 
+        reg._id === regId ? { ...reg, status: 'rejected' } : reg
+      ));
+    } catch (err) {
+      console.error('Reject error:', err);
+      alert(err.response?.data?.message || 'Failed to reject');
+    }
+  };
 
   const styles = {
     container: {
@@ -31,7 +94,6 @@ const TeacherRegistrations = ({ registrations, onApprove, onReject, theme }) => 
       color: isDark ? '#fff' : '#1e293b'
     },
     
-    // Header
     header: { 
       display: 'flex', alignItems: 'center', gap: '2vw', marginBottom: '3vh' 
     },
@@ -41,7 +103,7 @@ const TeacherRegistrations = ({ registrations, onApprove, onReject, theme }) => 
     },
     pageTitle: { fontSize: isMobile ? '6vw' : '2vw', fontWeight: '800' },
 
-    // Filter Tabs (The "Up Side Filter")
+    // Filter Tabs
     filterContainer: {
       display: 'flex', gap: '1vw', marginBottom: '3vh', 
       padding: '0.5vh', backgroundColor: isDark ? '#1e293b' : '#fff',
@@ -73,6 +135,16 @@ const TeacherRegistrations = ({ registrations, onApprove, onReject, theme }) => 
     statNumber: { fontSize: isMobile ? '8vw' : '2.5vw', fontWeight: '800' },
     statLabel: { fontSize: isMobile ? '3.5vw' : '1vw', opacity: 0.9 },
 
+    // Loading/Error States
+    loadingState: {
+      textAlign: 'center', padding: '5vh', color: '#64748b',
+      fontSize: isMobile ? '3.5vw' : '1vw'
+    },
+    errorState: {
+      textAlign: 'center', padding: '5vh', color: '#ef4444',
+      fontSize: isMobile ? '3.5vw' : '1vw'
+    },
+
     // List
     listContainer: { display: 'flex', flexDirection: 'column', gap: '2vh' },
 
@@ -103,7 +175,7 @@ const TeacherRegistrations = ({ registrations, onApprove, onReject, theme }) => 
     },
     icon: { width: isMobile ? '3.5vw' : '1vw', height: isMobile ? '3.5vw' : '1vw' },
 
-    // Action Buttons (Only for Pending)
+    // Action Buttons
     actions: { display: 'flex', gap: '1vw' },
     actionBtn: (type) => ({
       width: isMobile ? '10vw' : '2.5vw', height: isMobile ? '10vw' : '2.5vw',
@@ -114,18 +186,24 @@ const TeacherRegistrations = ({ registrations, onApprove, onReject, theme }) => 
       transition: 'transform 0.1s'
     }),
     
-    // Status Badge (For Approved/Rejected view)
+    // Status Badge
     statusBadge: (status) => ({
       padding: '0.5vh 1.5vw', borderRadius: '2vw',
       fontSize: '0.8vw', fontWeight: 'bold',
-      backgroundColor: status === 'Approved' ? '#dcfce7' : '#fee2e2',
-      color: status === 'Approved' ? '#166534' : '#991b1b'
+      backgroundColor: status === 'approved' ? '#dcfce7' : '#fee2e2',
+      color: status === 'approved' ? '#166534' : '#991b1b'
     }),
 
     emptyState: {
       textAlign: 'center', padding: '5vh', color: '#64748b',
       fontSize: isMobile ? '3.5vw' : '1vw',
       display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '2vh'
+    },
+    
+    ticketInfo: {
+      fontSize: isMobile ? '2.5vw' : '0.75vw', 
+      color: '#10b981', fontWeight: 'bold',
+      marginTop: '0.5vh'
     }
   };
 
@@ -166,68 +244,92 @@ const TeacherRegistrations = ({ registrations, onApprove, onReject, theme }) => 
         </div>
       </div>
 
+      {/* Loading State */}
+      {loading && (
+        <div style={styles.loadingState}>
+          <div>Loading registrations...</div>
+        </div>
+      )}
+
+      {/* Error State */}
+      {error && (
+        <div style={styles.errorState}>
+          <div>Error: {error}</div>
+        </div>
+      )}
+
       {/* List */}
-      <div style={styles.listContainer}>
-        {filteredList.length === 0 ? (
-          <div style={styles.emptyState}>
-            <div style={{
-              width: isMobile ? '20vw' : '6vw', height: isMobile ? '20vw' : '6vw', 
-              borderRadius: '50%', backgroundColor: isDark ? '#1e293b' : '#f1f5f9',
-              display: 'flex', alignItems: 'center', justifyContent: 'center'
-            }}>
-              <Filter size={isMobile ? 32 : 40} color="#94a3b8" />
-            </div>
-            <p>No {activeFilter.toLowerCase()} registrations found.</p>
-          </div>
-        ) : (
-          filteredList.map((reg) => (
-            <div key={reg.id} style={styles.card}>
-              <div style={styles.avatarBox}>
-                {reg.name.charAt(0)}
+      {!loading && !error && (
+        <div style={styles.listContainer}>
+          {filteredList.length === 0 ? (
+            <div style={styles.emptyState}>
+              <div style={{
+                width: isMobile ? '20vw' : '6vw', height: isMobile ? '20vw' : '6vw', 
+                borderRadius: '50%', backgroundColor: isDark ? '#1e293b' : '#f1f5f9',
+                display: 'flex', alignItems: 'center', justifyContent: 'center'
+              }}>
+                <Filter size={isMobile ? 32 : 40} color="#94a3b8" />
               </div>
-              
-              <div style={styles.cardInfo}>
-                <div style={styles.name}>{reg.name}</div>
-                <div style={styles.detailRow}>
-                   <Mail style={styles.icon} /> {reg.email}
+              <p>No {activeFilter.toLowerCase()} registrations found.</p>
+            </div>
+          ) : (
+            filteredList.map((reg) => (
+              <div key={reg._id} style={styles.card}>
+                <div style={styles.avatarBox}>
+                  {/* Use student name from populated data */}
+                  {reg.student?.name?.charAt(0) || 'S'}
                 </div>
-                {reg.phone && (
+                
+                <div style={styles.cardInfo}>
+                  {/* Student Name */}
+                  <div style={styles.name}>{reg.student?.name || 'Unknown Student'}</div>
+                  
+                  {/* Student Email */}
                   <div style={styles.detailRow}>
-                     <Phone style={styles.icon} /> {reg.phone}
+                    <Mail style={styles.icon} /> {reg.student?.email || 'No email'}
+                  </div>
+                  
+                  {/* Event Title */}
+                  <div style={styles.detailRow}>
+                    <Calendar style={styles.icon} /> {reg.event?.title || 'Unknown Event'}
+                  </div>
+                  
+                  {/* Ticket ID (for approved registrations) */}
+                  {reg.ticketId && (
+                    <div style={styles.ticketInfo}>
+                      Ticket: {reg.ticketId}
+                    </div>
+                  )}
+                </div>
+
+                {/* Show Actions only for Pending, else show Status Badge */}
+                {activeFilter === 'Pending' ? (
+                  <div style={styles.actions}>
+                    <button 
+                      style={styles.actionBtn('reject')} 
+                      onClick={() => handleReject(reg._id)}
+                      title="Reject"
+                    >
+                      <X size={isMobile ? 20 : 18} />
+                    </button>
+                    <button 
+                      style={styles.actionBtn('approve')} 
+                      onClick={() => handleApprove(reg._id)}
+                      title="Approve"
+                    >
+                      <Check size={isMobile ? 20 : 18} />
+                    </button>
+                  </div>
+                ) : (
+                  <div style={styles.statusBadge(reg.status)}>
+                    {reg.status.charAt(0).toUpperCase() + reg.status.slice(1)}
                   </div>
                 )}
-                <div style={styles.detailRow}>
-                   <Calendar style={styles.icon} /> {reg.event}
-                </div>
               </div>
-
-              {/* Show Actions only for Pending, else show Status Badge */}
-              {activeFilter === 'Pending' ? (
-                <div style={styles.actions}>
-                  <button 
-                    style={styles.actionBtn('reject')} 
-                    onClick={() => onReject && onReject(reg.id)}
-                    title="Reject"
-                  >
-                    <X size={isMobile ? 20 : 18} />
-                  </button>
-                  <button 
-                    style={styles.actionBtn('approve')} 
-                    onClick={() => onApprove(reg.id)}
-                    title="Approve"
-                  >
-                    <Check size={isMobile ? 20 : 18} />
-                  </button>
-                </div>
-              ) : (
-                <div style={styles.statusBadge(reg.status)}>
-                  {reg.status}
-                </div>
-              )}
-            </div>
-          ))
-        )}
-      </div>
+            ))
+          )}
+        </div>
+      )}
     </div>
   );
 };

@@ -1,6 +1,8 @@
 const User = require('../models/User');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const crypto = require('crypto');
+const nodemailer = require('nodemailer');
 
 const generateToken = (id) => {
   return jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: '30d' });
@@ -8,57 +10,43 @@ const generateToken = (id) => {
 
 // Register User
 const registerUser = async (req, res) => {
-  console.log('📝 POST /register - Registration request received');
-  console.log('📝 Body:', req.body);
-
   try {
     const { name, email, password, role, college, regNo, department } = req.body;
 
     if (!name || !email || !password || !role) {
-      console.log('❌ Missing required fields');
       return res.status(400).json({ message: 'Please fill all required fields' });
     }
 
-    const userExists = await User.findOne({ email: email.toLowerCase() });
+    const userExists = await User.findOne({ email });
+
     if (userExists) {
-      console.log('❌ User already exists:', email);
       return res.status(400).json({ message: 'User already exists with this email' });
     }
-
-    console.log('✅ Creating new user:', email, '- Role:', role);
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
     const user = await User.create({
       name,
-      email: email.toLowerCase(),
+      email,
       password: hashedPassword,
       role,
-      college,
-      regNo,
-      department,
+      college: college || '',
+      regNo: regNo || '',
+      department: department || '',
     });
 
-    console.log('✅ User created successfully!');
-    console.log('   - _id:', user._id);
-    console.log('   - email:', user.email);
-    console.log('   - role:', user.role);
-
     res.status(201).json({
-      _id: user._id,
+      _id: user.id,
       name: user.name,
       email: user.email,
       role: user.role,
       college: user.college,
       regNo: user.regNo,
-      department: user.department,
-      profileImage: user.profileImage,
       token: generateToken(user._id),
     });
-
   } catch (error) {
-    console.error('❌ Registration error:', error.message);
-    res.status(500).json({ message: error.message });
+    console.error('Register Error:', error);
+    res.status(500).json({ message: error.message || 'Server error during registration' });
   }
 };
 
@@ -68,208 +56,202 @@ const loginUser = async (req, res) => {
     const { email, password } = req.body;
 
     if (!email || !password) {
-      return res.status(400).json({ message: 'Email and password are required' });
+      return res.status(400).json({ message: 'Please enter email and password' });
     }
 
-    const user = await User.findOne({ email: email.toLowerCase() });
+    const user = await User.findOne({ email });
 
-    if (!user) {
-      return res.status(401).json({ message: 'Invalid email or password' });
-    }
-
-    const isHashed = user.password.startsWith('$2a$') || user.password.startsWith('$2b$') || user.password.startsWith('$2y$');
-    
-    let isMatch;
-    
-    if (isHashed) {
-      isMatch = await bcrypt.compare(password, user.password);
-    } else {
-      isMatch = password === user.password;
-      if (isMatch) {
-        user.password = await bcrypt.hash(password, 10);
-        await user.save();
-      }
-    }
-
-    if (isMatch) {
+    if (user && (await bcrypt.compare(password, user.password))) {
       res.json({
-        _id: user._id,
+        _id: user.id,
         name: user.name,
         email: user.email,
         role: user.role,
         college: user.college,
         regNo: user.regNo,
-        department: user.department,
-        profileImage: user.profileImage,
         token: generateToken(user._id),
       });
     } else {
       res.status(401).json({ message: 'Invalid email or password' });
     }
-
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error('Login Error:', error);
+    res.status(500).json({ message: error.message || 'Server error during login' });
   }
 };
 
-// UPDATE PROFILE
-const updateUser = async (req, res) => {
-  try {
-    const { name, college, regNo, department, profileImage } = req.body;
-    const userId = req.user._id;
-
-    const user = await User.findByIdAndUpdate(
-      userId,
-      { name, college, regNo, department, profileImage },
-      { new: true, runValidators: true }
-    );
-
-    if (!user) {
-      return res.status(404).json({ message: 'User not found' });
-    }
-
-    res.json({
-      _id: user._id,
-      name: user.name,
-      email: user.email,
-      role: user.role,
-      college: user.college,
-      regNo: user.regNo,
-      department: user.department,
-      profileImage: user.profileImage,
-    });
-
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
-};
-
-// GET USER PROFILE
-const getUser = async (req, res) => {
+// Get User Profile
+const getUserProfile = async (req, res) => {
   try {
     const user = await User.findById(req.user._id).select('-password');
-
-    if (!user) {
-      return res.status(404).json({ message: 'User not found' });
+    if (user) {
+      res.json(user);
+    } else {
+      res.status(404).json({ message: 'User not found' });
     }
-
-    res.json(user);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error('Profile Error:', error);
+    res.status(500).json({ message: error.message || 'Server error fetching profile' });
   }
 };
 
-// CHANGE PASSWORD
-const changePassword = async (req, res) => {
+// Forgot Password
+const forgotPassword = async (req, res) => {
   try {
-    const { currentPassword, newPassword } = req.body;
-    const userId = req.user._id;
+    const { email } = req.body;
 
-    const user = await User.findById(userId);
+    if (!email) {
+      return res.status(400).json({ message: 'Please enter your email' });
+    }
+
+    const user = await User.findOne({ email });
 
     if (!user) {
-      return res.status(404).json({ message: 'User not found' });
+      // Don't reveal if user exists
+      return res.status(200).json({ 
+        message: 'If an account with that email exists, a password reset link has been sent.' 
+      });
+    }
+
+    // Generate reset token
+    const resetToken = user.getResetPasswordToken();
+    await user.save();
+
+    // Create reset URL
+    const resetUrl = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/reset-password/${resetToken}`;
+
+    // Send email
+    try {
+      const transporter = nodemailer.createTransport({
+        service: 'gmail',
+        auth: {
+          user: process.env.EMAIL_USER,
+          pass: process.env.EMAIL_PASS,
+        },
+      });
+
+      const mailOptions = {
+        from: `"EventSphere" <${process.env.EMAIL_USER}>`,
+        to: user.email,
+        subject: 'Password Reset Request',
+        html: `
+          <h2>Password Reset Request</h2>
+          <p>Hi ${user.name},</p>
+          <p>You requested a password reset. Click the link below to reset your password:</p>
+          <a href="${resetUrl}" style="display: inline-block; background: #6366f1; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px;">Reset Password</a>
+          <p>This link expires in 10 minutes.</p>
+          <p>If you didn't request this, please ignore this email.</p>
+        `,
+      };
+
+      await transporter.sendMail(mailOptions);
+      console.log('✅ Password reset email sent to:', user.email);
+
+      res.status(200).json({ 
+        message: 'If an account with that email exists, a password reset link has been sent.' 
+      });
+    } catch (error) {
+      console.error('Email send error:', error);
+      user.resetPasswordToken = undefined;
+      user.resetPasswordExpire = undefined;
+      await user.save();
+      return res.status(500).json({ message: 'Email could not be sent' });
+    }
+  } catch (error) {
+    console.error('Forgot Password Error:', error);
+    res.status(500).json({ message: error.message || 'Server error' });
+  }
+};
+
+// Reset Password
+const resetPassword = async (req, res) => {
+  try {
+    const { token } = req.params;
+    const { password } = req.body;
+
+    if (!password) {
+      return res.status(400).json({ message: 'Please enter a new password' });
+    }
+
+    if (password.length < 6) {
+      return res.status(400).json({ message: 'Password must be at least 6 characters' });
+    }
+
+    // Hash token and find user
+    const resetPasswordToken = crypto
+      .createHash('sha256')
+      .update(token)
+      .digest('hex');
+
+    const user = await User.findOne({
+      resetPasswordToken,
+      resetPasswordExpire: { $gt: Date.now() }
+    });
+
+    if (!user) {
+      return res.status(400).json({ message: 'Invalid or expired reset token' });
+    }
+
+    // Hash new password
+    const salt = await bcrypt.genSalt(10);
+    user.password = await bcrypt.hash(password, salt);
+    user.resetPasswordToken = undefined;
+    user.resetPasswordExpire = undefined;
+    await user.save();
+
+    console.log('✅ Password reset successful for:', user.email);
+
+    res.status(200).json({ 
+      message: 'Password reset successful! You can now login with your new password.'
+    });
+  } catch (error) {
+    console.error('Reset Password Error:', error);
+    res.status(500).json({ message: error.message || 'Server error' });
+  }
+};
+
+// Change Password (while logged in)
+const changePassword = async (req, res) => {
+  try {
+    const userId = req.user._id;
+    const { currentPassword, newPassword } = req.body;
+
+    if (!currentPassword || !newPassword) {
+      return res.status(400).json({ message: "Please fill all fields" });
+    }
+
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
     }
 
     const isMatch = await bcrypt.compare(currentPassword, user.password);
-
     if (!isMatch) {
-      return res.status(401).json({ message: 'Current password is incorrect' });
+      return res.status(400).json({ message: "Current password incorrect" });
     }
 
-    user.password = await bcrypt.hash(newPassword, 10);
+    if (newPassword.length < 6) {
+      return res.status(400).json({ message: "Password must be at least 6 characters" });
+    }
+
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    user.password = hashedPassword;
     await user.save();
 
-    res.json({ message: 'Password updated successfully' });
+    console.log('✅ Password changed successfully for:', user.email);
 
+    res.json({ message: "Password updated successfully" });
   } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
-};
-
-// UPLOAD PROFILE IMAGE
-const uploadProfileImage = async (req, res) => {
-  try {
-    if (!req.file) {
-      return res.status(400).json({ message: 'No file uploaded' });
-    }
-
-    const userId = req.user._id;
-    const imageUrl = `/uploads/profiles/${req.file.filename}`;
-
-    const user = await User.findByIdAndUpdate(
-      userId,
-      { profileImage: imageUrl },
-      { new: true }
-    );
-
-    if (!user) {
-      return res.status(404).json({ message: 'User not found' });
-    }
-
-    res.json({
-      message: 'Image uploaded successfully',
-      profileImage: imageUrl,
-    });
-
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
-};
-
-// Debug endpoints
-const getAllUsers = async (req, res) => {
-  try {
-    const users = await User.find({}, '-password');
-    res.json({ count: users.length, users });
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
-};
-
-const debugUser = async (req, res) => {
-  try {
-    const { email } = req.params;
-    const user = await User.findOne({ email: email.toLowerCase() });
-    
-    if (!user) {
-      return res.status(404).json({ message: 'User not found' });
-    }
-    
-    res.json({
-      email: user.email,
-      name: user.name,
-      role: user.role,
-      college: user.college,
-      regNo: user.regNo,
-      department: user.department,
-      profileImage: user.profileImage,
-    });
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
-};
-
-const testDB = async (req, res) => {
-  try {
-    const count = await User.countDocuments();
-    res.json({ 
-      status: 'connected', 
-      userCount: count 
-    });
-  } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error('Change Password Error:', error);
+    res.status(500).json({ message: error.message || "Server error" });
   }
 };
 
 module.exports = { 
   registerUser, 
   loginUser, 
-  updateUser, 
-  getUser, 
-  changePassword,
-  uploadProfileImage,
-  debugUser, 
-  getAllUsers, 
-  testDB 
+  getUserProfile, 
+  forgotPassword, 
+  resetPassword, 
+  changePassword 
 };

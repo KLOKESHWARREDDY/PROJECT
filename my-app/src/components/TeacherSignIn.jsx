@@ -1,13 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Eye, EyeOff, ArrowLeft, LogIn, AlertCircle } from 'lucide-react';
-import axios from 'axios';
+import { authAPI } from '../api';
 
 const TeacherSignIn = ({ onLogin }) => {
   const navigate = useNavigate();
   const [showPass, setShowPass] = useState(false);
   const [errors, setErrors] = useState({});
   const [formData, setFormData] = useState({ email: '', password: '' });
+  const [isLoading, setIsLoading] = useState(false);
 
   // Responsive Check
   const [isMobile, setIsMobile] = useState(window.innerWidth < 900);
@@ -39,7 +40,7 @@ const TeacherSignIn = ({ onLogin }) => {
     if(errors[e.target.name]) setErrors({...errors, [e.target.name]: null});
   };
 
-  // ✅ TEACHER LOGIN LOGIC - Using API
+  // TEACHER LOGIN LOGIC - Using API
   const handleSubmit = async () => {
     if(!formData.email || !formData.password) {
       setErrors({ general: "Email and password are required" });
@@ -47,13 +48,10 @@ const TeacherSignIn = ({ onLogin }) => {
     }
 
     try {
-      const response = await axios.post(
-        "http://localhost:5000/api/auth/login",
-        {
-          email: formData.email,
-          password: formData.password
-        }
-      );
+      const response = await authAPI.login({
+        email: formData.email,
+        password: formData.password
+      });
 
       const userData = response.data;
 
@@ -123,6 +121,10 @@ const TeacherSignIn = ({ onLogin }) => {
                  </div>
               </div>
               {errors.password && <div style={{color:'#ef4444', fontSize:'0.8vw', marginTop:'0.5vh'}}><AlertCircle size={12}/> {errors.password}</div>}
+            </div>
+
+            <div style={{textAlign:'right', marginTop:'-1vh', marginBottom:'2vh'}}>
+              <Link to="/forgot-password" style={{color:'#312e81', fontWeight:'600', fontSize:'0.9vw', textDecoration:'none'}}>Forgot Password?</Link>
             </div>
 
             <button style={styles.actionBtn} onClick={handleSubmit}>

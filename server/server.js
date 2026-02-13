@@ -1,53 +1,72 @@
+require('dotenv').config();
+
 const express = require('express');
-const dotenv = require('dotenv');
 const cors = require('cors');
 const path = require('path');
 const connectDB = require('./config/db');
 
-dotenv.config();
-connectDB();
-
 const app = express();
+const PORT = process.env.PORT || 5000;
 
 // Middleware
-app.use(cors());
+app.use(cors({
+  origin: ['http://localhost:3000', 'http://localhost:5173'],
+  credentials: true,
+}));
 app.use(express.json());
-app.use("/uploads", express.static("uploads"));
+app.use(express.urlencoded({ extended: true }));
 
-// Serve uploaded images statically
+// Static files - serve uploaded images
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-// Routes
-app.use('/api/auth', require('./routes/authRoutes'));
-app.use('/api/debug', require('./routes/debugRoutes'));
-
-// Test route
+// Health check route
 app.get('/', (req, res) => {
   res.json({ 
-    message: 'API is running', 
-    uploads: 'http://localhost:5000/uploads/profiles/filename.jpg'
+    message: 'API Running',
+    backend: 'EventSphere API Server',
+    version: '1.0.0'
   });
 });
 
-// ✅ 404 Handler - Must be after all routes
+// API Routes
+app.use('/api/auth', require('./routes/authRoutes'));
+app.use('/api/events', require('./routes/eventRoutes'));
+app.use('/api/registrations', require('./routes/registrationRoutes'));
+app.use('/api/tickets', require('./routes/ticketRoutes'));
+app.use('/api/auth', require('./routes/uploadRoutes'));
+
+// 404 Handler
 app.use((req, res) => {
-  res.status(404).json({ message: `Route ${req.method} ${req.url} not found` });
+  res.status(404).json({ message: 'Route not found' });
 });
 
-// ✅ Global Error Handler
+// Error Handler
 app.use((err, req, res, next) => {
-  console.error('❌ Server Error:', err.message);
-  res.status(500).json({ message: 'Internal Server Error', error: err.message });
+  console.error(err.stack);
+  res.status(500).json({ message: 'Server Error', error: err.message });
 });
 
-const PORT = process.env.PORT || 5000;
+// Start server function
+const startServer = async () => {
+  // Connect to MongoDB Atlas
+  const dbConnected = await connectDB();
+  
+  if (dbConnected) {
+    console.log('🚀 Starting server WITH database connection...');
+  } else {
+    console.log('⚠️  Starting server WITHOUT database connection.');
+    console.log('   API routes that require DB will fail.');
+  }
+  
+  // Start listening
+  app.listen(PORT, () => {
+    console.log(`✅ Server running on http://localhost:${PORT}`);
+    console.log(`📡 API endpoints available at http://localhost:${PORT}/api`);
+    console.log(`🔗 CORS enabled for: http://localhost:3000, http://localhost:5173`);
+  });
+};
 
-app.listen(PORT, () => {
-  console.log(`🚀 Server running on: http://localhost:${PORT}`);
-  console.log(`📡 API Endpoints:`);
-  console.log(`   POST http://localhost:${PORT}/api/auth/register`);
-  console.log(`   POST http://localhost:${PORT}/api/auth/login`);
-  console.log(`   POST http://localhost:${PORT}/api/auth/upload-profile-image`);
-  console.log(`   GET  http://localhost:${PORT}/api/debug/test`);
-  console.log(`   GET  http://localhost:${PORT}/uploads/profiles/filename.jpg`);
-});
+// Start the server
+startServer();
+
+module.exports = app;
