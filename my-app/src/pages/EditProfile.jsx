@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Camera } from 'lucide-react';
+import { authAPI } from '../api';
 
 const EditProfile = ({ user, setUser, theme }) => {
   const navigate = useNavigate();
@@ -25,25 +26,8 @@ const EditProfile = ({ user, setUser, theme }) => {
     email: user?.email || '',
   });
 
-  // ✅ HELPER: Get token from localStorage or user prop
-  const getToken = () => {
-    const savedUser = localStorage.getItem('user');
-    if (savedUser) {
-      try {
-        const parsed = JSON.parse(savedUser);
-        if (parsed.token) return parsed.token;
-      } catch (e) {
-        console.error('Error parsing user from localStorage:', e);
-      }
-    }
-    if (user?.token) return user.token;
-    return null;
-  };
-
-  // ✅ DEBUG: Log token availability
+  // DEBUG: Log user role
   useEffect(() => {
-    const token = getToken();
-    console.log('🔐 EditProfile - Token available:', !!token);
     console.log('🔐 EditProfile - User role:', user?.role);
   }, [user]);
 
@@ -55,31 +39,9 @@ const EditProfile = ({ user, setUser, theme }) => {
     setMessage('');
 
     try {
-      const token = getToken();
-      if (!token) {
-        throw new Error('No token found. Please login again.');
-      }
-
-      const imageFormData = new FormData();
-      imageFormData.append('profileImage', file);
-
-      const response = await fetch('http://localhost:5000/api/auth/upload-profile-image', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`
-        },
-        body: imageFormData
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || 'Upload failed');
-      }
-
-      setPreviewUrl(data.profileImage);
+      const result = await authAPI.uploadProfileImage(file);
+      setPreviewUrl(result.profileImage);
       setMessage('Image uploaded! Now save other changes.');
-
     } catch (error) {
       console.error('Upload error:', error);
       setMessage('Error uploading image: ' + error.message);
@@ -93,41 +55,25 @@ const EditProfile = ({ user, setUser, theme }) => {
     setMessage('');
 
     try {
-      const token = getToken();
-      if (!token) {
-        throw new Error('No token found. Please login again.');
-      }
+      const data = {
+        name: formData.name,
+        college: formData.college,
+        regNo: formData.regNo,
+        profileImage: previewUrl
+      };
+      
+      const response = await authAPI.updateProfile(data);
 
-      const response = await fetch('http://localhost:5000/api/auth/profile', {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          name: formData.name,
-          college: formData.college,
-          regNo: formData.regNo,
-          profileImage: previewUrl
-        })
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || 'Save failed');
-      }
-
-      // ✅ Update localStorage with new user data
+      // Update localStorage with new user data
       const savedUser = localStorage.getItem('user');
-      let updatedUserData = data;
+      let updatedUserData = response.data;
       
       if (savedUser) {
         const parsed = JSON.parse(savedUser);
         updatedUserData = {
           ...parsed,
-          ...data,
-          token: token
+          ...response.data,
+          token: parsed.token
         };
       }
       
@@ -145,7 +91,7 @@ const EditProfile = ({ user, setUser, theme }) => {
 
     } catch (error) {
       console.error('Save error:', error);
-      setMessage('Error saving profile: ' + error.message);
+      setMessage('Error saving profile: ' + (error.response?.data?.message || error.message));
     } finally {
       setLoading(false);
     }
@@ -218,6 +164,8 @@ const EditProfile = ({ user, setUser, theme }) => {
       borderRadius: 8, fontSize: isMobile ? 14 : 14, textAlign: 'center'
     }
   };
+
+  const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
 
   const getImageUrl = (url) => {
     if (!url) return 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200&q=80';

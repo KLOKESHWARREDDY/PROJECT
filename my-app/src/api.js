@@ -45,6 +45,7 @@ export const authAPI = {
   register: (data) => api.post('/auth/register', data),
   login: (data) => api.post('/auth/login', data),
   getProfile: () => api.get('/auth/profile'),
+  updateProfile: (data) => api.put('/auth/profile', data),
   forgotPassword: (email) => api.post('/auth/forgot-password', { email }),
   resetPassword: (token, password) => api.put(`/auth/reset-password/${token}`, { password }),
   uploadProfileImage: async (file) => {
@@ -67,6 +68,7 @@ export const authAPI = {
     
     return response.json();
   },
+  changePassword: (data) => api.put('/auth/change-password', data),
 };
 
 // Event APIs

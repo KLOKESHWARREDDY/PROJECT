@@ -95,6 +95,64 @@ const getUserProfile = async (req, res) => {
   }
 };
 
+// Update User Profile
+const updateUserProfile = async (req, res) => {
+  try {
+    console.log('📝 Update Profile Request Body:', req.body);
+    console.log('📝 User ID from token:', req.user?._id);
+    
+    const userId = req.user?._id || req.user?.id;
+    
+    if (!userId) {
+      console.error('❌ No user ID in request');
+      return res.status(400).json({ message: 'User ID not found' });
+    }
+    
+    const user = await User.findById(userId);
+    
+    if (!user) {
+      console.error('❌ User not found in database');
+      return res.status(404).json({ message: 'User not found' });
+    }
+    
+    console.log('📝 Current user:', user.email);
+    console.log('📝 Fields to update:', {
+      name: req.body.name,
+      college: req.body.college,
+      regNo: req.body.regNo,
+      department: req.body.department,
+      profileImage: req.body.profileImage
+    });
+    
+    // Update fields from request body
+    if (req.body.name) user.name = req.body.name;
+    if (req.body.college !== undefined) user.college = req.body.college;
+    if (req.body.regNo !== undefined) user.regNo = req.body.regNo;
+    if (req.body.department !== undefined) user.department = req.body.department;
+    if (req.body.profileImage) user.profileImage = req.body.profileImage;
+    
+    // Save updated user
+    await user.save();
+    
+    console.log('✅ User saved successfully:', user.email);
+    console.log('✅ Updated fields:', {
+      name: user.name,
+      college: user.college,
+      regNo: user.regNo,
+      department: user.department,
+      profileImage: user.profileImage
+    });
+    
+    // Return updated user without password
+    const updatedUser = await User.findById(user._id).select('-password');
+    
+    res.json(updatedUser);
+  } catch (error) {
+    console.error('❌ Update Profile Error:', error);
+    res.status(500).json({ message: error.message || 'Server error updating profile' });
+  }
+};
+
 // Forgot Password
 const forgotPassword = async (req, res) => {
   try {
@@ -251,6 +309,7 @@ module.exports = {
   registerUser, 
   loginUser, 
   getUserProfile, 
+  updateUserProfile,
   forgotPassword, 
   resetPassword, 
   changePassword 

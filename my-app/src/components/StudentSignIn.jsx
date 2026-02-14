@@ -1,16 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Eye, EyeOff, ArrowLeft, LogIn, AlertCircle } from 'lucide-react';
-import { authAPI } from '../api';
-
-
-
+import axios from 'axios';
 
 const StudentSignIn = ({ onLogin }) => {
   const navigate = useNavigate();
   const [isStudent, setIsStudent] = useState(true);
   const [showPass, setShowPass] = useState(false);
   const [errors, setErrors] = useState({});
+  const [loading, setLoading] = useState(false);
 
   // Responsive Check
   const [isMobile, setIsMobile] = useState(window.innerWidth < 900);
@@ -144,11 +142,11 @@ const StudentSignIn = ({ onLogin }) => {
       padding: isMobile ? '2vh' : '1.5vh', 
       borderRadius: isMobile ? '2vw' : '0.8vw', 
       border: 'none',
-      background: '#6366f1', 
+      background: loading ? '#94a3b8' : '#6366f1', 
       color: '#fff', 
       fontSize: isMobile ? '4vw' : '1.1vw', 
       fontWeight: 'bold',
-      cursor: 'pointer', 
+      cursor: loading ? 'not-allowed' : 'pointer', 
       marginTop: '1vh', 
       boxShadow: '0 0.5vh 1.5vh rgba(99, 102, 241, 0.3)',
       display: 'flex', 
@@ -234,39 +232,51 @@ const StudentSignIn = ({ onLogin }) => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = async () => {
-    if (validate()) {
-      try {
-        const response = await authAPI.login({
+  // FIXED: Proper handleSubmit with e.preventDefault()
+  const handleSubmit = async (e) => {
+    e.preventDefault(); // IMPORTANT: Prevent form refresh
+    
+    if (!validate()) return;
+    
+    setLoading(true);
+    setErrors({});
+
+    try {
+      const { data } = await axios.post(
+        "http://localhost:5000/api/auth/login",
+        {
           email: formData.email,
           password: formData.password
-        });
-
-        const userData = response.data;
-
-        const selectedRole = isStudent ? 'student' : 'teacher';
-
-        if (userData.role !== selectedRole) {
-          setErrors({
-            general: `This account is registered as ${userData.role}. Please use ${userData.role} login.`
-          });
-          return;
         }
+      );
 
-        // Save user with token
-        localStorage.setItem("user", JSON.stringify(userData));
-        localStorage.setItem("isAuthenticated", "true");
-        localStorage.setItem("token", userData.token || "");
+      const selectedRole = isStudent ? 'student' : 'teacher';
 
-        onLogin(userData);
-        navigate("/");
-
-      } catch (error) {
-        const errorMsg = error.response?.data?.message || "Login failed. Please try again.";
+      if (data.role !== selectedRole) {
         setErrors({
-          general: errorMsg
+          general: `This account is registered as ${data.role}. Please use ${data.role} login.`
         });
+        setLoading(false);
+        return;
       }
+
+      // Save user with token - ONLY on success
+      localStorage.setItem("user", JSON.stringify(data));
+      localStorage.setItem("isAuthenticated", "true");
+      localStorage.setItem("token", data.token || "");
+
+      onLogin(data);
+      navigate("/"); // ONLY redirect on success
+
+    } catch (err) {
+      // NO navigate here
+      // NO onLogin here
+      // NO setTimeout here
+      setErrors({
+        general: err.response?.data?.message || "Invalid email or password"
+      });
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -303,12 +313,19 @@ const StudentSignIn = ({ onLogin }) => {
             <button style={styles.toggleBtn(!isStudent)} onClick={() => setIsStudent(false)}>Teacher</button>
           </div>
 
-          {/* FORM */}
-          <div style={{animation: 'fadeIn 0.3s ease-in-out'}}>
+          {/* FORM - Using onSubmit instead of onClick */}
+          <form onSubmit={handleSubmit}>
             
-            {/* General Error */}
+            {/* General Error - Stays until user types */}
             {errors.general && (
-              <div style={{...styles.errorText, marginBottom: '2vh', padding: '1vh', backgroundColor: '#fef2f2', borderRadius: '0.5vw'}}>
+              <div style={{
+                ...styles.errorText, 
+                marginBottom: '2vh', 
+                padding: '1vh', 
+                backgroundColor: '#fef2f2', 
+                borderRadius: '0.5vw',
+                fontSize: isMobile ? '3vw' : '0.9vw'
+              }}>
                 <AlertCircle size={isMobile ? 14 : 12}/> {errors.general}
               </div>
             )}
@@ -324,38 +341,49 @@ const StudentSignIn = ({ onLogin }) => {
                 onChange={handleChange} 
                 autoFocus
               />
-              {errors.email && <div style={styles.errorText}><AlertCircle size={isMobile ? 14 : 12}/> {errors.email}</div>}
+              {errors.email && (
+                <div style={styles.errorText}>
+                  <AlertCircle size={isMobile ? 14 : 12}/> {errors.email}
+                </div>
+              )}
             </div>
 
             <div style={styles.inputGroup}>
               <label style={styles.label}>Password</label>
               <div style={{position:'relative'}}>
-                 <input 
-                   style={styles.input(errors.password)} 
-                   placeholder="••••••" 
-                   name="password" 
-                   type={showPass ? "text" : "password"} 
-                   value={formData.password} 
-                   onChange={handleChange} 
-                 />
-                 <div style={styles.iconBox} onClick={() => setShowPass(!showPass)}>
-                   {showPass ? <EyeOff size={isMobile ? 20 : 18}/> : <Eye size={isMobile ? 20 : 18}/>}
-                 </div>
+                <input 
+                  style={styles.input(errors.password)} 
+                  placeholder="••••••" 
+                  name="password" 
+                  type={showPass ? "text" : "password"} 
+                  value={formData.password} 
+                  onChange={handleChange} 
+                />
+                <div 
+                  style={styles.iconBox} 
+                  onClick={() => setShowPass(!showPass)}
+                >
+                  {showPass ? <EyeOff size={isMobile ? 20 : 18}/> : <Eye size={isMobile ? 20 : 18}/>}
+                </div>
               </div>
-              {errors.password && <div style={styles.errorText}><AlertCircle size={isMobile ? 14 : 12}/> {errors.password}</div>}
+              {errors.password && (
+                <div style={styles.errorText}>
+                  <AlertCircle size={isMobile ? 14 : 12}/> {errors.password}
+                </div>
+              )}
             </div>
 
             <Link to="/forgot-password" style={styles.forgotPass}>Forgot Password?</Link>
 
+            {/* Button with type="submit" - no onClick */}
             <button 
-              style={styles.actionBtn} 
-              onClick={handleSubmit}
-              onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.02)'}
-              onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
+              type="submit"
+              style={styles.actionBtn}
+              disabled={loading}
             >
-              Login <LogIn size={isMobile ? 20 : 18} />
+              {loading ? 'Logging in...' : <><LogIn size={isMobile ? 20 : 18} /> Login</>}
             </button>
-          </div>
+          </form>
 
           {/* DYNAMIC REGISTRATION LINK */}
           <div style={styles.bottomLink}>
