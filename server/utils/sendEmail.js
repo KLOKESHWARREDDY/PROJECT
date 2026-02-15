@@ -1,4 +1,4 @@
-const nodemailer = require('nodemailer');
+import nodemailer from 'nodemailer';
 
 // Create transporter
 const createTransporter = async () => {
@@ -14,7 +14,7 @@ const createTransporter = async () => {
 };
 
 // Send approval email
-const sendApprovalEmail = async (toEmail, studentName, eventTitle, ticketCode, eventDate, eventLocation) => {
+export const sendApprovalEmail = async (toEmail, studentName, eventTitle, ticketCode, eventDate, eventLocation) => {
   try {
     const transporter = await createTransporter();
 
@@ -85,7 +85,7 @@ const sendApprovalEmail = async (toEmail, studentName, eventTitle, ticketCode, e
 };
 
 // Send rejection email
-const sendRejectionEmail = async (toEmail, studentName, eventTitle, eventDate, reason) => {
+export const sendRejectionEmail = async (toEmail, studentName, eventTitle, eventDate, reason) => {
   try {
     const transporter = await createTransporter();
 
@@ -134,9 +134,4 @@ const sendRejectionEmail = async (toEmail, studentName, eventTitle, eventDate, r
     console.error('❌ Rejection email failed:', error.message);
     return { success: false, error: error.message };
   }
-};
-
-module.exports = {
-  sendApprovalEmail,
-  sendRejectionEmail,
 };

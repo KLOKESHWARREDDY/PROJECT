@@ -1,16 +1,48 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { ArrowLeft, Check, X, User, Mail, Phone, Filter } from 'lucide-react';
+import axios from 'axios';
 
-const EventSpecificRegistrations = ({ events, registrations, onApprove, onReject, theme }) => {
+const EventSpecificRegistrations = ({ events, onApprove, onReject, theme }) => {
   const navigate = useNavigate();
-  const { id } = useParams(); // Get Event ID from URL
+  const { id } = useParams(); // Get ID from URL
   const isDark = theme === 'dark';
   
-  // Find the specific event
-  const event = events.find(e => e.id === parseInt(id));
+  // State for registrations data
+  const [registrations, setRegistrations] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  // Find event from props for display title
+  const eventItem = events.find(e => e.id === id || e._id === id);
+
+  console.log("EventSpecificRegistrations - Received ID:", id);
+
+  // Fetch registrations from API
+  useEffect(() => {
+    const fetchRegistrations = async () => {
+      try {
+        setLoading(true);
+        const token = localStorage.getItem('token');
+        const response = await axios.get(`/api/registrations/event/${id}`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        console.log("Event registrations response:", response.data);
+        setRegistrations(response.data);
+        setError(null);
+      } catch (err) {
+        console.error('Error fetching event registrations:', err);
+        setError(err.response?.data?.message || 'Failed to fetch registrations');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (id) {
+      fetchRegistrations();
+    }
+  }, [id]);
   
-  // State for Filter
   const [activeFilter, setActiveFilter] = useState("Pending"); 
 
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
@@ -20,15 +52,11 @@ const EventSpecificRegistrations = ({ events, registrations, onApprove, onReject
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  if (!event) return <div style={{padding:'20px'}}>Event not found</div>;
-
-  // ✅ FILTER: Show only registrations for THIS event matching the status
-  // Note: We match by event title (assuming registration.event === event.title)
-  // or you can implement a looser check if names slightly differ.
-  const filteredList = registrations.filter(reg => 
-    (reg.event === event.title || reg.event.includes(event.category) || event.title.includes(reg.event)) && 
-    reg.status === activeFilter
-  );
+  // Filter registrations by status (lowercase comparison)
+  const filteredList = registrations.filter(reg => {
+    console.log("Filtering:", activeFilter.toLowerCase(), "===", reg.status);
+    return reg.status === activeFilter.toLowerCase();
+  });
 
   const styles = {
     container: {
@@ -107,7 +135,7 @@ const EventSpecificRegistrations = ({ events, registrations, onApprove, onReject
         </button>
         <div style={{display:'flex', flexDirection:'column'}}>
           <h1 style={styles.pageTitle}>Event Registrations</h1>
-          <span style={{fontSize:'0.9rem', color:'#64748b'}}>{event.title}</span>
+          <span style={{fontSize:'0.9rem', color:'#64748b'}}>{eventItem?.title}</span>
         </div>
       </div>
 
@@ -127,18 +155,17 @@ const EventSpecificRegistrations = ({ events, registrations, onApprove, onReject
           </div>
         ) : (
           filteredList.map((reg) => (
-            <div key={reg.id} style={styles.card}>
-              <div style={styles.avatarBox}>{reg.name.charAt(0)}</div>
+            <div key={reg._id} style={styles.card}>
+              <div style={styles.avatarBox}>{reg.student?.name?.charAt(0) || 'S'}</div>
               <div style={styles.cardInfo}>
-                <div style={styles.name}>{reg.name}</div>
-                <div style={styles.detail}><Mail size={12} /> {reg.email}</div>
-                {reg.phone && <div style={styles.detail}><Phone size={12} /> {reg.phone}</div>}
+                <div style={styles.name}>{reg.student?.name || 'Unknown'}</div>
+                <div style={styles.detail}><Mail size={12} /> {reg.student?.email || 'No email'}</div>
               </div>
 
               {activeFilter === 'Pending' ? (
                 <div style={styles.actions}>
-                  <button style={styles.actionBtn('reject')} onClick={() => onReject(reg.id)}><X size={18} /></button>
-                  <button style={styles.actionBtn('approve')} onClick={() => onApprove(reg.id)}><Check size={18} /></button>
+                  <button style={styles.actionBtn('reject')} onClick={() => onReject(reg._id)}><X size={18} /></button>
+                  <button style={styles.actionBtn('approve')} onClick={() => onApprove(reg._id)}><Check size={18} /></button>
                 </div>
               ) : (
                 <div style={styles.statusBadge(reg.status)}>{reg.status}</div>

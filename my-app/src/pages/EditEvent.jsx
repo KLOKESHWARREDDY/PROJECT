@@ -3,13 +3,17 @@ import { useNavigate, useParams } from "react-router-dom";
 import { 
   ArrowLeft, Upload, X, CheckCircle, 
   Calendar, Clock, Tag, Heading, 
-  MapPin, AlignLeft, Camera, Save 
+  MapPin, AlignLeft, Camera, Save, Send
 } from 'lucide-react';
+import api, { eventAPI } from '../api';
 
 function EditEvent({ events, onUpdate, theme }) {
   const navigate = useNavigate();
   const { id } = useParams(); // ✅ Get ID from URL
   const isDark = theme === 'dark';
+
+  console.log("EditEvent - Received ID:", id);
+  console.log("EditEvent - Available events:", events.map(e => ({ id: e.id, _id: e._id, title: e.title })));
 
   // Responsive Check
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
@@ -19,8 +23,35 @@ function EditEvent({ events, onUpdate, theme }) {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  // Find existing event
-  const eventToEdit = events.find((e) => e.id === parseInt(id));
+  // State for event from API
+  const [eventToEdit, setEventToEdit] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  // Fetch event from backend on mount
+  useEffect(() => {
+    const fetchEvent = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        console.log("EditEvent - Token:", token);
+        
+        const response = await eventAPI.getEventById(id);
+        console.log("EditEvent - Event response:", response.data);
+        
+        setEventToEdit(response.data);
+      } catch (error) {
+        console.log('Error fetching event:', error.message);
+        // Fallback to finding from props
+        const foundEvent = events.find((e) => e.id === id || e._id === id);
+        setEventToEdit(foundEvent || null);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    if (id) {
+      fetchEvent();
+    }
+  }, [id, events]);
 
   const [eventName, setEventName] = useState("");
   const [description, setDescription] = useState("");
@@ -32,15 +63,17 @@ function EditEvent({ events, onUpdate, theme }) {
   
   const [showPopup, setShowPopup] = useState(false);
   const [popupMessage, setPopupMessage] = useState("");
+  const [eventStatus, setEventStatus] = useState(eventToEdit?.status || "draft");
 
   // Load data when component mounts
   useEffect(() => {
     if (eventToEdit) {
       setEventName(eventToEdit.title || "");
-      setDescription(eventToEdit.desc || "");
+      setDescription(eventToEdit.description || "");
       setLocation(eventToEdit.location || "");
       setCategory(eventToEdit.category || "Technology");
       setEventImage(eventToEdit.image || null);
+      setEventStatus(eventToEdit.status || "draft");
       
       // Parse date/time if stored as string "YYYY-MM-DD · HH:MM"
       if (eventToEdit.date && eventToEdit.date.includes("·")) {
@@ -54,7 +87,7 @@ function EditEvent({ events, onUpdate, theme }) {
     }
   }, [eventToEdit]);
 
-  const handleUpdate = () => {
+  const handleUpdate = async () => {
     if (!eventName || !date || !time) {
       setPopupMessage("Please fill in all required fields");
       setShowPopup(true);
@@ -62,23 +95,69 @@ function EditEvent({ events, onUpdate, theme }) {
       return;
     }
 
-    const updatedEvent = {
-      ...eventToEdit,
-      title: eventName,
-      desc: description,
-      date: `${date} · ${time}`,
-      location: location,
-      category: category,
-      image: eventImage,
-    };
+    try {
+      const updatedEvent = {
+        title: eventName,
+        description: description,
+        date: `${date} · ${time}`,
+        location: location,
+        category: category,
+        image: eventImage,
+      };
 
-    setPopupMessage("Event updated successfully!");
-    setShowPopup(true);
+      const eventId = eventToEdit._id || eventToEdit.id;
+      await api.put(`/events/${eventId}`, updatedEvent);
+      
+      setPopupMessage("Event updated successfully!");
+      setShowPopup(true);
 
-    setTimeout(() => {
-      if (onUpdate) onUpdate(eventToEdit.id, updatedEvent);
-      navigate(-1); // Go back to details
-    }, 1500);
+      setTimeout(() => {
+        if (onUpdate) onUpdate(eventId, updatedEvent);
+        navigate('/teacher-events');
+      }, 1500);
+    } catch (error) {
+      console.error('Error updating event:', error);
+      setPopupMessage("Failed to update event");
+      setShowPopup(true);
+      setTimeout(() => setShowPopup(false), 2000);
+    }
+  };
+
+  const handlePublish = async () => {
+    if (!eventName || !date || !time) {
+      setPopupMessage("Please fill in all required fields before publishing");
+      setShowPopup(true);
+      setTimeout(() => setShowPopup(false), 2000);
+      return;
+    }
+
+    try {
+      const updatedEvent = {
+        title: eventName,
+        description: description,
+        date: `${date} · ${time}`,
+        location: location,
+        category: category,
+        image: eventImage,
+        status: 'active',
+      };
+
+      const eventId = eventToEdit._id || eventToEdit.id;
+      await api.put(`/events/${eventId}`, updatedEvent);
+
+      setPopupMessage("Event published successfully!");
+      setShowPopup(true);
+
+      setTimeout(() => {
+        if (onUpdate) onUpdate(eventId, { ...updatedEvent, status: 'active' });
+        navigate('/teacher-events');
+      }, 1500);
+    } catch (error) {
+      console.error('Error publishing event:', error);
+      setPopupMessage("Failed to publish event");
+      setShowPopup(true);
+      setTimeout(() => setShowPopup(false), 2000);
+    }
   };
 
   const handleImageUpload = (e) => {
@@ -90,6 +169,7 @@ function EditEvent({ events, onUpdate, theme }) {
     }
   };
 
+  if (loading) return <div style={{padding:'20px', color: isDark?'#fff':'#000'}}>Loading...</div>;
   if (!eventToEdit) return <div style={{padding:'20px'}}>Event not found</div>;
 
   const styles = {
@@ -261,6 +341,15 @@ function EditEvent({ events, onUpdate, theme }) {
         <button style={styles.submitBtn} onClick={handleUpdate}>
           Save Changes <Save size={18} />
         </button>
+
+        {eventStatus?.toLowerCase() === 'draft' && (
+          <button 
+            style={{...styles.submitBtn, backgroundColor: '#10b981', marginTop: '10px'}} 
+            onClick={handlePublish}
+          >
+            Publish Event <Send size={18} />
+          </button>
+        )}
 
       </div>
 

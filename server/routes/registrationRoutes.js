@@ -1,29 +1,44 @@
-const express = require('express');
-const router = express.Router();
-const { protect } = require('../middleware/authMiddleware');
-const { isTeacher } = require('../middleware/roleMiddleware');
-const {
-  registerEvent,
-  getMyRegistrations,
-  getEventRegistrations,
-  getAllPendingRegistrations,
-  approveRegistration,
+import express from "express";
+import { 
+  createRegistration, 
+  getStudentRegistrations, 
+  getTeacherRegistrations,
+  approveRegistration, 
   rejectRegistration,
-} = require('../controllers/registrationController');
+  cancelRegistration,
+  getRegistrationById,
+  getPendingRegistrationsCount
+} from '../controllers/registrationController.js';
+import { protect } from '../middleware/authMiddleware.js';
+import { isTeacher } from '../middleware/roleMiddleware.js';
 
-// Student routes
-router.post('/register', protect, registerEvent); // Register for an event
-router.get('/my-registrations', protect, getMyRegistrations); // Get student's registrations
+const router = express.Router();
 
-// Teacher routes (for their events)
-router.get('/all', protect, isTeacher, getAllPendingRegistrations); // Get all pending registrations across all teacher's events
-router.get('/event/:eventId', protect, isTeacher, getEventRegistrations);
-router.put('/:id/approve', protect, isTeacher, approveRegistration);
-router.put('/:id/reject', protect, isTeacher, rejectRegistration);
+// Create new registration
+router.post("/", protect, createRegistration);
 
-// Test route
-router.get('/test', (req, res) => {
-  res.json({ message: 'Registration routes working' });
-});
+// Get student's registrations
+router.get("/student/:id", protect, getStudentRegistrations);
 
-module.exports = router;
+// Get teacher's registrations (all registrations for teacher's events)
+router.get("/teacher", protect, isTeacher, getTeacherRegistrations);
+
+// Get pending registrations count for teacher dashboard
+router.get("/teacher/pending-count", protect, isTeacher, getPendingRegistrationsCount);
+
+// Approve registration
+router.put("/approve/:id", protect, isTeacher, approveRegistration);
+
+// Reject registration
+router.put("/reject/:id", protect, isTeacher, rejectRegistration);
+
+// Cancel registration (student cancels their own)
+router.delete("/:id", protect, cancelRegistration);
+
+// Get single registration by ID (for ticket view)
+router.get("/:id", protect, getRegistrationById);
+
+// Get ticket by registration ID (alias for getRegistrationById)
+router.get("/ticket/:id", protect, getRegistrationById);
+
+export default router;

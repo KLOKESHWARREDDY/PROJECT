@@ -65,6 +65,7 @@ const TeacherSignUp = ({ onLogin }) => {
     if(!formData.fullName.trim()) newErrors.fullName = "Full name is required";
     if(!formData.email.trim()) newErrors.email = "Email is required";
     else if(!/\S+@\S+\.\S+/.test(formData.email)) newErrors.email = "Invalid email format";
+    else if(!formData.email.endsWith("@gmail.com")) newErrors.email = "Only Gmail accounts are allowed";
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };

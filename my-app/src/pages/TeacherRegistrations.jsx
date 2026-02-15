@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Check, X, User, Mail, Calendar, Phone, Filter, Search } from 'lucide-react';
+import { ArrowLeft, Check, X, User, Mail, Calendar, Filter, Ticket } from 'lucide-react';
+import axios from 'axios';
 import { registrationAPI } from '../api';
+import { toast } from 'react-toastify';
 
 const TeacherRegistrations = ({ theme }) => {
   const navigate = useNavigate();
@@ -28,13 +30,28 @@ const TeacherRegistrations = ({ theme }) => {
     const fetchRegistrations = async () => {
       try {
         setLoading(true);
-        const response = await registrationAPI.getAll();
+        console.log("Fetching teacher registrations...");
         
-        console.log('Registrations fetched:', response.data);
+        // Get token from localStorage
+        const token = localStorage.getItem('token');
+        console.log("Token exists:", !!token);
+        
+        // Use axios directly to call the teacher endpoint
+        const response = await axios.get('/api/registrations/teacher', {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        });
+        
+        console.log('Teacher Registrations response:', response.data);
+        console.log('Number of registrations:', response.data.length);
+        console.log('First registration:', response.data[0]);
         setRegistrations(response.data);
         setError(null);
       } catch (err) {
         console.error('Error fetching registrations:', err);
+        console.error('Error response:', err.response?.data);
         setError(err.response?.data?.message || 'Failed to fetch registrations');
       } finally {
         setLoading(false);
@@ -44,8 +61,14 @@ const TeacherRegistrations = ({ theme }) => {
     fetchRegistrations();
   }, []);
 
-  // Filter Logic
-  const filteredList = registrations.filter(reg => reg.status === activeFilter);
+  // Filter Logic - use lowercase for comparison since backend returns lowercase status
+  const filteredList = registrations.filter(reg => 
+    reg.status === activeFilter.toLowerCase()
+  );
+  
+  console.log('Active filter:', activeFilter);
+  console.log('Total registrations:', registrations.length);
+  console.log('Filtered registrations:', filteredList.length);
 
   // APPROVE REGISTRATION
   const handleApprove = async (regId) => {
@@ -59,10 +82,10 @@ const TeacherRegistrations = ({ theme }) => {
         reg._id === regId ? { ...reg, status: 'approved', ticketId: response.data.registration.ticketId } : reg
       ));
       
-      alert('Registration approved! Ticket generated.');
+      toast.success('Registration approved! Ticket generated.');
     } catch (err) {
       console.error('Approve error:', err);
-      alert(err.response?.data?.message || 'Failed to approve');
+      toast.error(err.response?.data?.message || 'Failed to approve');
     }
   };
 
@@ -77,10 +100,19 @@ const TeacherRegistrations = ({ theme }) => {
       setRegistrations(prev => prev.map(reg => 
         reg._id === regId ? { ...reg, status: 'rejected' } : reg
       ));
+      toast.success('Registration rejected.');
     } catch (err) {
       console.error('Reject error:', err);
-      alert(err.response?.data?.message || 'Failed to reject');
+      toast.error(err.response?.data?.message || 'Failed to reject');
     }
+  };
+
+  // VIEW TICKET
+  const handleViewTicket = (registration) => {
+    console.log('View ticket for registration:', registration._id);
+    console.log('Registration data:', registration);
+    console.log('Event ID:', registration.event?._id || registration.event);
+    navigate(`/ticket/${registration._id}`);
   };
 
   const styles = {
@@ -204,6 +236,16 @@ const TeacherRegistrations = ({ theme }) => {
       fontSize: isMobile ? '2.5vw' : '0.75vw', 
       color: '#10b981', fontWeight: 'bold',
       marginTop: '0.5vh'
+    },
+
+    // View Ticket Button
+    viewTicketBtn: {
+      padding: isMobile ? '1vh 2vw' : '0.5vh 1vw',
+      borderRadius: isMobile ? '2vw' : '0.5vw',
+      border: 'none', cursor: 'pointer',
+      fontSize: isMobile ? '3vw' : '0.75vw', fontWeight: '600',
+      backgroundColor: '#4f46e5', color: '#fff',
+      display: 'flex', alignItems: 'center', gap: '0.5vw'
     }
   };
 
@@ -318,6 +360,19 @@ const TeacherRegistrations = ({ theme }) => {
                       title="Approve"
                     >
                       <Check size={isMobile ? 20 : 18} />
+                    </button>
+                  </div>
+                ) : activeFilter === 'Approved' ? (
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '0.5vh' }}>
+                    <div style={styles.statusBadge(reg.status)}>
+                      {reg.status.charAt(0).toUpperCase() + reg.status.slice(1)}
+                    </div>
+                    <button 
+                      style={styles.viewTicketBtn}
+                      onClick={() => handleViewTicket(reg)}
+                      title="View Ticket"
+                    >
+                      <Ticket size={isMobile ? 14 : 12} /> View Ticket
                     </button>
                   </div>
                 ) : (

@@ -122,7 +122,7 @@ const MyEvents = ({ theme, events, onCancel }) => {
       ) : (
         <div style={styles.list}>
           {events.map(event => (
-            <div key={event.id} style={styles.ticketCard}>
+            <div key={event._id} style={styles.ticketCard}>
               <div style={styles.ticketInfo}>
                 <span style={styles.badge(event.status)}>
                   {event.status === 'approved' ? 'Confirmed' : 'Pending Approval'}
@@ -140,14 +140,14 @@ const MyEvents = ({ theme, events, onCancel }) => {
                 {event.status === 'approved' && (
                   <button 
                     style={styles.viewBtn} 
-                    onClick={() => navigate(`/ticket-confirmation/${event.id}`)}
+                    onClick={() => navigate(`/ticket/${event.registrationId}`)}
                   >
                     View Ticket
                   </button>
                 )}
                 <button 
                   style={styles.cancelBtn} 
-                  onClick={() => onCancel(event.id)}
+                  onClick={() => onCancel(event.registrationId)}
                 >
                   Cancel
                 </button>

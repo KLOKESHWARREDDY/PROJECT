@@ -1,145 +1,152 @@
-const Registration = require('../models/Registration');
-const Event = require('../models/Event');
-const Ticket = require('../models/Ticket');
-const QRCode = require('qrcode');
-const { sendApprovalEmail, sendRejectionEmail } = require('../utils/sendEmail');
+import Registration from '../models/Registration.js';
+import Event from '../models/Event.js';
+import Ticket from '../models/Ticket.js';
+import mongoose from 'mongoose';
+import QRCode from 'qrcode';
 
-// Register for an event (Student only)
-const registerEvent = async (req, res) => {
+// Create new registration
+export const createRegistration = async (req, res) => {
   try {
     const { eventId } = req.body;
     const studentId = req.user._id;
-
+    
+    console.log("=== CREATE REGISTRATION ===");
+    console.log("eventId:", eventId);
+    console.log("studentId:", studentId);
+    
+    // Validate eventId is provided
+    if (!eventId) {
+      return res.status(400).json({ message: 'Event ID is required' });
+    }
+    
     // Validate event exists
     const event = await Event.findById(eventId);
     if (!event) {
       return res.status(404).json({ message: 'Event not found' });
     }
-
+    
     // Check if already registered
     const existingRegistration = await Registration.findOne({
       student: studentId,
       event: eventId,
     });
-
+    
     if (existingRegistration) {
       return res.status(400).json({ 
-        message: 'You are already registered for this event',
+        message: 'Already registered for this event',
         status: existingRegistration.status 
       });
     }
-
+    
     // Create registration
     const registration = await Registration.create({
       student: studentId,
       event: eventId,
+      teacher: event.teacher,
       status: 'pending',
     });
-
-    // Populate student and event details for response
+    
+    console.log("Registration created:", registration._id);
+    
+    // Populate for response
     await registration.populate('student', 'name email');
     await registration.populate('event', 'title date location');
-
+    
     res.status(201).json({
       message: 'Registration successful! Awaiting approval.',
       registration,
     });
   } catch (error) {
-    console.error('Register Event Error:', error);
-    if (error.code === 11000) {
-      return res.status(400).json({ message: 'Already registered for this event' });
-    }
-    res.status(500).json({ message: error.message || 'Server error during registration' });
+    console.error('Create Registration Error:', error);
+    res.status(500).json({ message: error.message || 'Server error' });
   }
 };
 
-// Get student's own registrations
-const getMyRegistrations = async (req, res) => {
+// Get student's registrations
+export const getStudentRegistrations = async (req, res) => {
   try {
-    const registrations = await Registration.find({ student: req.user._id })
-      .populate('event', 'title date location description')
+    const studentId = req.params.id;
+    console.log("=== GET STUDENT REGISTRATIONS ===");
+    console.log("Student ID from params:", studentId);
+    console.log("Current user:", req.user._id);
+    
+    // Ensure user can only see their own registrations
+    if (studentId !== req.user._id.toString()) {
+      return res.status(403).json({ message: 'Not authorized' });
+    }
+    
+    const registrations = await Registration.find({ student: studentId })
+      .populate('event', 'title date location description image')
+      .populate('teacher', 'name email')
       .sort({ createdAt: -1 });
-
+    
+    console.log("Found registrations:", registrations.length);
     res.json(registrations);
   } catch (error) {
-    console.error('Get My Registrations Error:', error);
-    res.status(500).json({ message: error.message || 'Server error fetching registrations' });
+    console.error('Get Student Registrations Error:', error);
+    res.status(500).json({ message: error.message || 'Server error' });
   }
 };
 
-// Get all registrations for a specific event (Event Creator/Teacher only)
-const getEventRegistrations = async (req, res) => {
+// Get teacher's registrations (all registrations for teacher's events)
+export const getTeacherRegistrations = async (req, res) => {
   try {
-    const { eventId } = req.params;
-
-    // Check if event exists and user is the creator
-    const event = await Event.findById(eventId);
-    if (!event) {
-      return res.status(404).json({ message: 'Event not found' });
-    }
-
-    if (event.createdBy.toString() !== req.user._id.toString()) {
-      return res.status(403).json({ message: 'Not authorized to view these registrations' });
-    }
-
-    const registrations = await Registration.find({ event: eventId })
+    console.log("=== GET TEACHER REGISTRATIONS ===");
+    console.log("Teacher ID:", req.user._id);
+    
+    // Find all registrations where teacher matches logged-in teacher
+    const registrations = await Registration.find({ teacher: req.user._id })
       .populate('student', 'name email college regNo department')
+      .populate('event', 'title date location')
       .sort({ createdAt: -1 });
-
+    
+    console.log("Found registrations:", registrations.length);
     res.json(registrations);
   } catch (error) {
-    console.error('Get Event Registrations Error:', error);
-    res.status(500).json({ message: error.message || 'Server error fetching registrations' });
+    console.error('Get Teacher Registrations Error:', error);
+    res.status(500).json({ message: error.message || 'Server error' });
   }
 };
 
-// Approve a registration (Event Creator/Teacher only)
-const approveRegistration = async (req, res) => {
+// Approve registration
+export const approveRegistration = async (req, res) => {
   try {
     const { id } = req.params;
-
+    console.log("=== APPROVE REGISTRATION ===");
+    console.log("Registration ID:", id);
+    
     const registration = await Registration.findById(id);
     if (!registration) {
       return res.status(404).json({ message: 'Registration not found' });
     }
-
-    // Check if user is the event creator
+    
+    // Verify teacher owns the event
     const event = await Event.findById(registration.event);
-    if (event.createdBy.toString() !== req.user._id.toString()) {
-      return res.status(403).json({ message: 'Not authorized to approve this registration' });
+    if (!event) {
+      return res.status(404).json({ message: 'Event not found' });
     }
-
-    // Check if ticket already exists (idempotency)
-    if (registration.status === 'approved') {
-      return res.status(400).json({ message: 'Registration already approved' });
+    
+    if (event.teacher.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ message: 'Not authorized' });
     }
-
-    // Update registration status
+    
+    // Update status
     registration.status = 'approved';
     await registration.save();
-
-    // Generate unique ticket code
+    
+    // Generate ticket
     const ticketCode = 'TKT-' + Date.now().toString(36).toUpperCase() + 
                        Math.random().toString(36).substring(2, 8).toUpperCase();
-
-    // Generate QR code (base64) containing ticket info
+    
     const qrData = JSON.stringify({
-      ticketId: 'PENDING',
       ticketCode: ticketCode,
-      eventId: registration.event._id || registration.event,
-      studentId: registration.student._id || registration.student
+      eventId: registration.event,
+      studentId: registration.student
     });
-
-    const qrCodeDataURL = await QRCode.toDataURL(qrData, {
-      width: 200,
-      margin: 2,
-      color: {
-        dark: '#000000',
-        light: '#ffffff'
-      }
-    });
-
-    // Auto-create ticket for the student
+    
+    const qrCodeDataURL = await QRCode.toDataURL(qrData, { width: 200 });
+    
+    // Create ticket
     const ticket = await Ticket.create({
       student: registration.student,
       event: registration.event,
@@ -147,133 +154,139 @@ const approveRegistration = async (req, res) => {
       ticketCode: ticketCode,
       qrCode: qrCodeDataURL,
     });
-
-    // Update registration with ticket code
+    
+    // Update registration with ticket
     registration.ticketId = ticket.ticketCode;
     await registration.save();
-
-    // Send approval email to student (non-blocking)
-    sendApprovalEmail(
-      registration.student.email || registration.student._id.toString(),
-      registration.student.name,
-      event.title,
-      ticket.ticketCode,
-      event.date,
-      event.location
-    ).then(emailResult => {
-      if (emailResult.success) {
-        console.log('✅ Approval email sent to:', registration.student.email);
-      } else {
-        console.warn('⚠️  Failed to send approval email:', emailResult.error);
-      }
-    }).catch(err => {
-      console.warn('⚠️  Email send error:', err.message);
-    });
-
-    // Populate for response
+    
     await registration.populate('student', 'name email');
     await registration.populate('event', 'title date location');
-
+    
+    console.log("Registration approved successfully");
     res.json({
-      message: 'Registration approved! Ticket generated successfully.',
+      message: 'Registration approved!',
       registration,
-      ticket: {
-        ticketId: ticket._id,
-        ticketCode: ticket.ticketCode,
-        qrCode: ticket.qrCode,
-        status: ticket.status,
-        issuedAt: ticket.issuedAt,
-      },
+      ticket: { ticketCode: ticket.ticketCode }
     });
   } catch (error) {
-    console.error('Approve Registration Error:', error);
-    res.status(500).json({ message: error.message || 'Server error approving registration' });
+    console.error('Approve Error:', error);
+    res.status(500).json({ message: error.message || 'Server error' });
   }
 };
 
-// Reject a registration (Event Creator/Teacher only)
-const rejectRegistration = async (req, res) => {
+// Reject registration
+export const rejectRegistration = async (req, res) => {
   try {
     const { id } = req.params;
-
+    console.log("=== REJECT REGISTRATION ===");
+    console.log("Registration ID:", id);
+    
     const registration = await Registration.findById(id);
     if (!registration) {
       return res.status(404).json({ message: 'Registration not found' });
     }
-
-    // Check if user is the event creator
+    
+    // Verify teacher owns the event
     const event = await Event.findById(registration.event);
-    if (event.createdBy.toString() !== req.user._id.toString()) {
-      return res.status(403).json({ message: 'Not authorized to reject this registration' });
+    if (event.teacher.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ message: 'Not authorized' });
     }
-
+    
+    // Update status
     registration.status = 'rejected';
     await registration.save();
-
-    // Send rejection email to student (non-blocking)
-    const rejectionReason = req.body.reason || 'Your registration was not approved.';
-    sendRejectionEmail(
-      registration.student.email || registration.student._id.toString(),
-      registration.student.name,
-      event.title,
-      event.date,
-      rejectionReason
-    ).then(emailResult => {
-      if (emailResult.success) {
-        console.log('✅ Rejection email sent to:', registration.student.email);
-      } else {
-        console.warn('⚠️  Failed to send rejection email:', emailResult.error);
-      }
-    }).catch(err => {
-      console.warn('⚠️  Email send error:', err.message);
-    });
-
+    
     await registration.populate('student', 'name email');
     await registration.populate('event', 'title date location');
-
+    
+    console.log("Registration rejected successfully");
     res.json({
       message: 'Registration rejected',
       registration,
     });
   } catch (error) {
-    console.error('Reject Registration Error:', error);
-    res.status(500).json({ message: error.message || 'Server error rejecting registration' });
+    console.error('Reject Error:', error);
+    res.status(500).json({ message: error.message || 'Server error' });
   }
 };
 
-// Get all pending registrations across all teacher's events
-const getAllPendingRegistrations = async (req, res) => {
+// Cancel registration (student cancels their own)
+export const cancelRegistration = async (req, res) => {
   try {
-    // Find all events created by this teacher
-    const teacherEvents = await Event.find({ createdBy: req.user._id }).select('_id');
+    const { id } = req.params;
+    console.log("=== CANCEL REGISTRATION ===");
+    console.log("Registration ID:", id);
+    console.log("User ID:", req.user._id);
     
-    if (teacherEvents.length === 0) {
-      return res.json([]);
+    const registration = await Registration.findById(id);
+    if (!registration) {
+      return res.status(404).json({ message: 'Registration not found' });
     }
     
-    const eventIds = teacherEvents.map(event => event._id);
+    // Verify student owns the registration
+    console.log("Registration student:", registration.student);
+    console.log("User ID:", req.user._id);
     
-    // Find all pending registrations for these events
-    const registrations = await Registration.find({
-      event: { $in: eventIds },
-      status: 'pending'
-    })
-      .populate('student', 'name email college regNo department')
-      .populate('event', 'title date location')
-      .sort({ createdAt: -1 });
-
-    res.json(registrations);
+    if (registration.student.toString() !== req.user._id.toString()) {
+      console.log("Authorization failed!");
+      return res.status(403).json({ message: 'Not authorized to cancel this registration' });
+    }
+    
+    // Check if already approved - if so, also delete ticket
+    if (registration.status === 'approved') {
+      await Ticket.deleteOne({ registration: id });
+    }
+    
+    // Delete registration
+    await Registration.findByIdAndDelete(id);
+    
+    console.log("Registration cancelled successfully");
+    res.json({
+      message: 'Registration cancelled successfully',
+    });
   } catch (error) {
-    console.error('Get All Pending Registrations Error:', error);
-    res.status(500).json({ message: error.message || 'Server error fetching registrations' });
+    console.error('Cancel Error:', error);
+    res.status(500).json({ message: error.message || 'Server error' });
   }
 };
 
-module.exports = {
-  registerEvent,
-  getMyRegistrations,
-  getEventRegistrations,
-  getAllPendingRegistrations,
-  approveRegistration,
-  rejectRegistration,
+// Get single registration by ID
+export const getRegistrationById = async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    const registration = await Registration.findById(id)
+      .populate('student', 'name email')
+      .populate('event', 'title date location')
+      .populate('teacher', 'name');
+    
+    if (!registration) {
+      return res.status(404).json({ message: 'Registration not found' });
+    }
+    
+    res.json(registration);
+  } catch (error) {
+    console.error('Get Registration Error:', error);
+    res.status(500).json({ message: error.message || 'Server error' });
+  }
+};
+
+// Get pending registrations count for teacher's events
+export const getPendingRegistrationsCount = async (req, res) => {
+  try {
+    console.log("=== GET PENDING REGISTRATIONS COUNT ===");
+    console.log("Teacher ID:", req.user._id);
+    
+    // Count registrations where teacher matches logged-in teacher AND status is pending
+    const count = await Registration.countDocuments({
+      teacher: req.user._id,
+      status: 'pending'
+    });
+    
+    console.log("Pending registrations count:", count);
+    res.json({ count });
+  } catch (error) {
+    console.error('Get Pending Count Error:', error);
+    res.status(500).json({ message: error.message || 'Server error' });
+  }
 };

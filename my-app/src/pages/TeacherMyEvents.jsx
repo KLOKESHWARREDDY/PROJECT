@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft, Calendar, Clock, MapPin, ChevronRight, Filter } from 'lucide-react';
+import { eventAPI } from '../api';
 
 const TeacherMyEvents = ({ events, theme }) => {
   const navigate = useNavigate();
   const isDark = theme === 'dark';
   const [activeFilter, setActiveFilter] = useState("All");
+  const [teacherEvents, setTeacherEvents] = useState([]);
 
   // RESPONSIVE CHECK
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
@@ -15,9 +17,30 @@ const TeacherMyEvents = ({ events, theme }) => {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  const filteredEvents = events.filter((event) => {
+  // ✅ FETCH TEACHER'S OWN EVENTS
+  useEffect(() => {
+    const fetchTeacherEvents = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        console.log("TeacherMyEvents token:", token);
+        
+        const response = await eventAPI.getTeacherEvents();
+        console.log("TeacherMyEvents response:", response.data);
+        
+        setTeacherEvents(response.data);
+      } catch (error) {
+        console.log('Error fetching teacher events:', error.message);
+        setTeacherEvents([]);
+      }
+    };
+    
+    fetchTeacherEvents();
+  }, []);
+
+  const filteredEvents = teacherEvents.filter((event) => {
+    console.log("Filtering:", activeFilter, "===", event.status);
     if (activeFilter === "All") return true;
-    return event.status === activeFilter;
+    return event.status?.toLowerCase() === activeFilter.toLowerCase();
   });
 
   const styles = {
@@ -105,9 +128,18 @@ const TeacherMyEvents = ({ events, theme }) => {
         {filteredEvents.length > 0 ? (
           filteredEvents.map((event) => (
             <div 
-              key={event.id} 
+              key={event._id} 
               style={styles.eventCard}
-              onClick={() => navigate(`/teacher-event-details/${event.id}`)}
+              onClick={() => {
+                const eventId = event.id || event._id;
+                console.log("Clicked Event ID:", eventId, "Status:", event.status);
+                // If draft, go to edit page, otherwise go to details page
+                if (event.status?.toLowerCase() === 'draft') {
+                  navigate(`/edit-event/${eventId}`);
+                } else {
+                  navigate(`/teacher-event-details/${eventId}`);
+                }
+              }}
             >
               <img src={event.image} alt={event.title} style={styles.eventImage} />
               

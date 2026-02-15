@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { BrowserRouter as Router, Routes, Route, useLocation, Navigate } from 'react-router-dom';
 import { CheckCircle, XCircle } from 'lucide-react';
+import axios from 'axios';
+import { toast } from 'react-toastify';
 import './App.css';
 
 // Components
@@ -43,24 +45,8 @@ import ResetPassword from './pages/ResetPassword';
 import Settings from './pages/Settings';
 import LanguageSelection from './pages/LanguageSelection';
 
-import api from './api';
+import api, { registrationAPI, eventAPI } from './api';
 
-// Default user state
-const defaultUser = {
-  name: "Guest",
-  email: "",
-  college: "",
-  regNo: "",
-  role: "student",
-  profileImage: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200&q=80"
-};
-
-// Default mock data
-const defaultEvents = [
-  { id: 1, title: "AI & Future Tech Workshop", date: "2024-04-05 09:00", location: "Innovation Lab", category: "Tech", image: "https://images.unsplash.com/photo-1485827404703-89b55fcc595e?w=800&q=80", description: "Learn about AI and future tech" },
-  { id: 2, title: "Inter-College Music Battle", date: "2024-03-12 17:00", location: "Main Stadium", category: "Cultural", image: "https://images.unsplash.com/photo-1501281668745-f7f57925c3b4?w=800&q=80", description: "Music competition between colleges" },
-  { id: 3, title: "Cyber Security Seminar", date: "2024-05-20 10:00", location: "Auditorium", category: "Seminar", image: "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?w=800&q=80", description: "Learn about cyber security" }
-];
 
 const AppContent = ({ 
   isAuthenticated, handleLogin, handleLogout,
@@ -131,6 +117,8 @@ const AppContent = ({
               <Route path="/teacher-events" element={<TeacherMyEvents events={allEvents} theme={theme} />} />
               <Route path="/teacher-event-details/:id" element={<TeacherEventDetails events={allEvents} onDelete={handleDeleteEvent} theme={theme} />} />
               <Route path="/teacher-registrations" element={<TeacherRegistrations registrations={registrations} onApprove={handleApproveReg} onReject={handleRejectReg} theme={theme} />} />
+              <Route path="/ticket/:id" element={<TicketConfirmation allEvents={allEvents} theme={theme} onCancel={handleCancel} />} />
+              <Route path="/ticket-confirmation/:id" element={<TicketConfirmation allEvents={allEvents} theme={theme} onCancel={handleCancel} />} />
               <Route path="/event-registrations/:id" element={<EventSpecificRegistrations events={allEvents} registrations={registrations} onApprove={handleApproveReg} onReject={handleRejectReg} theme={theme} />} />
             </>
           )}
@@ -138,8 +126,9 @@ const AppContent = ({
           {!isTeacher && (
             <>
               <Route path="/events" element={<Events allEvents={filteredEvents} theme={theme} searchTerm={searchTerm} setSearchTerm={setSearchTerm} onRegister={handleRegister} />} />
+              <Route path="/events/:id" element={<EventDetails allEvents={allEvents} registrations={registrations} theme={theme} onRegister={handleRegister} />} />
               <Route path="/my-events" element={<MyEvents theme={theme} events={registeredEvents} onCancel={handleCancel} />} />
-              <Route path="/event-details/:id" element={<EventDetails allEvents={allEvents} theme={theme} onRegister={handleRegister} />} />
+              <Route path="/ticket/:id" element={<TicketConfirmation allEvents={allEvents} theme={theme} onCancel={handleCancel} />} />
               <Route path="/ticket-confirmation/:id" element={<TicketConfirmation allEvents={allEvents} theme={theme} onCancel={handleCancel} />} />
             </>
           )}
@@ -169,22 +158,59 @@ function App() {
   
   const [searchTerm, setSearchTerm] = useState("");
   
-  const [isAuthenticated, setIsAuthenticated] = useState(() => {
-    const saved = localStorage.getItem('isAuthenticated');
-    return saved === 'true';
-  });
+  const [authLoading, setAuthLoading] = useState(true);
   
-  const [user, setUser] = useState(() => {
-    const saved = localStorage.getItem('user');
-    if (saved) {
-      try {
-        return JSON.parse(saved);
-      } catch (e) {
-        return defaultUser;
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  
+  const [user, setUser] = useState(null);
+
+  // Initialize auth state and fetch user from API on app load
+  useEffect(() => {
+    const initAuth = async () => {
+      const token = localStorage.getItem('token');
+      const savedUser = localStorage.getItem('user');
+      
+      if (token) {
+        axios.defaults.headers.common["Authorization"] = `Bearer ${token}`;
+        
+        // Try to restore user from localStorage first
+        if (savedUser) {
+          try {
+            const parsedUser = JSON.parse(savedUser);
+            if (parsedUser && parsedUser.name && parsedUser.name !== 'Guest') {
+              setUser(parsedUser);
+              setIsAuthenticated(true);
+            }
+          } catch (e) {
+            console.error('Error parsing saved user:', e);
+          }
+        }
+        
+        // Then fetch fresh user data from API
+        try {
+          const response = await axios.get('http://localhost:5000/api/auth/profile', {
+            headers: { Authorization: `Bearer ${token}` }
+          });
+          
+          const userData = response.data;
+          setUser({ ...userData, token });
+          setIsAuthenticated(true);
+          localStorage.setItem('user', JSON.stringify({ ...userData, token }));
+          console.log('[App] User fetched from API on init:', userData.name);
+        } catch (error) {
+          console.log('[App] Could not fetch user from API:', error.message);
+          // If API fails but we have saved user, keep authenticated
+          if (savedUser) {
+            setIsAuthenticated(true);
+          }
+        }
       }
-    }
-    return defaultUser;
-  });
+      
+      setAuthLoading(false);
+    };
+    
+    initAuth();
+  }, []);
 
   useEffect(() => {
     localStorage.setItem('theme', theme);
@@ -208,63 +234,85 @@ function App() {
     });
   }, []);
 
-  const handleLogin = useCallback((userData) => {
+  const handleLogin = useCallback(async (userData) => {
     if (userData) {
+      const token = userData.token || '';
+      
+      // Save to localStorage first
+      localStorage.setItem('user', JSON.stringify(userData));
+      localStorage.setItem('token', token);
+      localStorage.setItem('isAuthenticated', 'true');
+      
+      // Set axios default header
+      axios.defaults.headers.common["Authorization"] = `Bearer ${token}`;
+      
+      // Update state
       setUser(userData);
       setIsAuthenticated(true);
-      localStorage.setItem('user', JSON.stringify(userData));
-      localStorage.setItem('token', userData.token || '');
-      localStorage.setItem('isAuthenticated', 'true');
+      
+      // Fetch fresh user data from API
+      try {
+        const response = await axios.get('http://localhost:5000/api/auth/profile', {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        
+        const freshUser = response.data;
+        setUser({ ...freshUser, token });
+        localStorage.setItem('user', JSON.stringify({ ...freshUser, token }));
+        console.log('[App] Fresh user fetched after login:', freshUser.name);
+      } catch (error) {
+        console.log('[App] Could not fetch fresh user:', error.message);
+      }
     }
   }, []);
 
   const handleLogout = useCallback(() => {
     setIsAuthenticated(false);
-    setUser(defaultUser);
+    setUser(null);
     localStorage.removeItem('user');
     localStorage.removeItem('token');
     localStorage.removeItem('isAuthenticated');
+    // Clear axios default header
+    delete axios.defaults.headers.common["Authorization"];
   }, []);
 
-  const [allEvents, setAllEvents] = useState(defaultEvents);
-  const [eventsLoading, setEventsLoading] = useState(true);
-  const [eventsError, setEventsError] = useState(null);
+  const [allEvents, setAllEvents] = useState([]);
 
   const fetchEvents = useCallback(async () => {
     if (!isAuthenticated) return;
     
-    setEventsLoading(true);
     try {
       const token = localStorage.getItem('token') || user?.token;
       if (!token) {
         console.log('[App.js] No token found');
-        setEventsLoading(false);
         return;
       }
       
+      // Use single endpoint - backend handles role-based filtering
       const response = await api.get('/events', {
         headers: { Authorization: `Bearer ${token}` }
       });
       
+      console.log("Events from API:", response.data)
+      console.log("Upcoming events response:", response.data)
+      
       const backendEvents = response.data.map(event => ({
         id: event._id,
+        _id: event._id,
         title: event.title,
         date: new Date(event.date).toISOString().slice(0, 16).replace('T', ' '),
         location: event.location,
         category: 'Event',
         image: event.image || 'https://images.unsplash.com/photo-1485827404703-89b55fcc595e?w=800&q=80',
         description: event.description,
-        createdBy: event.createdBy
+        teacher: event.teacher,
+        status: event.status || 'draft'
       }));
       
       setAllEvents(backendEvents);
-      setEventsError(null);
       console.log('[App.js] Events fetched successfully:', backendEvents.length);
     } catch (error) {
       console.log('[App.js] Failed to fetch events, using mock data:', error.message);
-      setEventsError(error.message);
-    } finally {
-      setEventsLoading(false);
     }
   }, [isAuthenticated, user?.token]);
 
@@ -272,28 +320,99 @@ function App() {
     fetchEvents();
   }, [fetchEvents]);
 
-  const [registrations, setRegistrations] = useState([
-    { id: 101, name: "Rahul Kumar", email: "rahul@student.edu", event: "AI & Future Tech Workshop", status: "Pending" },
-    { id: 102, name: "Priya Sharma", email: "priya@student.edu", event: "Web Dev Bootcamp", status: "Approved" },
-    { id: 103, name: "Amit Verma", email: "amit@student.edu", event: "Inter-College Music Battle", status: "Pending" }
-  ]);
+  const [registrations, setRegistrations] = useState([]);
+
+  // Fetch registrations from database - pass student ID
+  const fetchRegistrations = useCallback(async () => {
+    if (!isAuthenticated || !user?._id) return;
+    
+    try {
+      const token = localStorage.getItem('token') || user?.token;
+      if (!token) {
+        console.log('[App.js] No token available for fetching registrations');
+        return;
+      }
+      
+      console.log('[App.js] Fetching student registrations for user:', user._id);
+      const response = await registrationAPI.getStudentRegistrations(user._id);
+      console.log('[App.js] Registrations fetched successfully, count:', response.data.length);
+      setRegistrations(response.data);
+    } catch (error) {
+      console.log('[App.js] Failed to fetch registrations:', error.message);
+    }
+  }, [isAuthenticated, user?._id, user?.token]);
+
+  // Trigger registration refresh when needed (called from EventDetails)
+  const refreshRegistrations = useCallback(async () => {
+    console.log('[App.js] Refreshing registrations...');
+    await fetchRegistrations();
+  }, [fetchRegistrations]);
+
+  useEffect(() => {
+    fetchRegistrations();
+  }, [fetchRegistrations]);
 
   const [notifications, setNotifications] = useState([
     { id: 1, title: "Welcome!", typeLabel: "System", desc: "Welcome to EventSphere.", time: "Just now", icon: <CheckCircle size={20} color="#5c5cfc" />, bgColor: 'rgba(92, 92, 252, 0.1)', eventId: 0 }
   ]);
   const [unreadCount, setUnreadCount] = useState(1);
 
-  const handleRegister = useCallback((eventId) => { 
-    const event = allEvents.find(e => e.id === eventId);
-    setAllEvents(prev => prev.map(ev => ev.id === eventId ? { ...ev, status: 'pending' } : ev)); 
-    if(event) {
-      const newReg = { id: Date.now(), name: user.name, email: user.email, event: event.title, status: "Pending" };
-      setRegistrations(prev => [newReg, ...prev]);
+  // handleRegister now accepts an optional callback for navigation
+  const handleRegister = useCallback(async (eventId, onSuccess) => {
+    // Don't check allEvents - just send to API. Backend validates event exists.
+    console.log("[App.js] Registering for event:", eventId);
+    
+    try {
+      // Call API to register
+      console.log("[App.js] Sending registration request for eventId:", eventId);
+      const response = await registrationAPI.register(eventId);
+      console.log("[App.js] Registration response status:", response.status);
+      console.log("[App.js] Registration response:", response.data);
+      
+      if (response.data.registration) {
+        console.log("[App.js] Registration saved with ID:", response.data.registration._id);
+        console.log("[App.js] Registration status:", response.data.registration.status);
+      }
+      
+      // Update local state if event exists in allEvents - check both id and _id
+      setAllEvents(prev => prev.map(ev => (ev.id === eventId || ev._id === eventId) ? { ...ev, status: 'pending' } : ev));
+      
+      // Refresh registrations from database
+      await fetchRegistrations();
+      
+      console.log("[App.js] Registration completed successfully!");
+      toast.success('Registration successful! Waiting for teacher approval.');
+      
+      // Call the success callback if provided
+      if (onSuccess) {
+        onSuccess();
+      }
+    } catch (error) {
+      console.log("[App.js] Registration FAILED:");
+      console.log("[App.js] Error:", error.message);
+      console.log("[App.js] Error response:", error.response?.data);
+      console.log("[App.js] Error status:", error.response?.status);
+      
+      const errorMessage = error.response?.data?.message || error.message || 'Registration failed';
+      toast.error('Registration failed: ' + errorMessage);
     }
-  }, [allEvents, user]);
+  }, [allEvents, fetchRegistrations]);
 
-  const handleCancel = useCallback((eventId) => { 
-    setAllEvents(prev => prev.map(ev => ev.id === eventId ? { ...ev, status: 'idle' } : ev)); 
+  // Student cancels their registration
+  const handleCancel = useCallback(async (registrationId) => { 
+    console.log('[App.js] Cancelling registration:', registrationId);
+    try {
+      const response = await registrationAPI.cancel(registrationId);
+      console.log('[App.js] Cancel response:', response.data);
+      
+      // Remove from local state
+      setRegistrations(prev => prev.filter(r => r._id !== registrationId));
+      
+      toast.success('Registration cancelled successfully!');
+    } catch (error) {
+      console.log('[App.js] Failed to cancel registration:', error.response?.data || error.message);
+      toast.error('Failed to cancel: ' + (error.response?.data?.message || error.message));
+    }
   }, []);
 
   const handleCreateEvent = useCallback(async (newEvent) => {
@@ -305,12 +424,14 @@ function App() {
       
       const backendEvent = {
         id: response.data._id,
+        _id: response.data._id,
         title: response.data.title,
         date: new Date(response.data.date).toISOString().slice(0, 16).replace('T', ' '),
         location: response.data.location,
         category: 'Event',
         image: 'https://images.unsplash.com/photo-1485827404703-89b55fcc595e?w=800&q=80',
-        description: response.data.description
+        description: response.data.description,
+        status: response.data.status || 'draft'
       };
       
       setAllEvents(prev => [backendEvent, ...prev]);
@@ -322,55 +443,126 @@ function App() {
     }
   }, [user?.token]);
 
-  const handleDeleteEvent = useCallback((eventId) => { 
-    setAllEvents(prev => prev.filter(e => e.id !== eventId)); 
-  }, []);
-
-  const handleUpdateEvent = useCallback((eventId, updatedData) => { 
-    setAllEvents(prev => prev.map(e => e.id === eventId ? updatedData : e)); 
-  }, []);
-
-  const handleApproveReg = useCallback((regId) => {
-    let approvedEventName = "";
-    setRegistrations(prev => prev.map(r => {
-      if (r.id === regId) {
-        approvedEventName = r.event; 
-        return { ...r, status: 'Approved' };
+  const handleDeleteEvent = useCallback(async (eventId, navigateCallback) => { 
+    console.log('[App] Deleting event:', eventId);
+    try {
+      const token = localStorage.getItem('token') || user?.token;
+      if (!token) {
+        alert('Authentication error. Please login again.');
+        return;
       }
-      return r;
-    }));
-    if (approvedEventName) {
-      setAllEvents(prev => prev.map(ev => 
-        ev.title === approvedEventName ? { ...ev, status: 'approved' } : ev
-      ));
-      const newNotif = { id: Date.now(), title: approvedEventName, typeLabel: "Approved", desc: "Your registration has been approved!", time: "Just now", icon: <CheckCircle size={20} color="#16a34a" />, bgColor: '#dcfce7' };
-      setNotifications(prev => [newNotif, ...prev]);
-      setUnreadCount(prev => prev + 1);
+      
+      // Use eventAPI to delete
+      const response = await eventAPI.delete(eventId);
+      console.log('[App] Delete response:', response.data);
+      console.log('[App] Event deleted successfully from MongoDB');
+      
+      // Remove from local state after successful delete
+      setAllEvents(prev => prev.filter(e => e.id !== eventId && e._id !== eventId));
+      
+      alert('Event deleted successfully!');
+      
+      // Navigate if callback provided
+      if (navigateCallback) {
+        navigateCallback();
+      }
+    } catch (error) {
+      console.error('[App] Error deleting event:', error.message);
+      console.error('[App] Error response:', error.response?.data);
+      
+      const errorMsg = error.response?.data?.message || error.message || 'Failed to delete event';
+      alert('Error: ' + errorMsg);
+    }
+  }, [user?.token]);
+
+  const handleUpdateEvent = useCallback(async (eventId, updatedData) => { 
+    try {
+      const response = await api.put(`/events/${eventId}`, updatedData);
+      const updatedEvent = response.data;
+      setAllEvents(prev => prev.map(e => (e.id === eventId || e._id === eventId) ? updatedEvent : e));
+      return updatedEvent;
+    } catch (error) {
+      console.error('Error updating event:', error);
+      // Fallback to local update if API fails
+      setAllEvents(prev => prev.map(e => (e.id === eventId || e._id === eventId) ? updatedData : e));
+      throw error;
     }
   }, []);
 
-  const handleRejectReg = useCallback((regId) => {
-    let rejectedEventName = "";
-    setRegistrations(prev => prev.map(r => {
-      if (r.id === regId) {
-        rejectedEventName = r.event;
-        return { ...r, status: 'Rejected' };
-      }
-      return r;
-    }));
-    if (rejectedEventName) {
-      setAllEvents(prev => prev.map(ev => 
-        ev.title === rejectedEventName ? { ...ev, status: 'idle' } : ev
+  const handleApproveReg = useCallback(async (regId) => {
+    try {
+      console.log('[App.js] Approving registration:', regId);
+      const response = await registrationAPI.approve(regId);
+      console.log('[App.js] Approve response:', response.data);
+      
+      // Update local registrations state
+      setRegistrations(prev => prev.map(r => 
+        r._id === regId ? { ...r, status: 'approved', ticketId: response.data.ticket?.ticketCode } : r
       ));
-      const newNotif = { id: Date.now(), title: rejectedEventName, typeLabel: "Rejected", desc: "Your registration was rejected.", time: "Just now", icon: <XCircle size={20} color="#ef4444" />, bgColor: '#fee2e2' };
-      setNotifications(prev => [newNotif, ...prev]);
-      setUnreadCount(prev => prev + 1);
+      
+      console.log('[App.js] Registration approved successfully!');
+      toast.success('Registration approved! Ticket generated.');
+    } catch (error) {
+      console.log('[App.js] Failed to approve registration:', error.response?.data || error.message);
+      toast.error('Failed to approve: ' + (error.response?.data?.message || error.message));
+    }
+  }, []);
+
+  const handleRejectReg = useCallback(async (regId) => {
+    try {
+      console.log('[App.js] Rejecting registration:', regId);
+      const response = await registrationAPI.reject(regId);
+      console.log('[App.js] Reject response:', response.data);
+      
+      // Update local registrations state
+      setRegistrations(prev => prev.map(r => 
+        r._id === regId ? { ...r, status: 'rejected' } : r
+      ));
+      
+      console.log('[App.js] Registration rejected successfully!');
+      toast.success('Registration rejected.');
+    } catch (error) {
+      console.log('[App.js] Failed to reject registration:', error.response?.data || error.message);
+      toast.error('Failed to reject: ' + (error.response?.data?.message || error.message));
     }
   }, []);
 
   const markNotificationsRead = useCallback(() => setUnreadCount(0), []);
   const filteredEvents = allEvents.filter(e => e.title.toLowerCase().includes(searchTerm.toLowerCase()));
-  const registeredEvents = allEvents.filter(e => e.status === 'pending' || e.status === 'approved');
+  
+  // MyEvents should use registrations from database
+  const registeredEvents = registrations.map(reg => ({
+    _id: reg.event?._id || reg.event,
+    id: reg.event?._id || reg.event,
+    title: reg.event?.title || 'Event',
+    date: reg.event?.date || '',
+    location: reg.event?.location || '',
+    image: reg.event?.image || '',
+    status: reg.status,
+    registrationId: reg._id
+  }));
+
+  // Show loading while restoring auth state
+  if (authLoading) {
+    return (
+      <div style={{
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        minHeight: '100vh',
+        backgroundColor: '#f8fafc'
+      }}>
+        <div style={{
+          width: 40,
+          height: 40,
+          border: '4px solid #e2e8f0',
+          borderTop: '4px solid #6366f1',
+          borderRadius: '50%',
+          animation: 'spin 1s linear infinite'
+        }} />
+      </div>
+    );
+  }
 
   return (
     <Router>

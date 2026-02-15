@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Search, Bell, Calendar, MapPin, Clock, ArrowRight, Sun, Moon } from 'lucide-react';
-import { authAPI, registrationAPI } from '../api';
+import { authAPI, registrationAPI, eventAPI } from '../api';
 
 const Dashboard = ({ user, events, theme, unreadCount, onReadNotifications, toggleTheme }) => {
   const navigate = useNavigate();
@@ -11,6 +11,32 @@ const Dashboard = ({ user, events, theme, unreadCount, onReadNotifications, togg
   const [imageError, setImageError] = useState(false);
   const [realRegCount, setRealRegCount] = useState(0);
   const [loadingRegs, setLoadingRegs] = useState(true);
+  const [studentEvents, setStudentEvents] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  // Sync user from props when it changes (e.g., after login)
+  useEffect(() => {
+    if (user && user.name && user.name !== 'Guest') {
+      setCurrentUser(user);
+      setLoading(false);
+    } else {
+      // Try to restore from localStorage
+      const savedUser = localStorage.getItem('user');
+      if (savedUser) {
+        try {
+          const parsed = JSON.parse(savedUser);
+          if (parsed && parsed.name && parsed.name !== 'Guest') {
+            setCurrentUser(parsed);
+            setLoading(false);
+            return;
+          }
+        } catch (e) {
+          console.error('Error parsing saved user:', e);
+        }
+      }
+      setLoading(false);
+    }
+  }, [user]);
 
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth < 768);
@@ -18,8 +44,13 @@ const Dashboard = ({ user, events, theme, unreadCount, onReadNotifications, togg
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  // ✅ FETCH FRESH USER DATA ON MOUNT
+  // ✅ FETCH FRESH USER DATA ON MOUNT (only if user exists)
   useEffect(() => {
+    // Skip if no user yet
+    if (!user || !user.name || user.name === 'Guest') {
+      return;
+    }
+    
     const fetchLatestUserData = async () => {
       try {
         const savedUser = localStorage.getItem('user');
@@ -43,7 +74,7 @@ const Dashboard = ({ user, events, theme, unreadCount, onReadNotifications, togg
     };
     
     fetchLatestUserData();
-  }, []);
+  }, [user]);
 
   // ✅ FETCH REAL REGISTRATION COUNT
   useEffect(() => {
@@ -69,6 +100,26 @@ const Dashboard = ({ user, events, theme, unreadCount, onReadNotifications, togg
     };
     
     fetchRegistrations();
+  }, []);
+
+  // ✅ FETCH ACTIVE EVENTS FOR STUDENTS
+  useEffect(() => {
+    const fetchEvents = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        console.log("Student token:", token);
+        
+        const response = await eventAPI.getAll();
+        console.log("Student events response:", response.data);
+        
+        setStudentEvents(response.data);
+      } catch (error) {
+        console.log('Error fetching events:', error.message);
+        setStudentEvents([]);
+      }
+    };
+    
+    fetchEvents();
   }, []);
 
   // ✅ GET FULL IMAGE URL
@@ -262,6 +313,28 @@ const Dashboard = ({ user, events, theme, unreadCount, onReadNotifications, togg
 
   const imageUrl = getImageUrl(currentUser?.profileImage);
 
+  // Show loading while user data is being restored
+  if (loading) {
+    return (
+      <div style={{
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        minHeight: '100vh',
+        backgroundColor: isDark ? '#0f172a' : '#f8fafc'
+      }}>
+        <div style={{
+          width: 40,
+          height: 40,
+          border: '4px solid #e2e8f0',
+          borderTop: '4px solid #6366f1',
+          borderRadius: '50%',
+          animation: 'spin 1s linear infinite'
+        }} />
+      </div>
+    );
+  }
+
   return (
     <div style={styles.container}>
       <div style={styles.header}>
@@ -316,7 +389,7 @@ const Dashboard = ({ user, events, theme, unreadCount, onReadNotifications, togg
         <div style={styles.statCard}>
           <div style={styles.statIconBox('#e0e7ff', '#4338ca')}><Calendar size={24} /></div>
           <div>
-            <div style={styles.statNumber}>{events.length}</div>
+            <div style={styles.statNumber}>{studentEvents.length}</div>
             <div style={styles.statLabel}>Total Events</div>
           </div>
         </div>
@@ -335,8 +408,11 @@ const Dashboard = ({ user, events, theme, unreadCount, onReadNotifications, togg
           <div style={styles.seeAll} onClick={() => navigate('/events')}>View all <ArrowRight size={16} /></div>
         </div>
         <div style={styles.grid}>
-          {events.slice(0, 3).map(event => (
-            <div key={event.id} style={styles.eventCard} onClick={() => navigate(`/event-details/${event.id}`)}>
+          {studentEvents.slice(0, 3).map(event => (
+            <div key={event._id} style={styles.eventCard} onClick={() => {
+              console.log("Clicked Event ID:", event.id || event._id);
+              navigate(`/events/${event.id || event._id}`);
+            }}>
               <img src={event.image} alt={event.title} style={styles.cardImage} />
               <div style={styles.cardBody}>
                 <h3 style={styles.cardTitle}>{event.title}</h3>

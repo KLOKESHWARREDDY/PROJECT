@@ -1,19 +1,77 @@
 import React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Calendar, MapPin, Share2, ArrowLeft, CheckCircle } from 'lucide-react';
+import { eventAPI } from '../api';
+import { useState, useEffect } from 'react';
+import { toast } from 'react-toastify';
 
-const EventDetails = ({ allEvents, theme, onRegister }) => {
+const EventDetails = ({ allEvents, registrations, theme, onRegister, user }) => {
   const { id } = useParams();
   const navigate = useNavigate();
   const isDark = theme === 'dark';
+  const [event, setEvent] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [registering, setRegistering] = useState(false);
 
-  // Find the specific event from the main list
-  const event = allEvents.find(e => e.id === parseInt(id));
+  // Get the actual event ID from URL params - this is the MongoDB _id
+  const eventIdFromUrl = id;
+  console.log("Event ID from URL useParams:", eventIdFromUrl);
+
+  // Check if already registered using registrations from database
+  const registration = registrations?.find(reg => {
+    const regEventId = reg.event?._id || reg.event;
+    return regEventId === eventIdFromUrl || regEventId === String(eventIdFromUrl);
+  });
+  const isRegistered = !!registration;
+  const registeredStatus = registration?.status;
+
+  useEffect(() => {
+    const fetchEvent = async () => {
+      try {
+        console.log("Fetching event with ID:", eventIdFromUrl);
+        
+        const res = await eventAPI.getEventById(eventIdFromUrl);
+        console.log("Event from API:", res.data);
+        console.log("Event _id:", res.data._id);
+        console.log("Event id:", res.data.id);
+        
+        setEvent(res.data);
+        setLoading(false);
+      } catch (error) {
+        console.log("Error fetching event:", error.response?.data || error.message);
+        setLoading(false);
+      }
+    };
+
+    fetchEvent();
+  }, [eventIdFromUrl]);
+
+  if (loading) return <div style={{ padding: '40px', textAlign: 'center', color: isDark ? '#fff' : '#333' }}>Loading...</div>;
 
   if (!event) return <div style={{ padding: '40px', textAlign: 'center', color: isDark ? '#fff' : '#333' }}>Event not found</div>;
 
-  // CHECK IF REGISTERED
-  const isRegistered = event.status === 'pending' || event.status === 'approved';
+  const handleButtonClick = async () => {
+    if (isRegistered) {
+      // If approved, show ticket. If pending, go to My Events.
+      if (registeredStatus === 'approved') {
+        navigate(`/ticket-confirmation/${registration._id}`);
+      } else {
+        navigate('/my-events');
+      }
+    } else {
+      // Register logic - use onRegister prop which handles state update
+      // Always use URL param id directly - no dependency on event state
+      setRegistering(true);
+      console.log("=== REGISTRATION START ===");
+      console.log("Event ID from URL:", eventIdFromUrl);
+      
+      // Call onRegister with URL param id directly
+      await onRegister(eventIdFromUrl, () => {
+        setRegistering(false);
+        navigate('/my-events');
+      });
+    }
+  };
 
   const styles = {
     container: {
@@ -126,22 +184,6 @@ const EventDetails = ({ allEvents, theme, onRegister }) => {
     })
   };
 
-  const handleButtonClick = () => {
-    if (isRegistered) {
-      // If approved, show ticket. If pending, go to My Events.
-      if (event.status === 'approved') {
-        navigate(`/ticket-confirmation/${event.id}`);
-      } else {
-        navigate('/my-events');
-      }
-    } else {
-      // Register logic
-      onRegister(event.id);
-      // Wait a bit to show change, then navigate (optional)
-      setTimeout(() => navigate('/my-events'), 500);
-    }
-  };
-
   return (
     <div style={styles.container}>
       
@@ -203,13 +245,14 @@ const EventDetails = ({ allEvents, theme, onRegister }) => {
           <button 
             style={styles.registerBtn(isRegistered)} 
             onClick={handleButtonClick}
+            disabled={registering}
             onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(-2px)'}
             onMouseLeave={(e) => e.currentTarget.style.transform = 'translateY(0)'}
           >
-            {isRegistered ? (
+            {registering ? 'Registering...' : isRegistered ? (
               <>
                 <CheckCircle size={22} />
-                {event.status === 'approved' ? 'View Ticket' : 'Registration Pending'}
+                {registeredStatus === 'approved' ? 'View Ticket' : 'Registration Pending'}
               </>
             ) : (
               'Register Now'

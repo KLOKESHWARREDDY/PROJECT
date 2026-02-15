@@ -1,20 +1,26 @@
-const User = require('../models/User');
-const bcrypt = require('bcryptjs');
-const jwt = require('jsonwebtoken');
-const crypto = require('crypto');
-const nodemailer = require('nodemailer');
+import User from '../models/User.js';
+import bcrypt from 'bcryptjs';
+import jwt from 'jsonwebtoken';
+import crypto from 'crypto';
+import nodemailer from 'nodemailer';
+import { OAuth2Client } from 'google-auth-library';
 
 const generateToken = (id) => {
   return jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: '30d' });
 };
 
 // Register User
-const registerUser = async (req, res) => {
+export const registerUser = async (req, res) => {
   try {
     const { name, email, password, role, college, regNo, department } = req.body;
 
     if (!name || !email || !password || !role) {
       return res.status(400).json({ message: 'Please fill all required fields' });
+    }
+
+    // Only allow Gmail accounts
+    if (!email.endsWith('@gmail.com')) {
+      return res.status(400).json({ message: 'Only Gmail accounts are allowed' });
     }
 
     const userExists = await User.findOne({ email });
@@ -51,7 +57,7 @@ const registerUser = async (req, res) => {
 };
 
 // Login User
-const loginUser = async (req, res) => {
+export const loginUser = async (req, res) => {
   try {
     const { email, password } = req.body;
 
@@ -80,8 +86,81 @@ const loginUser = async (req, res) => {
   }
 };
 
+// Google Auth - Verify token and login/register user
+export const googleAuth = async (req, res) => {
+  try {
+    const { credential } = req.body;
+    
+    if (!credential) {
+      return res.status(400).json({ message: 'Google credential is required' });
+    }
+
+    // Verify Google token
+    const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+    
+    let ticket;
+    try {
+      ticket = await client.verifyIdToken({
+        idToken: credential,
+        audience: process.env.GOOGLE_CLIENT_ID,
+      });
+    } catch (verifyError) {
+      console.error('Google token verification error:', verifyError.message);
+      return res.status(401).json({ message: 'Invalid Google token' });
+    }
+
+    const payload = ticket.getPayload();
+    const { email, name, picture } = payload;
+
+    // Check if user already exists
+    let user = await User.findOne({ email });
+
+    if (user) {
+      // User exists - generate token and return
+      res.json({
+        _id: user.id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        college: user.college,
+        regNo: user.regNo,
+        profileImage: user.profileImage || picture,
+        token: generateToken(user._id),
+      });
+    } else {
+      // Create new user (default role is student)
+      const hashedPassword = await bcrypt.hash(crypto.randomBytes(20).toString('hex'), 10);
+      
+      user = await User.create({
+        name,
+        email,
+        password: hashedPassword,
+        role: 'student', // Default role for Google sign-in
+        college: '',
+        regNo: '',
+        department: '',
+        profileImage: picture,
+      });
+
+      res.status(201).json({
+        _id: user.id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        college: user.college,
+        regNo: user.regNo,
+        profileImage: user.profileImage,
+        token: generateToken(user._id),
+      });
+    }
+  } catch (error) {
+    console.error('Google Auth Error:', error);
+    res.status(500).json({ message: error.message || 'Server error during Google authentication' });
+  }
+};
+
 // Get User Profile
-const getUserProfile = async (req, res) => {
+export const getUserProfile = async (req, res) => {
   try {
     const user = await User.findById(req.user._id).select('-password');
     if (user) {
@@ -96,7 +175,7 @@ const getUserProfile = async (req, res) => {
 };
 
 // Update User Profile
-const updateUserProfile = async (req, res) => {
+export const updateUserProfile = async (req, res) => {
   try {
     console.log('📝 Update Profile Request Body:', req.body);
     console.log('📝 User ID from token:', req.user?._id);
@@ -154,7 +233,7 @@ const updateUserProfile = async (req, res) => {
 };
 
 // Forgot Password
-const forgotPassword = async (req, res) => {
+export const forgotPassword = async (req, res) => {
   try {
     const { email } = req.body;
 
@@ -222,7 +301,7 @@ const forgotPassword = async (req, res) => {
 };
 
 // Reset Password
-const resetPassword = async (req, res) => {
+export const resetPassword = async (req, res) => {
   try {
     const { token } = req.params;
     const { password } = req.body;
@@ -269,7 +348,7 @@ const resetPassword = async (req, res) => {
 };
 
 // Change Password (while logged in)
-const changePassword = async (req, res) => {
+export const changePassword = async (req, res) => {
   try {
     const userId = req.user._id;
     const { currentPassword, newPassword } = req.body;
@@ -303,14 +382,4 @@ const changePassword = async (req, res) => {
     console.error('Change Password Error:', error);
     res.status(500).json({ message: error.message || "Server error" });
   }
-};
-
-module.exports = { 
-  registerUser, 
-  loginUser, 
-  getUserProfile, 
-  updateUserProfile,
-  forgotPassword, 
-  resetPassword, 
-  changePassword 
 };

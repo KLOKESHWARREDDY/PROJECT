@@ -7,23 +7,20 @@ const Profile = ({ user: initialUser, theme, onLogout, setUser }) => {
   const navigate = useNavigate();
   const isDark = theme === 'dark';
 
-  const [user, setLocalUser] = useState(initialUser);
+  const [user, setLocalUser] = useState(null);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   const [imageError, setImageError] = useState(false);
+  const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const handleResize = () => setIsMobile(window.innerWidth < 768);
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
-
-  // ✅ HELPER: Get token from localStorage
+  // ✅ GET TOKEN from localStorage
   const getToken = () => {
+    const token = localStorage.getItem('token');
+    if (token) return token;
     const savedUser = localStorage.getItem('user');
     if (savedUser) {
       try {
         const parsed = JSON.parse(savedUser);
-        if (parsed.token) return parsed.token;
+        return parsed?.token || null;
       } catch (e) {
         console.error('Error parsing user:', e);
       }
@@ -31,12 +28,30 @@ const Profile = ({ user: initialUser, theme, onLogout, setUser }) => {
     return null;
   };
 
-  // ✅ FETCH LATEST USER DATA FROM BACKEND
+  // ✅ FETCH USER DATA - runs when initialUser changes or on mount
   useEffect(() => {
-    const fetchLatestUserData = async () => {
+    const fetchUserData = async () => {
       try {
+        // First, try to get user from props
+        if (initialUser && initialUser.name && initialUser.name !== 'Guest') {
+          setLocalUser(initialUser);
+        } else {
+          // Try localStorage
+          const savedUser = localStorage.getItem('user');
+          if (savedUser) {
+            const parsed = JSON.parse(savedUser);
+            if (parsed && parsed.name && parsed.name !== 'Guest') {
+              setLocalUser(parsed);
+            }
+          }
+        }
+
+        // Then fetch fresh data from API
         const token = getToken();
-        if (!token) return;
+        if (!token) {
+          setLoading(false);
+          return;
+        }
 
         const response = await axios.get('http://localhost:5000/api/auth/profile', {
           headers: { Authorization: `Bearer ${token}` }
@@ -44,30 +59,34 @@ const Profile = ({ user: initialUser, theme, onLogout, setUser }) => {
 
         const latestUser = response.data;
         
-        // Update local state
+        // Update local state with fresh data
         setLocalUser(latestUser);
         
-        // Also update parent state if provided
+        // Update parent state if provided
         if (setUser) {
           setUser({ ...latestUser, token: token });
         }
 
         // Update localStorage
-        const savedUser = localStorage.getItem('user');
-        if (savedUser) {
-          const parsed = JSON.parse(savedUser);
-          localStorage.setItem('user', JSON.stringify({ ...parsed, ...latestUser, token: token }));
-        }
+        localStorage.setItem('user', JSON.stringify({ ...latestUser, token: token }));
         
         console.log('✅ Profile data fetched:', latestUser.email, '- Role:', latestUser.role);
         
       } catch (error) {
         console.error('Error fetching user data:', error.response?.data?.message || error.message);
+      } finally {
+        setLoading(false);
       }
     };
 
-    fetchLatestUserData();
-  }, [setUser]);
+    fetchUserData();
+  }, [initialUser, setUser]);
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   // ✅ GET FULL IMAGE URL
   const getImageUrl = (url) => {
@@ -245,6 +264,28 @@ const Profile = ({ user: initialUser, theme, onLogout, setUser }) => {
   ];
 
   const imageUrl = getImageUrl(user?.profileImage);
+
+  // Show loading while user data is being restored
+  if (loading) {
+    return (
+      <div style={{
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        minHeight: '100vh',
+        backgroundColor: isDark ? '#0f172a' : '#f8fafc'
+      }}>
+        <div style={{
+          width: 40,
+          height: 40,
+          border: '4px solid #e2e8f0',
+          borderTop: '4px solid #6366f1',
+          borderRadius: '50%',
+          animation: 'spin 1s linear infinite'
+        }} />
+      </div>
+    );
+  }
 
   return (
     <div style={styles.container}>

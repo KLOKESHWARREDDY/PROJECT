@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Bell, Calendar, MapPin, Users, Plus, Sun, Moon, ArrowRight, CheckSquare } from 'lucide-react';
-import { authAPI, registrationAPI } from '../api';
+import { authAPI, registrationAPI, eventAPI } from '../api';
 
 const TeacherDashboard = ({ user, events, theme, toggleTheme, onLogout }) => {
   const navigate = useNavigate();
@@ -11,6 +11,32 @@ const TeacherDashboard = ({ user, events, theme, toggleTheme, onLogout }) => {
   const [imageError, setImageError] = useState(false);
   const [realPendingCount, setRealPendingCount] = useState(0);
   const [loadingRegs, setLoadingRegs] = useState(true);
+  const [teacherEvents, setTeacherEvents] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  // Sync user from props when it changes (e.g., after login)
+  useEffect(() => {
+    if (user && user.name && user.name !== 'Guest') {
+      setCurrentUser(user);
+      setLoading(false);
+    } else {
+      // Try to restore from localStorage
+      const savedUser = localStorage.getItem('user');
+      if (savedUser) {
+        try {
+          const parsed = JSON.parse(savedUser);
+          if (parsed && parsed.name && parsed.name !== 'Guest') {
+            setCurrentUser(parsed);
+            setLoading(false);
+            return;
+          }
+        } catch (e) {
+          console.error('Error parsing saved user:', e);
+        }
+      }
+      setLoading(false);
+    }
+  }, [user]);
 
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth < 768);
@@ -18,8 +44,13 @@ const TeacherDashboard = ({ user, events, theme, toggleTheme, onLogout }) => {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  // ✅ FETCH FRESH USER DATA ON MOUNT
+  // ✅ FETCH FRESH USER DATA ON MOUNT (only if user exists)
   useEffect(() => {
+    // Skip if no user yet
+    if (!user || !user.name || user.name === 'Guest') {
+      return;
+    }
+    
     const fetchLatestUserData = async () => {
       try {
         const token = localStorage.getItem('token');
@@ -35,7 +66,7 @@ const TeacherDashboard = ({ user, events, theme, toggleTheme, onLogout }) => {
     };
     
     fetchLatestUserData();
-  }, []);
+  }, [user]);
 
   // ✅ FETCH REAL PENDING REGISTRATION COUNT
   useEffect(() => {
@@ -50,8 +81,8 @@ const TeacherDashboard = ({ user, events, theme, toggleTheme, onLogout }) => {
         
         const response = await registrationAPI.getAllPendingRegistrations();
         
-        const registrations = response.data || [];
-        const pendingCount = registrations.length;
+        // Backend returns { count: number }
+        const pendingCount = response.data?.count || 0;
         setRealPendingCount(pendingCount);
       } catch (error) {
         console.log('Error fetching registrations:', error.message);
@@ -62,6 +93,26 @@ const TeacherDashboard = ({ user, events, theme, toggleTheme, onLogout }) => {
     };
     
     fetchPendingRegistrations();
+  }, []);
+
+  // ✅ FETCH TEACHER'S OWN EVENTS
+  useEffect(() => {
+    const fetchTeacherEvents = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        console.log("Teacher token:", token);
+        
+        const response = await eventAPI.getTeacherEvents();
+        console.log("Teacher events response:", response.data);
+        
+        setTeacherEvents(response.data);
+      } catch (error) {
+        console.log('Error fetching teacher events:', error.message);
+        setTeacherEvents([]);
+      }
+    };
+    
+    fetchTeacherEvents();
   }, []);
 
   // ✅ GET FULL IMAGE URL
@@ -77,8 +128,8 @@ const TeacherDashboard = ({ user, events, theme, toggleTheme, onLogout }) => {
     setImageError(true);
   };
 
-  const recentEvents = events.slice(0, 4); 
-  const totalParticipants = events.reduce((sum, event) => sum + (event.registrations || 0), 0);
+  const recentEvents = teacherEvents.slice(0, 4); 
+  const totalParticipants = teacherEvents.reduce((sum, event) => sum + (event.registrations || 0), 0);
 
   const styles = {
     container: { 
@@ -304,6 +355,28 @@ const TeacherDashboard = ({ user, events, theme, toggleTheme, onLogout }) => {
 
   const imageUrl = getImageUrl(currentUser?.profileImage);
 
+  // Show loading while user data is being restored
+  if (loading) {
+    return (
+      <div style={{
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        minHeight: '100vh',
+        backgroundColor: isDark ? '#0f172a' : '#f8fafc'
+      }}>
+        <div style={{
+          width: 40,
+          height: 40,
+          border: '4px solid #e2e8f0',
+          borderTop: '4px solid #3b82f6',
+          borderRadius: '50%',
+          animation: 'spin 1s linear infinite'
+        }} />
+      </div>
+    );
+  }
+
   return (
     <div style={styles.container}>
       <div style={styles.header}>
@@ -348,7 +421,7 @@ const TeacherDashboard = ({ user, events, theme, toggleTheme, onLogout }) => {
         <div style={styles.statCard} onClick={() => navigate('/teacher-events')}>
           <div style={styles.statIconBox('#e0e7ff', '#4338ca')}><Calendar size={24} /></div>
           <div>
-            <div style={styles.statNumber}>{events.length}</div>
+            <div style={styles.statNumber}>{teacherEvents.length}</div>
             <div style={styles.statLabel}>My Events</div>
           </div>
         </div>
@@ -376,7 +449,10 @@ const TeacherDashboard = ({ user, events, theme, toggleTheme, onLogout }) => {
         
         <div style={styles.grid}>
           {recentEvents.map(event => (
-            <div key={event.id} style={styles.eventCard} onClick={() => navigate(`/teacher-event-details/${event.id}`)}>
+            <div key={event.id || event._id} style={styles.eventCard} onClick={() => {
+              console.log("Clicked Event ID:", event.id || event._id);
+              navigate(`/teacher-event-details/${event.id || event._id}`);
+            }}>
               <img src={event.image} alt={event.title} style={styles.cardImage} />
               <div style={styles.cardBody}>
                 <h3 style={styles.cardTitle}>{event.title}</h3>

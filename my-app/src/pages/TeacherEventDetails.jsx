@@ -1,15 +1,44 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { ArrowLeft, Calendar, Clock, Edit3, Trash2, Users, AlertTriangle } from 'lucide-react';
+import { eventAPI } from '../api';
+import { toast } from 'react-toastify';
 
 const TeacherEventDetails = ({ events, onDelete, theme }) => {
   const navigate = useNavigate();
   const { id } = useParams();
+  console.log("Event ID from URL:", id);
+  console.log("Available events:", events.map(e => ({ id: e.id, _id: e._id, title: e.title })));
   const isDark = theme === 'dark';
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+  const [event, setEvent] = useState(null);
+  const [loading, setLoading] = useState(true);
   
-  // Find event by ID
-  const event = events.find((e) => e.id === parseInt(id));
+  // Fetch event from backend on mount
+  useEffect(() => {
+    const fetchEvent = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        console.log("Token:", token);
+        
+        const response = await eventAPI.getEventById(id);
+        console.log("Event response:", response.data);
+        
+        setEvent(response.data);
+      } catch (error) {
+        console.log('Error fetching event:', error.message);
+        // Fallback to finding from props
+        const foundEvent = events.find((e) => e.id === id || e._id === id);
+        setEvent(foundEvent || null);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    if (id) {
+      fetchEvent();
+    }
+  }, [id, events]);
   const [showDeletePopup, setShowDeletePopup] = useState(false);
 
   // Responsive listener
@@ -19,11 +48,19 @@ const TeacherEventDetails = ({ events, onDelete, theme }) => {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
+  if (loading) return <div style={{padding:'20px', color: isDark?'#fff':'#000'}}>Loading...</div>;
   if (!event) return <div style={{padding:'20px', color: isDark?'#fff':'#000'}}>Event not found</div>;
 
-  const handleDelete = () => {
-    onDelete(event.id);
-    navigate('/');
+  const handleDelete = async () => {
+    const eventId = event._id || event.id;
+    console.log('[TeacherEventDetails] Deleting event:', eventId);
+    
+    try {
+      // Pass navigate callback to handleDeleteEvent
+      await onDelete(eventId, () => navigate('/teacher-events'));
+    } catch (error) {
+      console.error('[TeacherEventDetails] Delete failed:', error);
+    }
   };
 
   const styles = {
@@ -64,15 +101,37 @@ const TeacherEventDetails = ({ events, onDelete, theme }) => {
             <span><Calendar size={18}/> {event.date.split('·')[0]}</span>
             <span><Clock size={18}/> {event.date.split('·')[1] || '10:00 AM'}</span>
           </div>
-          <p>{event.desc || "No description provided for this event."}</p>
+          <p>{event.description || "No description provided for this event."}</p>
 
           <div style={styles.btnGrid}>
-            <button style={styles.btn('#4f46e5', '#fff')} onClick={() => navigate(`/edit-event/${event.id}`)}>
+            <button style={styles.btn('#4f46e5', '#fff')} onClick={() => {
+              const eventId = event._id || event.id;
+              console.log("Edit Event - event._id:", event._id);
+              console.log("Edit Event - event.id:", event.id);
+              console.log("Edit Event - final ID:", eventId);
+              if (!eventId) {
+                console.error("ERROR: No event ID found! Event:", event);
+                toast.error("Error: Cannot edit - no event ID found");
+                return;
+              }
+              navigate(`/edit-event/${eventId}`);
+            }}>
               <Edit3 size={18}/> Edit Event
             </button>
 
             {/* ✅ UPDATED: Navigates to Event Specific Registrations */}
-            <button style={styles.btn(isDark?'#334155':'#e0e7ff', isDark?'#fff':'#4338ca')} onClick={() => navigate(`/event-registrations/${event.id}`)}>
+            <button style={styles.btn(isDark?'#334155':'#e0e7ff', isDark?'#fff':'#4338ca')} onClick={() => {
+              const eventId = event._id || event.id;
+              console.log("View Registrations - event._id:", event._id);
+              console.log("View Registrations - event.id:", event.id);
+              console.log("View Registrations - final ID:", eventId);
+              if (!eventId) {
+                console.error("ERROR: No event ID found!");
+                toast.error("Error: Cannot view registrations - no event ID found");
+                return;
+              }
+              navigate(`/event-registrations/${eventId}`);
+            }}>
               <Users size={18}/> View Registrations
             </button>
 

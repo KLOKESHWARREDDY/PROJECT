@@ -1,17 +1,17 @@
-const isTeacher = (req, res, next) => {
+export const isTeacher = (req, res, next) => {
   if (req.user && req.user.role === 'teacher') {
     next();
   } else {
-    res.status(403).json({ message: 'Not authorized as teacher' });
+    res.status(403).json({ message: 'Access denied. Teachers only.' });
   }
 };
 
-const isStudent = (req, res, next) => {
+export const isStudent = (req, res, next) => {
   if (req.user && req.user.role === 'student') {
     next();
   } else {
-    res.status(403).json({ message: 'Not authorized as student' });
+    res.status(403).json({ message: 'Access denied. Students only.' });
   }
 };
 
-module.exports = { isTeacher, isStudent };
+export default { isTeacher, isStudent };

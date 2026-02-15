@@ -19,7 +19,8 @@ const Sidebar = ({ user, theme, onLogout }) => {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  const isTeacher = user.role === 'teacher';
+  // Handle case where user is null or undefined
+  const isTeacher = user?.role === 'teacher';
 
   const menuItems = isTeacher 
     ? [

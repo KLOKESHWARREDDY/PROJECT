@@ -1,9 +1,19 @@
-require('dotenv').config();
+import express from 'express';
+import cors from 'cors';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import dotenv from 'dotenv';
 
-const express = require('express');
-const cors = require('cors');
-const path = require('path');
-const connectDB = require('./config/db');
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+// Load .env from server folder
+dotenv.config({ path: path.resolve(__dirname, '.env') });
+
+import connectDB from './config/db.js';
+
+// Connect to MongoDB
+connectDB();
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -29,11 +39,17 @@ app.get('/', (req, res) => {
 });
 
 // API Routes
-app.use('/api/auth', require('./routes/authRoutes'));
-app.use('/api/events', require('./routes/eventRoutes'));
-app.use('/api/registrations', require('./routes/registrationRoutes'));
-app.use('/api/tickets', require('./routes/ticketRoutes'));
-app.use('/api/auth', require('./routes/uploadRoutes'));
+import authRoutes from './routes/authRoutes.js';
+import eventRoutes from './routes/eventRoutes.js';
+import registrationRoutes from './routes/registrationRoutes.js';
+import ticketRoutes from './routes/ticketRoutes.js';
+import uploadRoutes from './routes/uploadRoutes.js';
+
+app.use('/api/auth', authRoutes);
+app.use('/api/events', eventRoutes);
+app.use('/api/registrations', registrationRoutes);
+app.use('/api/tickets', ticketRoutes);
+app.use('/api/uploads', uploadRoutes);
 
 // 404 Handler
 app.use((req, res) => {
@@ -46,27 +62,11 @@ app.use((err, req, res, next) => {
   res.status(500).json({ message: 'Server Error', error: err.message });
 });
 
-// Start server function
-const startServer = async () => {
-  // Connect to MongoDB Atlas
-  const dbConnected = await connectDB();
-  
-  if (dbConnected) {
-    console.log('🚀 Starting server WITH database connection...');
-  } else {
-    console.log('⚠️  Starting server WITHOUT database connection.');
-    console.log('   API routes that require DB will fail.');
-  }
-  
-  // Start listening
-  app.listen(PORT, () => {
-    console.log(`✅ Server running on http://localhost:${PORT}`);
-    console.log(`📡 API endpoints available at http://localhost:${PORT}/api`);
-    console.log(`🔗 CORS enabled for: http://localhost:3000, http://localhost:5173`);
-  });
-};
+// Start server
+app.listen(PORT, () => {
+  console.log(`✅ Server running on http://localhost:${PORT}`);
+  console.log(`📡 API endpoints available at http://localhost:${PORT}/api`);
+  console.log(`🔗 CORS enabled for: http://localhost:3000, http://localhost:5173`);
+});
 
-// Start the server
-startServer();
-
-module.exports = app;
+export default app;

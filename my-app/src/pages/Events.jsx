@@ -1,20 +1,44 @@
 import React, { useState, useEffect } from 'react';
 import { Search, MapPin, Calendar, Filter, ArrowRight, X, Check } from 'lucide-react'; 
 import { useNavigate } from 'react-router-dom';
+import { eventAPI } from '../api';
 
 const Events = ({ allEvents, theme, searchTerm, setSearchTerm }) => {
   const navigate = useNavigate();
   const isDark = theme === 'dark';
 
+  // Local state for events
+  const [events, setEvents] = useState([]);
+
   // 1. FILTER STATE
   const [showFilters, setShowFilters] = useState(false);
   const [activeCategory, setActiveCategory] = useState('All');
+
+  // Fetch events on mount
+  useEffect(() => {
+    const fetchEvents = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        console.log("Events page token:", token);
+        
+        const response = await eventAPI.getAll();
+        console.log("Events page response:", response.data);
+        
+        setEvents(response.data);
+      } catch (error) {
+        console.log('Error fetching events:', error.message);
+        setEvents([]);
+      }
+    };
+    
+    fetchEvents();
+  }, []);
 
   // Categories
   const categories = ['All', 'Tech', 'Cultural', 'Sports', 'Workshop', 'Seminar'];
 
   // 2. FILTER LOGIC
-  const filteredEvents = allEvents.filter(event => {
+  const filteredEvents = events.filter(event => {
     if (activeCategory === 'All') return true;
     return event.category === activeCategory;
   });
@@ -249,9 +273,12 @@ const Events = ({ allEvents, theme, searchTerm, setSearchTerm }) => {
         {filteredEvents.length > 0 ? (
           filteredEvents.map(event => (
             <div 
-              key={event.id} 
+              key={event._id} 
               style={styles.card} 
-              onClick={() => navigate(`/event-details/${event.id}`)}
+              onClick={() => {
+                console.log("Clicked Event ID:", event.id || event._id);
+                navigate(`/events/${event.id || event._id}`);
+              }}
               onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-5px)'; e.currentTarget.style.boxShadow = '0 1vh 2vh rgba(0,0,0,0.08)'; }}
               onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = 'none'; }}
             >

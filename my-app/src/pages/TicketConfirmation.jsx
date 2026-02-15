@@ -1,15 +1,127 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { QRCodeSVG } from 'qrcode.react'; 
-import { ArrowLeft, Download, Share2, MapPin, Calendar, Clock } from 'lucide-react';
+import { ArrowLeft, Download, Share2, MapPin, Calendar, Clock, User, Mail } from 'lucide-react';
+import axios from 'axios';
 
 const TicketConfirmation = ({ allEvents, theme, onCancel }) => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const event = allEvents.find(e => e.id === parseInt(id));
   const isDark = theme === 'dark';
+  
+  // State for ticket data
+  const [ticket, setTicket] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  if (!event) return null;
+  // Debug: Log the ID received
+  console.log('TicketConfirmation - Received ID from params:', id);
+  console.log('ID length:', id?.length);
+
+  // Fetch ticket data from API
+  useEffect(() => {
+    const fetchTicket = async () => {
+      try {
+        setLoading(true);
+        console.log('Fetching ticket for registration ID:', id);
+        
+        const token = localStorage.getItem('token');
+        const response = await axios.get(`/api/registrations/ticket/${id}`, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        });
+        
+        console.log('API Response:', response.data);
+        setTicket(response.data);
+        setError(null);
+      } catch (err) {
+        console.error('Error fetching ticket:', err);
+        console.error('Error response:', err.response?.data);
+        setError(err.response?.data?.message || 'Failed to load ticket');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (id) {
+      fetchTicket();
+    }
+  }, [id]);
+
+  // Loading state
+  if (loading) {
+    return (
+      <div style={{
+        minHeight: '100vh',
+        backgroundColor: isDark ? '#0f172a' : '#f1f5f9',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        fontFamily: "'Inter', sans-serif"
+      }}>
+        <div style={{ color: isDark ? '#fff' : '#1e293b' }}>Loading ticket...</div>
+      </div>
+    );
+  }
+
+  // Error state
+  if (error) {
+    return (
+      <div style={{
+        minHeight: '100vh',
+        backgroundColor: isDark ? '#0f172a' : '#f1f5f9',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        fontFamily: "'Inter', sans-serif",
+        padding: '20px'
+      }}>
+        <div style={{ color: '#ef4444', marginBottom: '20px' }}>{error}</div>
+        <button 
+          onClick={() => navigate(-1)}
+          style={{
+            padding: '10px 20px',
+            backgroundColor: '#4f46e5',
+            color: '#fff',
+            border: 'none',
+            borderRadius: '8px',
+            cursor: 'pointer'
+          }}
+        >
+          Go Back
+        </button>
+      </div>
+    );
+  }
+
+  // No ticket data
+  if (!ticket) {
+    return (
+      <div style={{
+        minHeight: '100vh',
+        backgroundColor: isDark ? '#0f172a' : '#f1f5f9',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        fontFamily: "'Inter', sans-serif"
+      }}>
+        <div style={{ color: isDark ? '#fff' : '#1e293b' }}>No ticket found</div>
+      </div>
+    );
+  }
+
+  // Use ticket data with optional chaining
+  const eventTitle = ticket?.event?.title || 'Event';
+  const eventDate = ticket?.event?.date ? new Date(ticket.event.date).toLocaleDateString('en-US', {
+    weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+  }) : 'Date not available';
+  const eventLocation = ticket?.event?.location || 'Location not available';
+  const studentName = ticket?.student?.name || 'Student';
+  const studentEmail = ticket?.student?.email || 'Email not available';
+  const ticketCode = ticket?.ticketCode || 'N/A';
 
   const styles = {
     // Page Background
@@ -113,7 +225,7 @@ const TicketConfirmation = ({ allEvents, theme, onCancel }) => {
     <div style={styles.container}>
       {/* Header Navigation */}
       <div style={{ width: '100%', maxWidth: '380px', marginBottom: '20px', display: 'flex', alignItems: 'center' }}>
-        <div style={{ cursor: 'pointer', padding: '10px', background: '#fff', borderRadius: '12px' }} onClick={() => navigate('/')}>
+        <div style={{ cursor: 'pointer', padding: '10px', background: '#fff', borderRadius: '12px' }} onClick={() => navigate(-1)}>
           <ArrowLeft size={20} color="#1e293b" />
         </div>
         <span style={{ marginLeft: '15px', fontWeight: '700', fontSize: '18px', color: isDark?'#fff':'#1e293b' }}>Ticket Details</span>
@@ -124,9 +236,9 @@ const TicketConfirmation = ({ allEvents, theme, onCancel }) => {
         
         {/* Top: Gradient Header */}
         <div style={styles.ticketTop}>
-          <img src={event.image} alt="Event" style={styles.eventImage} />
-          <div style={styles.eventTitle}>{event.title}</div>
-          <span style={styles.eventCategory}>{event.category} Ticket</span>
+          <div style={{ fontSize: '50px', marginBottom: '10px' }}>🎫</div>
+          <div style={styles.eventTitle}>{eventTitle}</div>
+          <span style={styles.eventCategory}>Event Ticket</span>
         </div>
 
         {/* Middle: Details */}
@@ -135,25 +247,35 @@ const TicketConfirmation = ({ allEvents, theme, onCancel }) => {
           <div style={styles.notchLeft}></div>
           <div style={styles.notchRight}></div>
 
+          {/* Student Info */}
+          <div style={styles.row}>
+            <User size={20} color="#6366f1" />
+            <div>
+              <div style={styles.label}>Student Name</div>
+              <div style={styles.value}>{studentName}</div>
+            </div>
+          </div>
+          <div style={styles.row}>
+            <Mail size={20} color="#6366f1" />
+            <div>
+              <div style={styles.label}>Email</div>
+              <div style={styles.value}>{studentEmail}</div>
+            </div>
+          </div>
+
+          {/* Event Details */}
           <div style={styles.row}>
             <Calendar size={20} color="#6366f1" />
             <div>
               <div style={styles.label}>Date</div>
-              <div style={styles.value}>{event.date.split('·')[0]}</div>
-            </div>
-          </div>
-          <div style={styles.row}>
-            <Clock size={20} color="#6366f1" />
-            <div>
-              <div style={styles.label}>Time</div>
-              <div style={styles.value}>09:00 AM</div>
+              <div style={styles.value}>{eventDate}</div>
             </div>
           </div>
           <div style={styles.row}>
             <MapPin size={20} color="#6366f1" />
             <div>
               <div style={styles.label}>Location</div>
-              <div style={styles.value}>{event.location}</div>
+              <div style={styles.value}>{eventLocation}</div>
             </div>
           </div>
         </div>
@@ -161,9 +283,13 @@ const TicketConfirmation = ({ allEvents, theme, onCancel }) => {
         {/* Bottom: QR Code */}
         <div style={styles.ticketBottom}>
            <div style={{ background: '#fff', padding: '10px', display: 'inline-block', borderRadius: '12px', border: '1px solid #f1f5f9' }}>
-             <QRCodeSVG value={`TICKET-${event.id}-USER-123`} size={140} fgColor="#1e293b" />
+             {ticket?.qrCode ? (
+               <QRCodeSVG value={ticket.qrCode} size={140} fgColor="#1e293b" />
+             ) : (
+               <QRCodeSVG value={`TICKET-${ticketCode}`} size={140} fgColor="#1e293b" />
+             )}
            </div>
-           <div style={styles.scanText}>SCAN AT ENTRY</div>
+           <div style={styles.scanText}>TICKET CODE: {ticketCode}</div>
         </div>
       </div>
 

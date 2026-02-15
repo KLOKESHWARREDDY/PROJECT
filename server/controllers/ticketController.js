@@ -1,8 +1,8 @@
-const Ticket = require('../models/Ticket');
-const PDFDocument = require('pdfkit');
+import Ticket from '../models/Ticket.js';
+import PDFDocument from 'pdfkit';
 
 // GET /api/tickets/my - Get all tickets for the logged-in student
-const getMyTickets = async (req, res) => {
+export const getMyTickets = async (req, res) => {
   try {
     const tickets = await Ticket.find({ student: req.user._id })
       .populate('event', 'title date location description')
@@ -17,7 +17,7 @@ const getMyTickets = async (req, res) => {
 };
 
 // GET /api/tickets/:id - Get single ticket by ID
-const getTicketById = async (req, res) => {
+export const getTicketById = async (req, res) => {
   try {
     const ticket = await Ticket.findById(req.params.id)
       .populate('student', 'name email college regNo')
@@ -42,7 +42,7 @@ const getTicketById = async (req, res) => {
 };
 
 // GET /api/tickets/verify/:code - Verify ticket by code
-const verifyTicket = async (req, res) => {
+export const verifyTicket = async (req, res) => {
   try {
     const { code } = req.params;
 
@@ -101,7 +101,7 @@ const verifyTicket = async (req, res) => {
 };
 
 // PUT /api/tickets/:id/use - Mark ticket as used (check-in)
-const useTicket = async (req, res) => {
+export const useTicket = async (req, res) => {
   try {
     const ticket = await Ticket.findById(req.params.id);
 
@@ -131,7 +131,7 @@ const useTicket = async (req, res) => {
 };
 
 // GET /api/tickets/:id/pdf - Download ticket as PDF
-const downloadTicketPDF = async (req, res) => {
+export const downloadTicketPDF = async (req, res) => {
   try {
     const ticket = await Ticket.findById(req.params.id)
       .populate('student', 'name email college regNo')
@@ -232,12 +232,4 @@ const downloadTicketPDF = async (req, res) => {
     console.error('Download PDF Error:', error);
     res.status(500).json({ message: error.message || 'Server error generating PDF' });
   }
-};
-
-module.exports = {
-  getMyTickets,
-  getTicketById,
-  verifyTicket,
-  useTicket,
-  downloadTicketPDF
 };

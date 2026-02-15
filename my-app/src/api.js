@@ -1,10 +1,13 @@
 import axios from 'axios';
 
-// API configuration - consolidated for Create React App
-// With proxy configured in package.json, we can use relative paths
-// Or use absolute URL for development
-
+// API configuration
 const API_URL = process.env.REACT_APP_API_URL || '/api';
+
+// Set default Authorization header from localStorage on app load
+const storedToken = localStorage.getItem('token');
+if (storedToken) {
+  axios.defaults.headers.common["Authorization"] = `Bearer ${storedToken}`;
+}
 
 const api = axios.create({
   baseURL: API_URL,
@@ -30,7 +33,6 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      // Token expired or invalid - logout user
       localStorage.removeItem('token');
       localStorage.removeItem('user');
       localStorage.removeItem('isAuthenticated');
@@ -51,21 +53,16 @@ export const authAPI = {
   uploadProfileImage: async (file) => {
     const formData = new FormData();
     formData.append('profileImage', file);
-    
     const token = localStorage.getItem('token');
     const response = await fetch(`${API_URL}/auth/upload-profile-image`, {
       method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-      },
+      headers: { 'Authorization': `Bearer ${token}` },
       body: formData,
     });
-    
     if (!response.ok) {
       const error = await response.json();
       throw new Error(error.message || 'Upload failed');
     }
-    
     return response.json();
   },
   changePassword: (data) => api.put('/auth/change-password', data),
@@ -74,17 +71,37 @@ export const authAPI = {
 // Event APIs
 export const eventAPI = {
   getAll: () => api.get('/events'),
+  getTeacherEvents: () => api.get('/events/my-events'),
+  getEventById: (id) => api.get(`/events/${id}`),
   create: (data) => api.post('/events', data),
+  delete: (id) => api.delete(`/events/${id}`),
 };
 
-// Registration APIs
+// Registration APIs - Updated routes
 export const registrationAPI = {
-  register: (eventId) => api.post('/registrations/register', { eventId }),
-  getMyRegistrations: () => api.get('/registrations/my-registrations'),
-  getAllPendingRegistrations: () => api.get('/registrations/all'),
-  getEventRegistrations: (eventId) => api.get(`/registrations/event/${eventId}`),
-  approve: (id) => api.put(`/registrations/${id}/approve`),
-  reject: (id) => api.put(`/registrations/${id}/reject`),
+  // Create registration
+  register: (eventId) => api.post('/registrations', { eventId }),
+  
+  // Get student's registrations (pass studentId in URL)
+  getStudentRegistrations: (studentId) => api.get(`/registrations/student/${studentId}`),
+  
+  // Get teacher's registrations
+  getTeacherRegistrations: () => api.get('/registrations/teacher'),
+  
+  // Get pending registrations count for teacher dashboard
+  getAllPendingRegistrations: () => api.get('/registrations/teacher/pending-count'),
+  
+  // Approve registration
+  approve: (id) => api.put(`/registrations/approve/${id}`),
+  
+  // Reject registration
+  reject: (id) => api.put(`/registrations/reject/${id}`),
+  
+  // Cancel registration (student cancels)
+  cancel: (id) => api.delete(`/registrations/${id}`),
+  
+  // Get single registration
+  getRegistrationById: (id) => api.get(`/registrations/${id}`),
 };
 
 // Ticket APIs
@@ -97,15 +114,11 @@ export const ticketAPI = {
     const token = localStorage.getItem('token');
     const response = await fetch(`${API_URL}/tickets/${ticketId}/pdf`, {
       method: 'GET',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-      },
+      headers: { 'Authorization': `Bearer ${token}` },
     });
-    
     if (!response.ok) {
       throw new Error('Failed to download PDF');
     }
-    
     const blob = await response.blob();
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement('a');

@@ -1,11 +1,13 @@
-const express = require("express");
+import express from "express";
+import { registerUser, loginUser, googleAuth, getUserProfile, updateUserProfile, forgotPassword, resetPassword, changePassword } from '../controllers/authController.js';
+import { protect } from '../middleware/authMiddleware.js';
+
 const router = express.Router();
-const { registerUser, loginUser, getUserProfile, updateUserProfile, forgotPassword, resetPassword, changePassword } = require('../controllers/authController');
-const { protect } = require('../middleware/authMiddleware');
 
 // Auth Routes
 router.post('/register', registerUser);
 router.post('/login', loginUser);
+router.post('/google', googleAuth);
 router.get('/profile', protect, getUserProfile);
 router.put('/profile', protect, updateUserProfile);
 
@@ -21,4 +23,4 @@ router.get("/test", (req, res) => {
   res.json({ message: "Auth routes working" });
 });
 
-module.exports = router;
+export default router;

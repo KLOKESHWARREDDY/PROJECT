@@ -1,16 +1,21 @@
-const express = require("express");
+import express from "express";
+import { createEvent, getEvents, getTeacherEvents, getEventById, updateEvent, deleteEvent } from '../controllers/eventController.js';
+import { protect } from '../middleware/authMiddleware.js';
+import { isTeacher } from '../middleware/roleMiddleware.js';
+
 const router = express.Router();
-const { createEvent, getEvents } = require('../controllers/eventController');
-const { protect } = require('../middleware/authMiddleware');
-const { isTeacher } = require('../middleware/roleMiddleware');
 
 // Event Routes
-router.get('/', protect, getEvents);
-router.post('/', protect, isTeacher, createEvent);
+router.get('/', protect, getEvents);  // Get all events
+router.get('/my-events', protect, isTeacher, getTeacherEvents);  // Get only THIS teacher's events
+router.get('/:id', protect, getEventById);  // Get single event by ID
+router.post('/', protect, isTeacher, createEvent);  // Create event (teacher only)
+router.put('/:id', protect, isTeacher, updateEvent);  // Update event (teacher only)
+router.delete('/:id', protect, isTeacher, deleteEvent);  // Delete event (teacher only)
 
 // Test route
 router.get("/test", (req, res) => {
   res.json({ message: "Events routes working" });
 });
 
-module.exports = router;
+export default router;
