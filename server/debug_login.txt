@@ -1,32 +1,36 @@
-
-[2026-02-18T05:59:54.871Z] Login Attempt: Email='kv@gmail.com', PasswordLength=6
-User Found: true, Role: student
-Password Match: true
-
-[2026-02-18T06:36:50.846Z] Login Attempt: Email='lokesh1.kk2007@gmail.com', PasswordLength=10
-User Found: true, Role: student
-Password Match: false
-
-[2026-02-18T06:37:49.360Z] Login Attempt: Email='kushal@gmail.com', PasswordLength=8
-User Found: true, Role: teacher
-Password Match: true
-
-[2026-02-18T06:39:16.406Z] Login Attempt: Email='lokesh1.kk2007@gmail.com', PasswordLength=8
-User Found: true, Role: student
-Password Match: false
-
-[2026-02-18T06:42:21.298Z] Login Attempt: Email='lokesh1.kk2007@gmail.com', PasswordLength=10
-User Found: true, Role: student
-Password Match: true
-
-[2026-02-18T06:46:30.415Z] Login Attempt: Email='kushal@gmail.com', PasswordLength=8
-User Found: true, Role: teacher
-Password Match: true
-
-[2026-02-18T06:47:32.800Z] Login Attempt: Email='kushal@gmail.com', PasswordLength=8
-User Found: true, Role: teacher
-Password Match: true
-
-[2026-02-18T06:47:48.824Z] Login Attempt: Email='lokesh1.kk2007@gmail.com', PasswordLength=10
-User Found: true, Role: student
-Password Match: true
+[2026-02-18T14:02:07.688Z] LOGIN ATTEMPT {"email":"kushal@gmail.com","passwordLength":8}
+[2026-02-18T14:02:07.720Z] USER LOOKUP {"email":"kushal@gmail.com","userFound":true,"userRole":"teacher","storedPasswordLength":60,"isPasswordHashed":true}
+[2026-02-18T14:02:07.802Z] BCRYPT COMPARE {"isMatch":false,"isHashed":true}
+[2026-02-18T14:02:07.803Z] PASSWORD MISMATCH {"email":"kushal@gmail.com"}
+[2026-02-18T14:02:08.372Z] LOGIN ATTEMPT {"email":"kushal@gmail.com","passwordLength":8}
+[2026-02-18T14:02:08.396Z] USER LOOKUP {"email":"kushal@gmail.com","userFound":true,"userRole":"teacher","storedPasswordLength":60,"isPasswordHashed":true}
+[2026-02-18T14:02:08.478Z] BCRYPT COMPARE {"isMatch":false,"isHashed":true}
+[2026-02-18T14:02:08.478Z] PASSWORD MISMATCH {"email":"kushal@gmail.com"}
+[2026-02-18T14:02:08.796Z] LOGIN ATTEMPT {"email":"kushal@gmail.com","passwordLength":8}
+[2026-02-18T14:02:08.819Z] USER LOOKUP {"email":"kushal@gmail.com","userFound":true,"userRole":"teacher","storedPasswordLength":60,"isPasswordHashed":true}
+[2026-02-18T14:02:08.898Z] BCRYPT COMPARE {"isMatch":false,"isHashed":true}
+[2026-02-18T14:02:08.899Z] PASSWORD MISMATCH {"email":"kushal@gmail.com"}
+[2026-02-18T14:02:33.151Z] LOGIN ATTEMPT {"email":"kushal@gmail.com","passwordLength":8}
+[2026-02-18T14:02:33.173Z] USER LOOKUP {"email":"kushal@gmail.com","userFound":true,"userRole":"teacher","storedPasswordLength":60,"isPasswordHashed":true}
+[2026-02-18T14:02:33.251Z] BCRYPT COMPARE {"isMatch":false,"isHashed":true}
+[2026-02-18T14:02:33.252Z] PASSWORD MISMATCH {"email":"kushal@gmail.com"}
+[2026-02-18T14:02:34.657Z] LOGIN ATTEMPT {"email":"kushal@gmail.com","passwordLength":8}
+[2026-02-18T14:02:34.678Z] USER LOOKUP {"email":"kushal@gmail.com","userFound":true,"userRole":"teacher","storedPasswordLength":60,"isPasswordHashed":true}
+[2026-02-18T14:02:34.756Z] BCRYPT COMPARE {"isMatch":false,"isHashed":true}
+[2026-02-18T14:02:34.757Z] PASSWORD MISMATCH {"email":"kushal@gmail.com"}
+[2026-02-18T14:04:07.636Z] REGISTER REQUEST {"name":"lokesh","email":"lokesh1.kk2007@gmail.com","role":"student","hasPassword":true}
+[2026-02-18T14:04:07.752Z] PASSWORD HASHED {"email":"lokesh1.kk2007@gmail.com","originalLength":10,"hashedLength":60}
+[2026-02-18T14:04:07.793Z] USER CREATED {"userId":"6995c6d7fef27a89b34248ee","email":"lokesh1.kk2007@gmail.com","role":"student"}
+[2026-02-18T14:17:16.497Z] REGISTER REQUEST {"name":"lokesh","email":"lokesh1.kk2007@gmail.com","role":"student","hasPassword":true}
+[2026-02-18T14:17:16.600Z] PASSWORD HASHED {"email":"lokesh1.kk2007@gmail.com","originalLength":10,"hashedLength":60}
+[2026-02-18T14:17:16.630Z] USER CREATED {"userId":"6995c9eca2e2610efd603690","email":"lokesh1.kk2007@gmail.com","role":"student"}
+[2026-02-18T14:18:04.237Z] REGISTER REQUEST {"name":"Kushal","email":"kushal@gmail.com","role":"teacher","hasPassword":true}
+[2026-02-18T14:18:04.317Z] PASSWORD HASHED {"email":"kushal@gmail.com","originalLength":8,"hashedLength":60}
+[2026-02-18T14:18:04.322Z] USER CREATED {"userId":"6995ca1ca2e2610efd6036aa","email":"kushal@gmail.com","role":"teacher"}
+[2026-02-18T14:43:17.091Z] REGISTER REQUEST {"name":"LOKESH","email":"lokesh1.kk2007@gmail.com","role":"student","hasPassword":true}
+[2026-02-18T14:43:17.187Z] PASSWORD HASHED {"email":"lokesh1.kk2007@gmail.com","originalLength":10,"hashedLength":60}
+[2026-02-18T14:43:17.206Z] USER CREATED {"userId":"6995d00571de1a8c5a322d8a","email":"lokesh1.kk2007@gmail.com","role":"student"}
+[2026-02-18T14:43:24.762Z] LOGIN ATTEMPT {"email":"lokesh1.kk2007@gmail.com","passwordLength":10}
+[2026-02-18T14:43:24.766Z] USER LOOKUP {"email":"lokesh1.kk2007@gmail.com","userFound":true,"userRole":"student","storedPasswordLength":60,"isPasswordHashed":true}
+[2026-02-18T14:43:24.838Z] BCRYPT COMPARE {"isMatch":true,"isHashed":true}
+[2026-02-18T14:43:24.839Z] LOGIN SUCCESS {"userId":"6995d00571de1a8c5a322d8a","role":"student"}

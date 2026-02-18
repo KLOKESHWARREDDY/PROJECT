@@ -4,38 +4,75 @@ import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
 import nodemailer from 'nodemailer';
 import { OAuth2Client } from 'google-auth-library';
-import fs from 'fs';
-import path from 'path';
 
 const generateToken = (id) => {
-  return jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: '30d' });
+  return jwt.sign({ id }, process.env.JWT_SECRET || 'eventsphere_secret_key_2024', { expiresIn: '30d' });
 };
 
-// Register User
+// Register User - Complete with Debugging
 export const registerUser = async (req, res) => {
+  console.log('\n========== REGISTER CONTROLLER ==========');
+  console.log('Request URL:', req.url);
+  console.log('Request Method:', req.method);
+  console.log('Content-Type:', req.headers['content-type']);
+  console.log('Request Body:', JSON.stringify(req.body));
+  console.log('===========================================\n');
+
   try {
     const { name, email, password, role, college, regNo, department } = req.body;
 
+    // Debug: Check if req.body is empty
+    if (!req.body || Object.keys(req.body).length === 0) {
+      console.error('❌ req.body is EMPTY - Express JSON middleware may not be working');
+      return res.status(400).json({ 
+        message: 'Request body is empty. Please check API configuration.',
+        hint: 'Make sure Content-Type header is application/json'
+      });
+    }
+
+    console.log('✅ Received data:', { name, email, role, hasPassword: !!password });
+
+    // Validate required fields
     if (!name || !email || !password || !role) {
-      return res.status(400).json({ message: 'Please fill all required fields' });
+      const missing = [];
+      if (!name) missing.push('name');
+      if (!email) missing.push('email');
+      if (!password) missing.push('password');
+      if (!role) missing.push('role');
+      
+      console.error('❌ Missing fields:', missing);
+      return res.status(400).json({ 
+        message: `Missing required fields: ${missing.join(', ')}`,
+        missingFields: missing
+      });
     }
 
     // Only allow Gmail accounts
     if (!email.endsWith('@gmail.com')) {
+      console.error('❌ Invalid email domain:', email);
       return res.status(400).json({ message: 'Only Gmail accounts are allowed' });
     }
 
-    const userExists = await User.findOne({ email });
+    // Check if user exists
+    const userExists = await User.findOne({ email: email.toLowerCase() });
 
     if (userExists) {
+      console.log('⚠️ User already exists:', email);
       return res.status(400).json({ message: 'User already exists with this email' });
     }
 
-    const hashedPassword = await bcrypt.hash(password, 10);
+    console.log('✅ Creating new user...');
 
+    // Hash password with bcrypt
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
+
+    console.log('✅ Password hashed successfully');
+
+    // Create user
     const user = await User.create({
       name,
-      email,
+      email: email.toLowerCase(),
       password: hashedPassword,
       role,
       college: college || '',
@@ -43,63 +80,134 @@ export const registerUser = async (req, res) => {
       department: department || '',
     });
 
+    console.log('✅ User created successfully:', user._id);
+
+    // Return success response
     res.status(201).json({
-      _id: user.id,
+      _id: user._id.toString(),
       name: user.name,
       email: user.email,
       role: user.role,
       college: user.college,
       regNo: user.regNo,
+      department: user.department,
       token: generateToken(user._id),
     });
+
   } catch (error) {
-    console.error('Register Error:', error);
-    res.status(500).json({ message: error.message || 'Server error during registration' });
+    console.error('❌ Registration Error:', error);
+    console.error('Error stack:', error.stack);
+    
+    // Handle specific MongoDB errors
+    if (error.name === 'ValidationError') {
+      const validationErrors = Object.values(error.errors).map(e => e.message);
+      return res.status(400).json({ 
+        message: 'Validation error',
+        errors: validationErrors 
+      });
+    }
+    
+    if (error.code === 11000) {
+      return res.status(400).json({ message: 'Email already exists' });
+    }
+    
+    res.status(500).json({ 
+      message: 'Server error during registration',
+      error: error.message 
+    });
   }
 };
 
-// Login User
+// Login User - Complete with Debugging
 export const loginUser = async (req, res) => {
+  console.log('\n========== LOGIN CONTROLLER ==========');
+  console.log('Request URL:', req.url);
+  console.log('Request Method:', req.method);
+  console.log('Content-Type:', req.headers['content-type']);
+  console.log('Request Body:', JSON.stringify(req.body));
+  console.log('======================================\n');
+
   try {
     let { email, password } = req.body;
 
-    // Trim email to avoid space issues
-    if (email) email = email.trim();
+    // Debug: Check if req.body is empty
+    if (!req.body || Object.keys(req.body).length === 0) {
+      console.error('❌ req.body is EMPTY');
+      return res.status(400).json({ 
+        message: 'Request body is empty. Please check API configuration.'
+      });
+    }
 
-    const logMsg = `\n[${new Date().toISOString()}] Login Attempt: Email='${email}', PasswordLength=${password?.length}\n`;
-    fs.appendFileSync(path.join(process.cwd(), 'debug_login.txt'), logMsg);
-
+    // Validate inputs
     if (!email || !password) {
-      fs.appendFileSync(path.join(process.cwd(), 'debug_login.txt'), "Result: Missing credentials\n");
+      console.error('❌ Missing credentials');
       return res.status(400).json({ message: 'Please enter email and password' });
     }
 
+    // Normalize email
+    email = email.trim().toLowerCase();
+    console.log('✅ Attempting login for:', email);
+
+    // Find user by email
     const user = await User.findOne({ email });
-    fs.appendFileSync(path.join(process.cwd(), 'debug_login.txt'), `User Found: ${!!user}, Role: ${user?.role}\n`);
 
-    if (user) {
-      const isMatch = await bcrypt.compare(password, user.password);
-      fs.appendFileSync(path.join(process.cwd(), 'debug_login.txt'), `Password Match: ${isMatch}\n`);
+    if (!user) {
+      console.log('❌ User not found:', email);
+      return res.status(401).json({ message: 'Invalid email or password' });
+    }
 
+    console.log('✅ User found:', user.email, '| Role:', user.role);
+    console.log('✅ Stored password length:', user.password.length);
+    console.log('✅ Is password hashed:', user.password.startsWith('$2'));
+
+    // Check password
+    let isMatch = false;
+    
+    if (user.password.startsWith('$2')) {
+      // Password is hashed - use bcrypt.compare
+      isMatch = await bcrypt.compare(password, user.password);
+      console.log('✅ bcrypt.compare result:', isMatch);
+    } else {
+      // Legacy: Plain text password
+      isMatch = (password === user.password);
+      console.log('✅ Plain text compare result:', isMatch);
+      
+      // Auto-upgrade to hashed password
       if (isMatch) {
-        res.json({
-          _id: user.id,
-          name: user.name,
-          email: user.email,
-          role: user.role,
-          college: user.college,
-          regNo: user.regNo,
-          token: generateToken(user._id),
-        });
-        return;
+        console.log('🔄 Upgrading to hashed password...');
+        const salt = await bcrypt.genSalt(10);
+        user.password = await bcrypt.hash(password, salt);
+        await user.save();
+        console.log('✅ Password upgraded to hashed');
       }
     }
 
-    res.status(401).json({ message: 'Invalid email or password' });
+    if (!isMatch) {
+      console.log('❌ Password mismatch');
+      return res.status(401).json({ message: 'Invalid email or password' });
+    }
+
+    console.log('✅ Login successful for:', user.email);
+
+    // Return success response
+    res.json({
+      _id: user._id.toString(),
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      college: user.college,
+      regNo: user.regNo,
+      department: user.department,
+      token: generateToken(user._id),
+    });
+
   } catch (error) {
-    fs.appendFileSync(path.join(process.cwd(), 'debug_login.txt'), `Error: ${error.message}\n`);
-    console.error('Login Error:', error);
-    res.status(500).json({ message: error.message || 'Server error during login' });
+    console.error('❌ Login Error:', error);
+    console.error('Error stack:', error.stack);
+    res.status(500).json({ 
+      message: 'Server error during login',
+      error: error.message 
+    });
   }
 };
 
@@ -179,12 +287,31 @@ export const googleAuth = async (req, res) => {
 // Get User Profile
 export const getUserProfile = async (req, res) => {
   try {
-    const user = await User.findById(req.user._id).select('-password');
-    if (user) {
-      res.json(user);
-    } else {
-      res.status(404).json({ message: 'User not found' });
+    // Get user by ID from JWT token - exclude password
+    const userId = req.user?._id || req.user?.id;
+    
+    if (!userId) {
+      return res.status(400).json({ message: 'User ID not found in token' });
     }
+    
+    const user = await User.findById(userId).select('-password');
+    
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    // Return user data with all fields, using defaults for missing values
+    res.json({
+      _id: user._id,
+      name: user.name || '',
+      email: user.email || '',
+      role: user.role || 'student',
+      college: user.college || '',
+      regNo: user.regNo || '',
+      department: user.department || '',
+      profileImage: user.profileImage || '',
+      createdAt: user.createdAt,
+    });
   } catch (error) {
     console.error('Profile Error:', error);
     res.status(500).json({ message: error.message || 'Server error fetching profile' });

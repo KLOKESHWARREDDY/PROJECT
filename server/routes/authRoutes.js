@@ -4,6 +4,17 @@ import { protect } from '../middleware/authMiddleware.js';
 
 const router = express.Router();
 
+// Test endpoint to verify server is receiving data
+router.post("/test-register", (req, res) => {
+  console.log('[TEST] Raw req.body:', req.body);
+  console.log('[TEST] Content-Type:', req.headers['content-type']);
+  res.json({ 
+    message: 'Test endpoint working',
+    receivedBody: req.body,
+    contentType: req.headers['content-type']
+  });
+});
+
 // Auth Routes
 router.post('/register', registerUser);
 router.post('/login', loginUser);

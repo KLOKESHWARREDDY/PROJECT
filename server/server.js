@@ -14,7 +14,7 @@ const __dirname = path.dirname(__filename);
 dotenv.config();
 
 // Debug check (remove after everything works)
-console.log("Loaded MONGO_URI:", process.env.MONGO_URI);
+console.log(`[${new Date().toISOString()}] Loaded MONGO_URI (standard):`, process.env.MONGO_URI ? "HIDDEN" : "MISSING");
 
 import connectDB from './config/db.js';
 

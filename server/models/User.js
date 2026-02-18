@@ -19,6 +19,19 @@ const userSchema = new mongoose.Schema({
     enum: ['student', 'teacher'],
     default: 'student',
   },
+  // Academic Information Fields
+  college: {
+    type: String,
+    default: '',
+  },
+  regNo: {
+    type: String,
+    default: '',
+  },
+  department: {
+    type: String,
+    default: '',
+  },
   profileImage: {
     type: String,
     default: '',
