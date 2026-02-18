@@ -4,6 +4,8 @@ import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
 import nodemailer from 'nodemailer';
 import { OAuth2Client } from 'google-auth-library';
+import fs from 'fs';
+import path from 'path';
 
 const generateToken = (id) => {
   return jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: '30d' });
@@ -59,28 +61,43 @@ export const registerUser = async (req, res) => {
 // Login User
 export const loginUser = async (req, res) => {
   try {
-    const { email, password } = req.body;
+    let { email, password } = req.body;
+
+    // Trim email to avoid space issues
+    if (email) email = email.trim();
+
+    const logMsg = `\n[${new Date().toISOString()}] Login Attempt: Email='${email}', PasswordLength=${password?.length}\n`;
+    fs.appendFileSync(path.join(process.cwd(), 'debug_login.txt'), logMsg);
 
     if (!email || !password) {
+      fs.appendFileSync(path.join(process.cwd(), 'debug_login.txt'), "Result: Missing credentials\n");
       return res.status(400).json({ message: 'Please enter email and password' });
     }
 
     const user = await User.findOne({ email });
+    fs.appendFileSync(path.join(process.cwd(), 'debug_login.txt'), `User Found: ${!!user}, Role: ${user?.role}\n`);
 
-    if (user && (await bcrypt.compare(password, user.password))) {
-      res.json({
-        _id: user.id,
-        name: user.name,
-        email: user.email,
-        role: user.role,
-        college: user.college,
-        regNo: user.regNo,
-        token: generateToken(user._id),
-      });
-    } else {
-      res.status(401).json({ message: 'Invalid email or password' });
+    if (user) {
+      const isMatch = await bcrypt.compare(password, user.password);
+      fs.appendFileSync(path.join(process.cwd(), 'debug_login.txt'), `Password Match: ${isMatch}\n`);
+
+      if (isMatch) {
+        res.json({
+          _id: user.id,
+          name: user.name,
+          email: user.email,
+          role: user.role,
+          college: user.college,
+          regNo: user.regNo,
+          token: generateToken(user._id),
+        });
+        return;
+      }
     }
+
+    res.status(401).json({ message: 'Invalid email or password' });
   } catch (error) {
+    fs.appendFileSync(path.join(process.cwd(), 'debug_login.txt'), `Error: ${error.message}\n`);
     console.error('Login Error:', error);
     res.status(500).json({ message: error.message || 'Server error during login' });
   }
@@ -90,14 +107,14 @@ export const loginUser = async (req, res) => {
 export const googleAuth = async (req, res) => {
   try {
     const { credential } = req.body;
-    
+
     if (!credential) {
       return res.status(400).json({ message: 'Google credential is required' });
     }
 
     // Verify Google token
     const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
-    
+
     let ticket;
     try {
       ticket = await client.verifyIdToken({
@@ -130,7 +147,7 @@ export const googleAuth = async (req, res) => {
     } else {
       // Create new user (default role is student)
       const hashedPassword = await bcrypt.hash(crypto.randomBytes(20).toString('hex'), 10);
-      
+
       user = await User.create({
         name,
         email,
@@ -179,21 +196,21 @@ export const updateUserProfile = async (req, res) => {
   try {
     console.log('📝 Update Profile Request Body:', req.body);
     console.log('📝 User ID from token:', req.user?._id);
-    
+
     const userId = req.user?._id || req.user?.id;
-    
+
     if (!userId) {
       console.error('❌ No user ID in request');
       return res.status(400).json({ message: 'User ID not found' });
     }
-    
+
     const user = await User.findById(userId);
-    
+
     if (!user) {
       console.error('❌ User not found in database');
       return res.status(404).json({ message: 'User not found' });
     }
-    
+
     console.log('📝 Current user:', user.email);
     console.log('📝 Fields to update:', {
       name: req.body.name,
@@ -202,17 +219,17 @@ export const updateUserProfile = async (req, res) => {
       department: req.body.department,
       profileImage: req.body.profileImage
     });
-    
+
     // Update fields from request body
     if (req.body.name) user.name = req.body.name;
     if (req.body.college !== undefined) user.college = req.body.college;
     if (req.body.regNo !== undefined) user.regNo = req.body.regNo;
     if (req.body.department !== undefined) user.department = req.body.department;
     if (req.body.profileImage) user.profileImage = req.body.profileImage;
-    
+
     // Save updated user
     await user.save();
-    
+
     console.log('✅ User saved successfully:', user.email);
     console.log('✅ Updated fields:', {
       name: user.name,
@@ -221,10 +238,10 @@ export const updateUserProfile = async (req, res) => {
       department: user.department,
       profileImage: user.profileImage
     });
-    
+
     // Return updated user without password
     const updatedUser = await User.findById(user._id).select('-password');
-    
+
     res.json(updatedUser);
   } catch (error) {
     console.error('❌ Update Profile Error:', error);
@@ -245,8 +262,8 @@ export const forgotPassword = async (req, res) => {
 
     if (!user) {
       // Don't reveal if user exists
-      return res.status(200).json({ 
-        message: 'If an account with that email exists, a password reset link has been sent.' 
+      return res.status(200).json({
+        message: 'If an account with that email exists, a password reset link has been sent.'
       });
     }
 
@@ -284,8 +301,8 @@ export const forgotPassword = async (req, res) => {
       await transporter.sendMail(mailOptions);
       console.log('✅ Password reset email sent to:', user.email);
 
-      res.status(200).json({ 
-        message: 'If an account with that email exists, a password reset link has been sent.' 
+      res.status(200).json({
+        message: 'If an account with that email exists, a password reset link has been sent.'
       });
     } catch (error) {
       console.error('Email send error:', error);
@@ -338,7 +355,7 @@ export const resetPassword = async (req, res) => {
 
     console.log('✅ Password reset successful for:', user.email);
 
-    res.status(200).json({ 
+    res.status(200).json({
       message: 'Password reset successful! You can now login with your new password.'
     });
   } catch (error) {

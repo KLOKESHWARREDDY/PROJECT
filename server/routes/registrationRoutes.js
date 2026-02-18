@@ -1,9 +1,10 @@
 import express from "express";
-import { 
-  createRegistration, 
-  getStudentRegistrations, 
+import {
+  createRegistration,
+  getStudentRegistrations,
   getTeacherRegistrations,
-  approveRegistration, 
+  getEventRegistrations,
+  approveRegistration,
   rejectRegistration,
   cancelRegistration,
   getRegistrationById,
@@ -25,6 +26,9 @@ router.get("/teacher", protect, isTeacher, getTeacherRegistrations);
 
 // Get pending registrations count for teacher dashboard
 router.get("/teacher/pending-count", protect, isTeacher, getPendingRegistrationsCount);
+
+// Get registrations for specific event
+router.get("/event/:id", protect, isTeacher, getEventRegistrations);
 
 // Approve registration
 router.put("/approve/:id", protect, isTeacher, approveRegistration);

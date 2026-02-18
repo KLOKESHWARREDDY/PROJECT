@@ -1,14 +1,20 @@
 import express from 'express';
 import cors from 'cors';
+import helmet from 'helmet';
+import rateLimit from 'express-rate-limit';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import dotenv from 'dotenv';
 
+// Setup __dirname for ES Modules
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Load .env from server folder
-dotenv.config({ path: path.resolve(__dirname, '.env') });
+// Load environment variables (since .env is inside server folder)
+dotenv.config();
+
+// Debug check (remove after everything works)
+console.log("Loaded MONGO_URI:", process.env.MONGO_URI);
 
 import connectDB from './config/db.js';
 
@@ -19,19 +25,33 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 
 // Middleware
+app.use(helmet()); // Security headers
 app.use(cors({
-  origin: ['http://localhost:3000', 'http://localhost:5173'],
+  origin: [
+    'http://localhost:3000',
+    'http://localhost:3001',
+    'http://localhost:5173',
+    process.env.FRONTEND_URL // Add production frontend URL
+  ].filter(Boolean),
   credentials: true,
 }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// Rate Limiting
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100, // Limit each IP to 100 requests per windowMs
+  message: 'Too many requests from this IP, please try again later.'
+});
+app.use('/api', limiter);
 
 // Static files - serve uploaded images
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Health check route
 app.get('/', (req, res) => {
-  res.json({ 
+  res.json({
     message: 'API Running',
     backend: 'EventSphere API Server',
     version: '1.0.0'
@@ -44,12 +64,17 @@ import eventRoutes from './routes/eventRoutes.js';
 import registrationRoutes from './routes/registrationRoutes.js';
 import ticketRoutes from './routes/ticketRoutes.js';
 import uploadRoutes from './routes/uploadRoutes.js';
+import notificationRoutes from './routes/notificationRoutes.js';
 
 app.use('/api/auth', authRoutes);
 app.use('/api/events', eventRoutes);
 app.use('/api/registrations', registrationRoutes);
 app.use('/api/tickets', ticketRoutes);
 app.use('/api/uploads', uploadRoutes);
+app.use('/api/notifications', notificationRoutes);
+
+import chatRoutes from './routes/chatRoutes.js';
+app.use('/api/chat', chatRoutes);
 
 // 404 Handler
 app.use((req, res) => {

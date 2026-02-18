@@ -9,6 +9,7 @@ import './App.css';
 import Sidebar from './components/Sidebar';
 import BottomNav from './components/BottomNav';
 import LandingPage from './components/LandingPage';
+import ChatBot from './components/ChatBot';
 
 // Auth Pages
 import StudentSignIn from './components/StudentSignIn';
@@ -48,7 +49,7 @@ import LanguageSelection from './pages/LanguageSelection';
 import api, { registrationAPI, eventAPI } from './api';
 
 
-const AppContent = ({ 
+const AppContent = ({
   isAuthenticated, handleLogin, handleLogout,
   theme, setTheme, user, setUser,
   allEvents, handleRegister, handleCancel,
@@ -97,9 +98,9 @@ const AppContent = ({
   return (
     <div className="app-layout" style={{ display: 'flex', minHeight: '100vh', width: '100%' }}>
       {!isMobile && <Sidebar key={user?._id || user?.profileImage || 'sidebar'} user={user} theme={theme} onLogout={handleLogout} />}
-      <div className="main-content" style={{ 
-        flex: 1, marginLeft: isMobile ? '0px' : '60px', width: isMobile ? '100%' : 'calc(100% - 60px)', 
-        backgroundColor: isDark ? '#0f172a' : '#f8fafc', minHeight: '100vh', paddingBottom: '80px', transition: 'margin-left 0.3s ease' 
+      <div className="main-content" style={{
+        flex: 1, marginLeft: isMobile ? '0px' : '60px', width: isMobile ? '100%' : 'calc(100% - 60px)',
+        backgroundColor: isDark ? '#0f172a' : '#f8fafc', minHeight: '100vh', paddingBottom: '80px', transition: 'margin-left 0.3s ease'
       }}>
         <Routes>
           <Route path="/" element={
@@ -109,7 +110,7 @@ const AppContent = ({
               <Dashboard key={user?._id || 'student-dash'} user={user} events={allEvents} theme={theme} toggleTheme={() => setTheme(theme === 'light' ? 'dark' : 'light')} onRegister={handleRegister} unreadCount={unreadCount} onReadNotifications={markNotificationsRead} />
             )
           } />
-          
+
           {isTeacher && (
             <>
               <Route path="/create-event" element={<CreateEvent onCreate={handleCreateEvent} theme={theme} />} />
@@ -137,7 +138,7 @@ const AppContent = ({
           <Route path="/edit-profile" element={<EditProfile user={user} setUser={setUser} theme={theme} />} />
           <Route path="/change-password" element={<ChangePassword theme={theme} />} />
           <Route path="/settings/theme" element={<ThemeSelection currentTheme={theme} setTheme={setTheme} />} />
-          <Route path="/settings/language" element={<LanguageSelection currentLanguage="English" setLanguage={() => {}} theme={theme} />} />
+          <Route path="/settings/language" element={<LanguageSelection currentLanguage="English" setLanguage={() => { }} theme={theme} />} />
           <Route path="/notifications" element={<Notifications theme={theme} user={user} registrations={registrations} notificationsList={notifications} />} />
           <Route path="/privacy" element={<PrivacyPolicy theme={theme} />} />
           <Route path="/help" element={<HelpCenter theme={theme} />} />
@@ -146,6 +147,7 @@ const AppContent = ({
         </Routes>
       </div>
       {shouldShowNav && isMobile && <BottomNav theme={theme} user={user} />}
+      <ChatBot user={user} />
     </div>
   );
 };
@@ -155,13 +157,13 @@ function App() {
     const saved = localStorage.getItem('theme');
     return saved || 'light';
   });
-  
+
   const [searchTerm, setSearchTerm] = useState("");
-  
+
   const [authLoading, setAuthLoading] = useState(true);
-  
+
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  
+
   const [user, setUser] = useState(null);
 
   // Initialize auth state and fetch user from API on app load
@@ -169,10 +171,10 @@ function App() {
     const initAuth = async () => {
       const token = localStorage.getItem('token');
       const savedUser = localStorage.getItem('user');
-      
+
       if (token) {
         axios.defaults.headers.common["Authorization"] = `Bearer ${token}`;
-        
+
         // Try to restore user from localStorage first
         if (savedUser) {
           try {
@@ -185,13 +187,13 @@ function App() {
             console.error('Error parsing saved user:', e);
           }
         }
-        
+
         // Then fetch fresh user data from API
         try {
           const response = await axios.get('http://localhost:5000/api/auth/profile', {
             headers: { Authorization: `Bearer ${token}` }
           });
-          
+
           const userData = response.data;
           setUser({ ...userData, token });
           setIsAuthenticated(true);
@@ -205,10 +207,10 @@ function App() {
           }
         }
       }
-      
+
       setAuthLoading(false);
     };
-    
+
     initAuth();
   }, []);
 
@@ -237,25 +239,25 @@ function App() {
   const handleLogin = useCallback(async (userData) => {
     if (userData) {
       const token = userData.token || '';
-      
+
       // Save to localStorage first
       localStorage.setItem('user', JSON.stringify(userData));
       localStorage.setItem('token', token);
       localStorage.setItem('isAuthenticated', 'true');
-      
+
       // Set axios default header
       axios.defaults.headers.common["Authorization"] = `Bearer ${token}`;
-      
+
       // Update state
       setUser(userData);
       setIsAuthenticated(true);
-      
+
       // Fetch fresh user data from API
       try {
         const response = await axios.get('http://localhost:5000/api/auth/profile', {
           headers: { Authorization: `Bearer ${token}` }
         });
-        
+
         const freshUser = response.data;
         setUser({ ...freshUser, token });
         localStorage.setItem('user', JSON.stringify({ ...freshUser, token }));
@@ -280,22 +282,22 @@ function App() {
 
   const fetchEvents = useCallback(async () => {
     if (!isAuthenticated) return;
-    
+
     try {
       const token = localStorage.getItem('token') || user?.token;
       if (!token) {
         console.log('[App.js] No token found');
         return;
       }
-      
+
       // Use single endpoint - backend handles role-based filtering
       const response = await api.get('/events', {
         headers: { Authorization: `Bearer ${token}` }
       });
-      
+
       console.log("Events from API:", response.data)
       console.log("Upcoming events response:", response.data)
-      
+
       const backendEvents = response.data.map(event => ({
         id: event._id,
         _id: event._id,
@@ -308,7 +310,7 @@ function App() {
         teacher: event.teacher,
         status: event.status || 'draft'
       }));
-      
+
       setAllEvents(backendEvents);
       console.log('[App.js] Events fetched successfully:', backendEvents.length);
     } catch (error) {
@@ -322,29 +324,32 @@ function App() {
 
   const [registrations, setRegistrations] = useState([]);
 
-  // Fetch registrations from database - pass student ID
+  // Fetch registrations based on role
   const fetchRegistrations = useCallback(async () => {
     if (!isAuthenticated || !user?._id) return;
-    
+
     try {
       const token = localStorage.getItem('token') || user?.token;
-      if (!token) {
-        console.log('[App.js] No token available for fetching registrations');
-        return;
+      if (!token) return;
+
+      let response;
+      if (user.role === 'teacher') {
+        console.log('[App.js] Fetching teacher registrations');
+        response = await registrationAPI.getTeacherRegistrations();
+      } else {
+        console.log('[App.js] Fetching student registrations');
+        response = await registrationAPI.getStudentRegistrations(user._id);
       }
-      
-      console.log('[App.js] Fetching student registrations for user:', user._id);
-      const response = await registrationAPI.getStudentRegistrations(user._id);
-      console.log('[App.js] Registrations fetched successfully, count:', response.data.length);
+
+      console.log('[App.js] Registrations fetched:', response.data.length);
       setRegistrations(response.data);
     } catch (error) {
       console.log('[App.js] Failed to fetch registrations:', error.message);
     }
-  }, [isAuthenticated, user?._id, user?.token]);
+  }, [isAuthenticated, user, user?.token]);
 
-  // Trigger registration refresh when needed (called from EventDetails)
+  // Trigger registration refresh when needed
   const refreshRegistrations = useCallback(async () => {
-    console.log('[App.js] Refreshing registrations...');
     await fetchRegistrations();
   }, [fetchRegistrations]);
 
@@ -352,37 +357,54 @@ function App() {
     fetchRegistrations();
   }, [fetchRegistrations]);
 
-  const [notifications, setNotifications] = useState([
-    { id: 1, title: "Welcome!", typeLabel: "System", desc: "Welcome to EventSphere.", time: "Just now", icon: <CheckCircle size={20} color="#5c5cfc" />, bgColor: 'rgba(92, 92, 252, 0.1)', eventId: 0 }
-  ]);
-  const [unreadCount, setUnreadCount] = useState(1);
+  const [notifications, setNotifications] = useState([]);
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  const fetchNotifications = useCallback(async () => {
+    if (!isAuthenticated) return;
+    try {
+      const response = await api.get('/notifications');
+      setNotifications(response.data);
+      const unread = response.data.filter(n => !n.read).length;
+      setUnreadCount(unread);
+    } catch (error) {
+      console.log('[App.js] Failed to fetch notifications:', error);
+    }
+  }, [isAuthenticated]);
+
+  useEffect(() => {
+    fetchNotifications();
+    // Poll for notifications every 30 seconds
+    const interval = setInterval(fetchNotifications, 30000);
+    return () => clearInterval(interval);
+  }, [fetchNotifications]);
 
   // handleRegister now accepts an optional callback for navigation
   const handleRegister = useCallback(async (eventId, onSuccess) => {
     // Don't check allEvents - just send to API. Backend validates event exists.
     console.log("[App.js] Registering for event:", eventId);
-    
+
     try {
       // Call API to register
       console.log("[App.js] Sending registration request for eventId:", eventId);
       const response = await registrationAPI.register(eventId);
       console.log("[App.js] Registration response status:", response.status);
       console.log("[App.js] Registration response:", response.data);
-      
+
       if (response.data.registration) {
         console.log("[App.js] Registration saved with ID:", response.data.registration._id);
         console.log("[App.js] Registration status:", response.data.registration.status);
       }
-      
+
       // Update local state if event exists in allEvents - check both id and _id
       setAllEvents(prev => prev.map(ev => (ev.id === eventId || ev._id === eventId) ? { ...ev, status: 'pending' } : ev));
-      
+
       // Refresh registrations from database
       await fetchRegistrations();
-      
+
       console.log("[App.js] Registration completed successfully!");
       toast.success('Registration successful! Waiting for teacher approval.');
-      
+
       // Call the success callback if provided
       if (onSuccess) {
         onSuccess();
@@ -392,22 +414,22 @@ function App() {
       console.log("[App.js] Error:", error.message);
       console.log("[App.js] Error response:", error.response?.data);
       console.log("[App.js] Error status:", error.response?.status);
-      
+
       const errorMessage = error.response?.data?.message || error.message || 'Registration failed';
       toast.error('Registration failed: ' + errorMessage);
     }
   }, [allEvents, fetchRegistrations]);
 
   // Student cancels their registration
-  const handleCancel = useCallback(async (registrationId) => { 
+  const handleCancel = useCallback(async (registrationId) => {
     console.log('[App.js] Cancelling registration:', registrationId);
     try {
       const response = await registrationAPI.cancel(registrationId);
       console.log('[App.js] Cancel response:', response.data);
-      
+
       // Remove from local state
       setRegistrations(prev => prev.filter(r => r._id !== registrationId));
-      
+
       toast.success('Registration cancelled successfully!');
     } catch (error) {
       console.log('[App.js] Failed to cancel registration:', error.response?.data || error.message);
@@ -421,7 +443,7 @@ function App() {
       const response = await api.post('/events', newEvent, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      
+
       const backendEvent = {
         id: response.data._id,
         _id: response.data._id,
@@ -433,7 +455,7 @@ function App() {
         description: response.data.description,
         status: response.data.status || 'draft'
       };
-      
+
       setAllEvents(prev => [backendEvent, ...prev]);
       console.log('[App.js] Event created successfully');
     } catch (error) {
@@ -443,25 +465,23 @@ function App() {
     }
   }, [user?.token]);
 
-  const handleDeleteEvent = useCallback(async (eventId, navigateCallback) => { 
+  const handleDeleteEvent = useCallback(async (eventId, navigateCallback) => {
     console.log('[App] Deleting event:', eventId);
     try {
       const token = localStorage.getItem('token') || user?.token;
       if (!token) {
-        alert('Authentication error. Please login again.');
+        console.error('Authentication error. Please login again.');
         return;
       }
-      
+
       // Use eventAPI to delete
       const response = await eventAPI.delete(eventId);
       console.log('[App] Delete response:', response.data);
       console.log('[App] Event deleted successfully from MongoDB');
-      
+
       // Remove from local state after successful delete
       setAllEvents(prev => prev.filter(e => e.id !== eventId && e._id !== eventId));
-      
-      alert('Event deleted successfully!');
-      
+
       // Navigate if callback provided
       if (navigateCallback) {
         navigateCallback();
@@ -469,13 +489,13 @@ function App() {
     } catch (error) {
       console.error('[App] Error deleting event:', error.message);
       console.error('[App] Error response:', error.response?.data);
-      
+
       const errorMsg = error.response?.data?.message || error.message || 'Failed to delete event';
-      alert('Error: ' + errorMsg);
+      console.error('Error: ' + errorMsg);
     }
   }, [user?.token]);
 
-  const handleUpdateEvent = useCallback(async (eventId, updatedData) => { 
+  const handleUpdateEvent = useCallback(async (eventId, updatedData) => {
     try {
       const response = await api.put(`/events/${eventId}`, updatedData);
       const updatedEvent = response.data;
@@ -494,12 +514,12 @@ function App() {
       console.log('[App.js] Approving registration:', regId);
       const response = await registrationAPI.approve(regId);
       console.log('[App.js] Approve response:', response.data);
-      
+
       // Update local registrations state
-      setRegistrations(prev => prev.map(r => 
+      setRegistrations(prev => prev.map(r =>
         r._id === regId ? { ...r, status: 'approved', ticketId: response.data.ticket?.ticketCode } : r
       ));
-      
+
       console.log('[App.js] Registration approved successfully!');
       toast.success('Registration approved! Ticket generated.');
     } catch (error) {
@@ -513,12 +533,12 @@ function App() {
       console.log('[App.js] Rejecting registration:', regId);
       const response = await registrationAPI.reject(regId);
       console.log('[App.js] Reject response:', response.data);
-      
+
       // Update local registrations state
-      setRegistrations(prev => prev.map(r => 
+      setRegistrations(prev => prev.map(r =>
         r._id === regId ? { ...r, status: 'rejected' } : r
       ));
-      
+
       console.log('[App.js] Registration rejected successfully!');
       toast.success('Registration rejected.');
     } catch (error) {
@@ -527,9 +547,17 @@ function App() {
     }
   }, []);
 
-  const markNotificationsRead = useCallback(() => setUnreadCount(0), []);
+  const markNotificationsRead = useCallback(async () => {
+    try {
+      await api.put('/notifications/read-all');
+      setUnreadCount(0);
+      setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+    } catch (error) {
+      console.error('Failed to mark notifications read:', error);
+    }
+  }, []);
   const filteredEvents = allEvents.filter(e => e.title.toLowerCase().includes(searchTerm.toLowerCase()));
-  
+
   // MyEvents should use registrations from database
   const registeredEvents = registrations.map(reg => ({
     _id: reg.event?._id || reg.event,
@@ -566,7 +594,7 @@ function App() {
 
   return (
     <Router>
-      <AppContent 
+      <AppContent
         isAuthenticated={isAuthenticated} handleLogin={handleLogin} handleLogout={handleLogout}
         theme={theme} setTheme={setTheme} toggleTheme={toggleTheme} user={user} setUser={setUser}
         allEvents={allEvents} registrations={registrations} registeredEvents={registeredEvents}

@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Upload, X, CheckCircle, Calendar, Clock, Tag, MapPin, AlignLeft, Save, AlertTriangle, FileText, Trash2 } from 'lucide-react';
-import { eventAPI } from '../api';
+import axios from "axios";
+import { ArrowLeft, Upload, X, CheckCircle, Calendar, Clock, Tag, MapPin, AlignLeft, Save, AlertTriangle, FileText, Trash2, Send } from 'lucide-react';
 
 function CreateEvent({ onCreate, theme }) {
   const navigate = useNavigate();
@@ -14,6 +14,7 @@ function CreateEvent({ onCreate, theme }) {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
+  // Form state
   const [eventName, setEventName] = useState("");
   const [description, setDescription] = useState("");
   const [date, setDate] = useState("");
@@ -24,34 +25,108 @@ function CreateEvent({ onCreate, theme }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   
+  // Track unsaved changes
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const initialValues = useRef({ eventName: "", description: "", date: "", time: "", location: "", category: "Technology" });
+
+  // Track form changes
+  useEffect(() => {
+    const hasChanges = 
+      eventName !== initialValues.current.eventName ||
+      description !== initialValues.current.description ||
+      date !== initialValues.current.date ||
+      time !== initialValues.current.time ||
+      location !== initialValues.current.location ||
+      category !== initialValues.current.category ||
+      eventImage !== null;
+    
+    setHasUnsavedChanges(hasChanges);
+  }, [eventName, description, date, time, location, category, eventImage]);
+
+  // Popups
   const [showSuccessPopup, setShowSuccessPopup] = useState(false);
   const [showCancelPopup, setShowCancelPopup] = useState(false);
+  const [successMessage, setSuccessMessage] = useState("");
 
   // --- ACTIONS ---
 
-  // 1. Save as Draft (local only)
-  const handleSaveDraft = () => {
-    const draftEvent = {
-      id: Date.now(),
-      title: eventName || "Untitled Draft",
-      desc: description,
-      date: date ? `${date} · ${time}` : "Date TBD",
-      location: location || "Location TBD",
-      category,
-      image: eventImage || "https://images.unsplash.com/photo-1505373877841-8d25f7d46678?w=800&q=80",
-      registrations: 0,
-      status: 'draft' 
-    };
-    onCreate(draftEvent);
-    navigate(-1);
+  // 1. Save as Draft (saves to backend with status 'draft')
+  const handleSaveDraft = async () => {
+    setError("");
+    setLoading(true);
+
+    try {
+      console.log("Saving draft");
+
+      // Combine date and time
+      const dateTime = date && time ? new Date(`${date}T${time}`) : null;
+
+      // Create event data for backend - status: draft
+      const eventData = {
+        title: eventName || "Untitled Draft",
+        description: description || "",
+        date: dateTime ? dateTime.toISOString() : "",
+        location: location || "",
+        category: category || "Technology",
+        image: eventImage || "https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=800",
+        status: "draft"
+      };
+
+      console.log("Draft data:", eventData);
+
+      // Call backend API directly with axios
+      const token = localStorage.getItem('token');
+      const response = await axios.post(
+        "http://localhost:5000/api/events",
+        eventData,
+        {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+
+      console.log("Draft saved:", response.data);
+
+      // Update local state
+      const newEvent = {
+        id: response.data._id,
+        title: response.data.title,
+        desc: response.data.description,
+        date: date && time ? `${date} · ${time}` : "Date TBD",
+        location: response.data.location,
+        category: category,
+        image: eventImage || "https://images.unsplash.com/photo-1505373877841-8d25f7d46678?w=800&q=80",
+        registrations: 0,
+        status: 'Draft',
+        teacher: response.data.teacher
+      };
+
+      onCreate(newEvent);
+      setSuccessMessage("Draft Saved!");
+      setShowSuccessPopup(true);
+      setTimeout(() => {
+        navigate('/teacher-events'); 
+      }, 1500);
+      
+    } catch (err) {
+      console.log('Error saving draft:', err);
+      console.error('Error message:', err.message);
+      if (err.response) {
+        console.error('Response data:', err.response.data);
+        setError(err.response.data?.message || "Failed to save draft");
+      } else if (err.request) {
+        setError("Network error - server not responding");
+      } else {
+        setError(err.message || "Failed to save draft");
+      }
+    } finally {
+      setLoading(false);
+    }
   };
 
-  // 2. Discard
-  const handleDiscard = () => {
-    navigate(-1);
-  };
-
-  // 3. Publish Event (saves to MongoDB)
+  // 2. Publish Event (saves to backend with status 'published')
   const handlePublish = async () => {
     setError("");
     
@@ -80,33 +155,47 @@ function CreateEvent({ onCreate, theme }) {
     setLoading(true);
 
     try {
+      console.log("Publishing event");
+
       // Combine date and time
       const dateTime = new Date(`${date}T${time}`);
       
-      // Create event data for backend
+      // Create event data for backend - status: published
       const eventData = {
         title: eventName,
         description: description,
         date: dateTime.toISOString(),
         location: location,
-        status: 'draft'
+        category: category || "Technology",
+        image: eventImage || "https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=800",
+        status: "published"
       };
 
-      console.log('📝 Publishing event:', eventData);
+      console.log("Publish data:", eventData);
 
-      // Call backend API
-      const response = await eventAPI.create(eventData);
-      
-      console.log('✅ Event saved to MongoDB:', response.data);
+      // Call backend API directly with axios
+      const token = localStorage.getItem('token');
+      const response = await axios.post(
+        "http://localhost:5000/api/events",
+        eventData,
+        {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        }
+      );
 
-      // Also update local state
+      console.log("Event published:", response.data);
+
+      // Update local state
       const newEvent = {
         id: response.data._id,
         title: response.data.title,
         desc: response.data.description,
         date: `${date} · ${time}`,
         location: response.data.location,
-        category,
+        category: category,
         image: eventImage || "https://images.unsplash.com/photo-1505373877841-8d25f7d46678?w=800&q=80",
         registrations: 0,
         status: 'Active',
@@ -114,6 +203,7 @@ function CreateEvent({ onCreate, theme }) {
       };
 
       onCreate(newEvent);
+      setSuccessMessage("Event Published!");
       setShowSuccessPopup(true);
       
       setTimeout(() => {
@@ -121,10 +211,32 @@ function CreateEvent({ onCreate, theme }) {
       }, 1500);
       
     } catch (err) {
-      console.error('❌ Error creating event:', err);
-      setError(err.response?.data?.message || "Failed to create event");
+      console.log('Error publishing event:', err);
+      console.error('Error message:', err.message);
+      if (err.response) {
+        console.error('Response data:', err.response.data);
+        setError(err.response.data?.message || "Failed to publish event");
+      } else if (err.request) {
+        setError("Network error - server not responding");
+      } else {
+        setError(err.message || "Failed to publish event");
+      }
     } finally {
       setLoading(false);
+    }
+  };
+
+  // 3. Discard Changes
+  const handleDiscard = () => {
+    navigate(-1);
+  };
+
+  // 4. Handle Back Button with Unsaved Changes Protection
+  const handleBackClick = () => {
+    if (hasUnsavedChanges && (eventName || description || date || time || location)) {
+      setShowCancelPopup(true);
+    } else {
+      navigate(-1);
     }
   };
 
@@ -192,16 +304,37 @@ function CreateEvent({ onCreate, theme }) {
       marginBottom: '1vh'
     },
 
-    // Buttons
-    submitBtn: {
-      width: '100%', padding: isMobile ? '2vh' : '1.5vh',
-      backgroundColor: loading ? '#94a3b8' : '#4f46e5', color: '#fff',
-      border: 'none', borderRadius: isMobile ? '2vw' : '0.8vw',
+    // Buttons Container
+    buttonRow: { display: 'flex', gap: '1vw', marginTop: '2vh' },
+    
+    // Save as Draft Button
+    draftBtn: {
+      flex: 1,
+      padding: isMobile ? '2vh' : '1.5vh',
+      backgroundColor: isDark ? '#334155' : '#f1f5f9',
+      color: isDark ? '#fff' : '#475569',
+      border: isDark ? '1px solid #475569' : '1px solid #cbd5e1',
+      borderRadius: isMobile ? '2vw' : '0.8vw',
       fontSize: isMobile ? '4vw' : '1.1vw', fontWeight: 'bold',
-      cursor: loading ? 'not-allowed' : 'pointer', marginTop: '2vh',
-      boxShadow: '0 4px 12px rgba(79, 70, 229, 0.3)',
+      cursor: 'pointer',
       display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5vw'
     },
+
+    // Publish Button
+    publishBtn: {
+      flex: 1,
+      padding: isMobile ? '2vh' : '1.5vh',
+      backgroundColor: loading ? '#94a3b8' : '#10b981', 
+      color: '#fff',
+      border: 'none',
+      borderRadius: isMobile ? '2vw' : '0.8vw',
+      fontSize: isMobile ? '4vw' : '1.1vw', fontWeight: 'bold',
+      cursor: loading ? 'not-allowed' : 'pointer',
+      boxShadow: '0 4px 12px rgba(16, 185, 129, 0.3)',
+      display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5vw'
+    },
+
+    // Cancel Button
     cancelBtn: {
       width: '100%', padding: isMobile ? '2vh' : '1.5vh',
       backgroundColor: 'transparent', color: isDark ? '#94a3b8' : '#64748b',
@@ -237,7 +370,7 @@ function CreateEvent({ onCreate, theme }) {
   return (
     <div style={styles.container}>
       <div style={styles.header}>
-        <button style={styles.backBtn} onClick={() => setShowCancelPopup(true)}>
+        <button style={styles.backBtn} onClick={handleBackClick}>
           <ArrowLeft size={isMobile ? 24 : 24} />
         </button>
         <h1 style={styles.pageTitle}>Create Event</h1>
@@ -315,13 +448,31 @@ function CreateEvent({ onCreate, theme }) {
           />
         </div>
 
-        {/* Submit Button */}
-        <button style={styles.submitBtn} onClick={handlePublish} disabled={loading}>
-          {loading ? 'Publishing...' : 'Publish Event'}
-        </button>
+        {/* Submit Buttons Row */}
+        <div style={styles.buttonRow}>
+          {/* Save as Draft Button */}
+          <button 
+            style={styles.draftBtn} 
+            onClick={handleSaveDraft}
+            disabled={loading}
+          >
+            <FileText size={isMobile ? 16 : 18}/>
+            {loading ? 'Saving...' : 'Save Draft'}
+          </button>
+
+          {/* Publish Button */}
+          <button 
+            style={styles.publishBtn} 
+            onClick={handlePublish}
+            disabled={loading}
+          >
+            <Send size={isMobile ? 16 : 18}/>
+            {loading ? 'Publishing...' : 'Publish'}
+          </button>
+        </div>
 
         {/* Cancel Button */}
-        <button style={styles.cancelBtn} onClick={() => setShowCancelPopup(true)}>
+        <button style={styles.cancelBtn} onClick={handleDiscard}>
           Cancel
         </button>
       </div>
@@ -331,23 +482,26 @@ function CreateEvent({ onCreate, theme }) {
         <div style={{position:'fixed', inset:0, background:'rgba(0,0,0,0.5)', display:'flex', alignItems:'center', justifyContent:'center', zIndex:1000}}>
           <div style={{background:'#fff', padding:'30px', borderRadius:'20px', textAlign:'center', animation:'popIn 0.3s ease'}}>
             <CheckCircle size={50} color="#10b981" style={{marginBottom:'10px'}}/>
-            <h3 style={{color:'#1f2937'}}>Event Published!</h3>
+            <h3 style={{color:'#1f2937'}}>{successMessage}</h3>
           </div>
         </div>
       )}
 
-      {/* Cancel Popup */}
+      {/* Unsaved Changes Popup */}
       {showCancelPopup && (
         <div style={styles.popupOverlay} onClick={() => setShowCancelPopup(false)}>
           <div style={styles.popup} onClick={(e) => e.stopPropagation()}>
-            <div style={styles.popupTitle}>Unsaved Changes</div>
+            <div style={styles.popupTitle}>
+              <AlertTriangle size={24} color="#f59e0b" style={{marginRight: '8px'}}/>
+              You have unsaved changes
+            </div>
             
             <button style={styles.popupOption('#15803d', '#dcfce7')} onClick={handleSaveDraft}>
               <FileText size={20}/> Save as Draft
             </button>
             
             <button style={styles.popupOption('#b91c1c', '#fee2e2')} onClick={handleDiscard}>
-              <Trash2 size={20}/> Don't Save
+              <Trash2 size={20}/> Discard Changes
             </button>
             
             <button style={styles.popupOption(isDark?'#fff':'#333', isDark?'#334155':'#f1f5f9')} onClick={() => setShowCancelPopup(false)}>

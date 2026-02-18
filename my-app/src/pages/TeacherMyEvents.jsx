@@ -94,13 +94,38 @@ const TeacherMyEvents = ({ events, theme }) => {
     eventMeta: { display: 'flex', gap: '2vw', color: '#64748b', fontSize: isMobile ? '3vw' : '0.85vw' },
     metaItem: { display: 'flex', alignItems: 'center', gap: '0.5vw' },
     
+    // Status Badge - Updated for Draft/Published/Completed
     statusBadge: (status) => ({
       padding: '0.4vh 1.5vw', borderRadius: '2vw',
       fontSize: isMobile ? '2.5vw' : '0.7vw', fontWeight: '700', textTransform: 'uppercase',
-      backgroundColor: status === 'Active' ? '#dcfce7' : status === 'Completed' ? '#f1f5f9' : '#fff7ed',
-      color: status === 'Active' ? '#166534' : status === 'Completed' ? '#475569' : '#c2410c'
+      backgroundColor: status === 'published' ? '#dcfce7' : status === 'draft' ? '#fef3c7' : status === 'completed' ? '#e0e7ff' : '#f1f5f9',
+      color: status === 'published' ? '#166534' : status === 'draft' ? '#92400e' : status === 'completed' ? '#4338ca' : '#475569'
     }),
     arrow: { color: isDark ? '#475569' : '#cbd5e1' }
+  };
+
+  // Helper to format date
+  const formatDate = (dateStr) => {
+    if (!dateStr) return 'TBD';
+    if (dateStr.includes('·')) return dateStr.split('·')[0];
+    try {
+      const date = new Date(dateStr);
+      return date.toLocaleDateString();
+    } catch (e) {
+      return dateStr;
+    }
+  };
+
+  // Helper to format time
+  const formatTime = (dateStr) => {
+    if (!dateStr) return '';
+    if (dateStr.includes('·')) return dateStr.split('·')[1];
+    try {
+      const date = new Date(dateStr);
+      return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    } catch (e) {
+      return '';
+    }
   };
 
   return (
@@ -112,14 +137,15 @@ const TeacherMyEvents = ({ events, theme }) => {
         <h1 style={styles.pageTitle}>My Created Events</h1>
       </div>
 
+      {/* Updated filter buttons for Draft/Published/Completed */}
       <div style={styles.filterBar}>
-        {['All', 'Active', 'Draft', 'Completed'].map((filter) => (
+        {['All', 'draft', 'published', 'completed'].map((filter) => (
           <button 
             key={filter} 
             style={styles.filterBtn(activeFilter === filter)}
             onClick={() => setActiveFilter(filter)}
           >
-            {filter}
+            {filter.charAt(0).toUpperCase() + filter.slice(1)}
           </button>
         ))}
       </div>
@@ -133,12 +159,8 @@ const TeacherMyEvents = ({ events, theme }) => {
               onClick={() => {
                 const eventId = event.id || event._id;
                 console.log("Clicked Event ID:", eventId, "Status:", event.status);
-                // If draft, go to edit page, otherwise go to details page
-                if (event.status?.toLowerCase() === 'draft') {
-                  navigate(`/edit-event/${eventId}`);
-                } else {
-                  navigate(`/teacher-event-details/${eventId}`);
-                }
+                // Go to event details page
+                navigate(`/teacher-event-details/${eventId}`);
               }}
             >
               <img src={event.image} alt={event.title} style={styles.eventImage} />
@@ -146,13 +168,17 @@ const TeacherMyEvents = ({ events, theme }) => {
               <div style={styles.eventInfo}>
                 <h3 style={styles.eventTitle}>{event.title}</h3>
                 <div style={styles.eventMeta}>
-                  <span style={styles.metaItem}><Calendar size={12}/> {event.date.split('·')[0]}</span>
-                  <span style={styles.metaItem}><Clock size={12}/> {event.date.split('·')[1] || '10:00 AM'}</span>
+                  <span style={styles.metaItem}><Calendar size={12}/> {formatDate(event.date)}</span>
+                  {formatTime(event.date) && (
+                    <span style={styles.metaItem}><Clock size={12}/> {formatTime(event.date)}</span>
+                  )}
                 </div>
               </div>
 
               <div style={{display:'flex', flexDirection:'column', alignItems:'flex-end', gap:'0.5vh'}}>
-                <span style={styles.statusBadge(event.status)}>{event.status}</span>
+                <span style={styles.statusBadge(event.status)}>
+                  {event.status === 'published' ? 'Published' : event.status === 'draft' ? 'Draft' : 'Completed'}
+                </span>
                 <ChevronRight size={16} style={styles.arrow} />
               </div>
             </div>

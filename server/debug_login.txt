@@ -1,0 +1,4 @@
+
+[2026-02-18T05:59:54.871Z] Login Attempt: Email='kv@gmail.com', PasswordLength=6
+User Found: true, Role: student
+Password Match: true

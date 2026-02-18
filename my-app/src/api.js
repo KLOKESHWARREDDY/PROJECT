@@ -1,7 +1,10 @@
 import axios from 'axios';
 
 // API configuration
-const API_URL = process.env.REACT_APP_API_URL || '/api';
+// API configuration
+// If REACT_APP_API_URL is set, use it. Otherwise fall back to localhost for dev.
+// Note: In production with same-origin, you might use '/api'
+const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
 
 // Set default Authorization header from localStorage on app load
 const storedToken = localStorage.getItem('token');
@@ -74,32 +77,39 @@ export const eventAPI = {
   getTeacherEvents: () => api.get('/events/my-events'),
   getEventById: (id) => api.get(`/events/${id}`),
   create: (data) => api.post('/events', data),
+  update: (id, data) => api.put(`/events/${id}`, data),
   delete: (id) => api.delete(`/events/${id}`),
+
+  // Draft + Publish System
+  publish: (id) => api.put(`/events/${id}/publish`),
+  unpublish: (id) => api.put(`/events/${id}/unpublish`),
+  complete: (id) => api.put(`/events/${id}/complete`),
+  schedulePublish: (id, publishAt) => api.put(`/events/${id}/schedule`, { publishAt }),
 };
 
 // Registration APIs - Updated routes
 export const registrationAPI = {
   // Create registration
   register: (eventId) => api.post('/registrations', { eventId }),
-  
+
   // Get student's registrations (pass studentId in URL)
   getStudentRegistrations: (studentId) => api.get(`/registrations/student/${studentId}`),
-  
+
   // Get teacher's registrations
   getTeacherRegistrations: () => api.get('/registrations/teacher'),
-  
+
   // Get pending registrations count for teacher dashboard
   getAllPendingRegistrations: () => api.get('/registrations/teacher/pending-count'),
-  
+
   // Approve registration
   approve: (id) => api.put(`/registrations/approve/${id}`),
-  
+
   // Reject registration
   reject: (id) => api.put(`/registrations/reject/${id}`),
-  
+
   // Cancel registration (student cancels)
   cancel: (id) => api.delete(`/registrations/${id}`),
-  
+
   // Get single registration
   getRegistrationById: (id) => api.get(`/registrations/${id}`),
 };
@@ -129,6 +139,14 @@ export const ticketAPI = {
     window.URL.revokeObjectURL(url);
     document.body.removeChild(a);
   },
+};
+
+// Notification APIs
+export const notificationAPI = {
+  getAll: () => api.get('/notifications'),
+  markAsRead: (id) => api.put(`/notifications/${id}/read`),
+  markAllAsRead: () => api.put('/notifications/read-all'),
+  delete: (id) => api.delete(`/notifications/${id}`),
 };
 
 export default api;

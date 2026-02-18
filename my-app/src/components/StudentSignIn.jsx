@@ -12,7 +12,7 @@ const StudentSignIn = ({ onLogin }) => {
 
   // Responsive Check
   const [isMobile, setIsMobile] = useState(window.innerWidth < 900);
-  
+
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth < 900);
     window.addEventListener('resize', handleResize);
@@ -27,207 +27,207 @@ const StudentSignIn = ({ onLogin }) => {
   const styles = {
     // Page & Card Layout
     pageContainer: {
-      height: '100vh', 
-      width: '100vw', 
-      display: 'flex', 
-      alignItems: 'center', 
+      height: '100vh',
+      width: '100vw',
+      display: 'flex',
+      alignItems: 'center',
       justifyContent: 'center',
-      fontFamily: "'Inter', sans-serif", 
-      backgroundColor: '#f3f4f6', 
+      fontFamily: "'Inter', sans-serif",
+      backgroundColor: '#f3f4f6',
       overflow: 'hidden'
     },
     mainWrapper: {
-      display: 'flex', 
-      width: isMobile ? '90vw' : '70vw', 
-      height: isMobile ? 'auto' : '80vh', 
-      minHeight: isMobile ? 'auto' : '600px', 
+      display: 'flex',
+      width: isMobile ? '90vw' : '70vw',
+      height: isMobile ? 'auto' : '80vh',
+      minHeight: isMobile ? 'auto' : '600px',
       maxHeight: '95vh',
-      backgroundColor: '#fff', 
-      borderRadius: isMobile ? '4vw' : '2vw', 
+      backgroundColor: '#fff',
+      borderRadius: isMobile ? '4vw' : '2vw',
       overflow: 'hidden',
-      boxShadow: '0 2vh 6vh -1vh rgba(0, 0, 0, 0.15)', 
+      boxShadow: '0 2vh 6vh -1vh rgba(0, 0, 0, 0.15)',
       flexDirection: 'row'
     },
 
     // Left Panel (Purple - Hidden on Mobile)
     leftPanel: {
-      flex: 1, 
+      flex: 1,
       background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)',
-      display: isMobile ? 'none' : 'flex', 
-      flexDirection: 'column', 
-      alignItems: 'center', 
+      display: isMobile ? 'none' : 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
       justifyContent: 'center',
-      color: '#fff', 
-      padding: '4vw', 
+      color: '#fff',
+      padding: '4vw',
       textAlign: 'center'
     },
     glassCard: {
-      backgroundColor: 'rgba(255, 255, 255, 0.1)', 
-      backdropFilter: 'blur(10px)', 
+      backgroundColor: 'rgba(255, 255, 255, 0.1)',
+      backdropFilter: 'blur(10px)',
       borderRadius: '1.5vw',
-      padding: '1.5vw', 
-      border: '1px solid rgba(255, 255, 255, 0.2)', 
-      marginTop: '2vh', 
+      padding: '1.5vw',
+      border: '1px solid rgba(255, 255, 255, 0.2)',
+      marginTop: '2vh',
       maxWidth: '20vw'
     },
-    heroImage: { 
-      width: '100%', 
-      borderRadius: '1vw', 
-      objectFit: 'cover' 
+    heroImage: {
+      width: '100%',
+      borderRadius: '1vw',
+      objectFit: 'cover'
     },
 
     // Right Panel (White Form)
     rightPanel: {
-      flex: 1.2, 
-      padding: isMobile ? '6vw' : '3vw 4vw', 
-      display: 'flex', 
+      flex: 1.2,
+      padding: isMobile ? '6vw' : '3vw 4vw',
+      display: 'flex',
       flexDirection: 'column',
-      justifyContent: 'center', 
-      backgroundColor: '#fff', 
+      justifyContent: 'center',
+      backgroundColor: '#fff',
       position: 'relative'
     },
 
-    header: { 
-      textAlign: 'center', 
-      marginBottom: '3vh' 
+    header: {
+      textAlign: 'center',
+      marginBottom: '3vh'
     },
-    title: { 
-      fontSize: isMobile ? '6vw' : '2vw', 
-      fontWeight: '800', 
-      color: '#1f2937', 
-      marginBottom: '1vh' 
+    title: {
+      fontSize: isMobile ? '6vw' : '2vw',
+      fontWeight: '800',
+      color: '#1f2937',
+      marginBottom: '1vh'
     },
-    subtitle: { 
-      fontSize: isMobile ? '3.5vw' : '1vw', 
-      color: '#6b7280' 
+    subtitle: {
+      fontSize: isMobile ? '3.5vw' : '1vw',
+      color: '#6b7280'
     },
 
-    inputGroup: { 
-      display: 'flex', 
-      flexDirection: 'column', 
-      gap: '0.8vh', 
-      marginBottom: '2vh' 
+    inputGroup: {
+      display: 'flex',
+      flexDirection: 'column',
+      gap: '0.8vh',
+      marginBottom: '2vh'
     },
-    label: { 
-      fontSize: isMobile ? '3.5vw' : '0.9vw', 
-      fontWeight: '700', 
-      color: '#374151', 
-      marginLeft: '0.2vw' 
+    label: {
+      fontSize: isMobile ? '3.5vw' : '0.9vw',
+      fontWeight: '700',
+      color: '#374151',
+      marginLeft: '0.2vw'
     },
-    
+
     input: (hasError) => ({
-      width: '100%', 
-      padding: isMobile ? '1.5vh 3vw' : '1.2vh 1vw', 
-      borderRadius: isMobile ? '2vw' : '0.8vw', 
+      width: '100%',
+      padding: isMobile ? '1.5vh 3vw' : '1.2vh 1vw',
+      borderRadius: isMobile ? '2vw' : '0.8vw',
       border: hasError ? '2px solid #ef4444' : '2px solid #e5e7eb',
-      backgroundColor: '#fff', 
-      fontSize: isMobile ? '4vw' : '1vw', 
-      outline: 'none', 
+      backgroundColor: '#fff',
+      fontSize: isMobile ? '4vw' : '1vw',
+      outline: 'none',
       color: '#111827',
       transition: 'border-color 0.2s',
       boxSizing: 'border-box'
     }),
-    
-    errorText: { 
-      fontSize: isMobile ? '3vw' : '0.8vw', 
-      color: '#ef4444', 
-      display: 'flex', 
-      alignItems: 'center', 
-      gap: '0.5vw', 
-      marginTop: '0.5vh' 
+
+    errorText: {
+      fontSize: isMobile ? '3vw' : '0.8vw',
+      color: '#ef4444',
+      display: 'flex',
+      alignItems: 'center',
+      gap: '0.5vw',
+      marginTop: '0.5vh'
     },
 
     actionBtn: {
-      width: '100%', 
-      padding: isMobile ? '2vh' : '1.5vh', 
-      borderRadius: isMobile ? '2vw' : '0.8vw', 
+      width: '100%',
+      padding: isMobile ? '2vh' : '1.5vh',
+      borderRadius: isMobile ? '2vw' : '0.8vw',
       border: 'none',
-      background: loading ? '#94a3b8' : '#6366f1', 
-      color: '#fff', 
-      fontSize: isMobile ? '4vw' : '1.1vw', 
+      background: loading ? '#94a3b8' : '#6366f1',
+      color: '#fff',
+      fontSize: isMobile ? '4vw' : '1.1vw',
       fontWeight: 'bold',
-      cursor: loading ? 'not-allowed' : 'pointer', 
-      marginTop: '1vh', 
+      cursor: loading ? 'not-allowed' : 'pointer',
+      marginTop: '1vh',
       boxShadow: '0 0.5vh 1.5vh rgba(99, 102, 241, 0.3)',
-      display: 'flex', 
-      alignItems: 'center', 
-      justifyContent: 'center', 
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
       gap: '0.5vw',
       transition: 'transform 0.1s'
     },
-    
+
     backBtn: {
-      background: 'none', 
-      border: 'none', 
-      color: '#6b7280', 
-      fontSize: isMobile ? '3.5vw' : '1vw', 
+      background: 'none',
+      border: 'none',
+      color: '#6b7280',
+      fontSize: isMobile ? '3.5vw' : '1vw',
       fontWeight: '600',
-      cursor: 'pointer', 
-      display: 'flex', 
-      alignItems: 'center', 
-      gap: '0.5vw', 
+      cursor: 'pointer',
+      display: 'flex',
+      alignItems: 'center',
+      gap: '0.5vw',
       marginBottom: '2vh',
       alignSelf: 'flex-start'
     },
 
     toggleContainer: {
-      display: 'flex', 
-      backgroundColor: '#f3f4f6', 
-      borderRadius: isMobile ? '2vw' : '0.8vw', 
-      padding: '0.5vh', 
+      display: 'flex',
+      backgroundColor: '#f3f4f6',
+      borderRadius: isMobile ? '2vw' : '0.8vw',
+      padding: '0.5vh',
       marginBottom: '3vh'
     },
     toggleBtn: (active) => ({
-      flex: 1, 
-      padding: isMobile ? '1.5vh' : '1vh', 
-      borderRadius: isMobile ? '1.5vw' : '0.6vw', 
-      border: 'none', 
-      fontSize: isMobile ? '3.5vw' : '0.9vw', 
+      flex: 1,
+      padding: isMobile ? '1.5vh' : '1vh',
+      borderRadius: isMobile ? '1.5vw' : '0.6vw',
+      border: 'none',
+      fontSize: isMobile ? '3.5vw' : '0.9vw',
       fontWeight: '600',
-      cursor: 'pointer', 
-      backgroundColor: active ? '#6366f1' : 'transparent', 
-      color: active ? '#fff' : '#6b7280', 
+      cursor: 'pointer',
+      backgroundColor: active ? '#6366f1' : 'transparent',
+      color: active ? '#fff' : '#6b7280',
       transition: 'all 0.2s'
     }),
 
-    forgotPass: { 
-      textAlign: 'right', 
-      fontSize: isMobile ? '3vw' : '0.9vw', 
-      color: '#6366f1', 
-      fontWeight: '600', 
-      cursor: 'pointer', 
-      marginTop: '-1vh', 
-      marginBottom: '2vh' 
+    forgotPass: {
+      textAlign: 'right',
+      fontSize: isMobile ? '3vw' : '0.9vw',
+      color: '#6366f1',
+      fontWeight: '600',
+      cursor: 'pointer',
+      marginTop: '-1vh',
+      marginBottom: '2vh'
     },
-    
+
     bottomLink: {
-      textAlign: 'center', 
-      marginTop: '3vh', 
-      fontSize: isMobile ? '3.5vw' : '1vw', 
+      textAlign: 'center',
+      marginTop: '3vh',
+      fontSize: isMobile ? '3.5vw' : '1vw',
       color: '#6b7280',
       paddingBottom: '1vh'
     },
-    
+
     iconBox: {
-      position: 'absolute', 
-      right: isMobile ? '3vw' : '1vw', 
-      top: isMobile ? '2vh' : '1.5vh', 
-      cursor: 'pointer', 
+      position: 'absolute',
+      right: isMobile ? '3vw' : '1vw',
+      top: isMobile ? '2vh' : '1.5vh',
+      cursor: 'pointer',
       color: '#9ca3af',
-      display: 'flex', 
+      display: 'flex',
       alignItems: 'center'
     }
   };
 
   const handleChange = (e) => {
-    setFormData({...formData, [e.target.name]: e.target.value});
-    if(errors[e.target.name]) setErrors({...errors, [e.target.name]: null});
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+    if (errors[e.target.name]) setErrors({ ...errors, [e.target.name]: null });
   };
-  
+
   const validate = () => {
     let newErrors = {};
-    if(!formData.email.trim()) newErrors.email = "Email is required";
-    if(!formData.password) newErrors.password = "Password is required";
+    if (!formData.email.trim()) newErrors.email = "Email is required";
+    if (!formData.password) newErrors.password = "Password is required";
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -235,13 +235,16 @@ const StudentSignIn = ({ onLogin }) => {
   // FIXED: Proper handleSubmit with e.preventDefault()
   const handleSubmit = async (e) => {
     e.preventDefault(); // IMPORTANT: Prevent form refresh
-    
+
     if (!validate()) return;
-    
+
     setLoading(true);
     setErrors({});
 
     try {
+      // DEBUG: Show what is being sent
+      // alert(`Attempting login with: ${formData.email} / ${formData.password}`);
+
       const { data } = await axios.post(
         "http://localhost:5000/api/auth/login",
         {
@@ -269,6 +272,10 @@ const StudentSignIn = ({ onLogin }) => {
       navigate("/"); // ONLY redirect on success
 
     } catch (err) {
+      console.error("Login Error Details:", err);
+      // DEBUG: Show exact error
+      alert(`Login Failed: ${err.response?.data?.message || err.message}`);
+
       // NO navigate here
       // NO onLogin here
       // NO setTimeout here
@@ -283,12 +290,12 @@ const StudentSignIn = ({ onLogin }) => {
   return (
     <div style={styles.pageContainer}>
       <div style={styles.mainWrapper}>
-        
+
         {/* LEFT PANEL */}
         <div style={styles.leftPanel}>
-          <div style={{fontSize: '3vw', marginBottom: '2vh'}}>👋</div>
-          <h1 style={{fontSize: '2.5vw', fontWeight: '800', marginBottom: '1vh'}}>Welcome Back!</h1>
-          <p style={{fontSize: '1.1vw', opacity: 0.9, marginBottom: '4vh', maxWidth: '20vw'}}>
+          <div style={{ fontSize: '3vw', marginBottom: '2vh' }}>👋</div>
+          <h1 style={{ fontSize: '2.5vw', fontWeight: '800', marginBottom: '1vh' }}>Welcome Back!</h1>
+          <p style={{ fontSize: '1.1vw', opacity: 0.9, marginBottom: '4vh', maxWidth: '20vw' }}>
             Log in to access your event dashboard, tickets, and certificates.
           </p>
           <div style={styles.glassCard}>
@@ -298,7 +305,7 @@ const StudentSignIn = ({ onLogin }) => {
 
         {/* RIGHT PANEL */}
         <div style={styles.rightPanel}>
-          
+
           <button style={styles.backBtn} onClick={() => navigate('/')}>
             <ArrowLeft size={isMobile ? 20 : 16} /> Home
           </button>
@@ -315,60 +322,60 @@ const StudentSignIn = ({ onLogin }) => {
 
           {/* FORM - Using onSubmit instead of onClick */}
           <form onSubmit={handleSubmit}>
-            
+
             {/* General Error - Stays until user types */}
             {errors.general && (
               <div style={{
-                ...styles.errorText, 
-                marginBottom: '2vh', 
-                padding: '1vh', 
-                backgroundColor: '#fef2f2', 
+                ...styles.errorText,
+                marginBottom: '2vh',
+                padding: '1vh',
+                backgroundColor: '#fef2f2',
                 borderRadius: '0.5vw',
                 fontSize: isMobile ? '3vw' : '0.9vw'
               }}>
-                <AlertCircle size={isMobile ? 14 : 12}/> {errors.general}
+                <AlertCircle size={isMobile ? 14 : 12} /> {errors.general}
               </div>
             )}
 
             <div style={styles.inputGroup}>
               <label style={styles.label}>Email Address</label>
-              <input 
-                style={styles.input(errors.email)} 
-                placeholder="you@example.com" 
-                name="email" 
-                type="email" 
-                value={formData.email} 
-                onChange={handleChange} 
+              <input
+                style={styles.input(errors.email)}
+                placeholder="you@example.com"
+                name="email"
+                type="email"
+                value={formData.email}
+                onChange={handleChange}
                 autoFocus
               />
               {errors.email && (
                 <div style={styles.errorText}>
-                  <AlertCircle size={isMobile ? 14 : 12}/> {errors.email}
+                  <AlertCircle size={isMobile ? 14 : 12} /> {errors.email}
                 </div>
               )}
             </div>
 
             <div style={styles.inputGroup}>
               <label style={styles.label}>Password</label>
-              <div style={{position:'relative'}}>
-                <input 
-                  style={styles.input(errors.password)} 
-                  placeholder="••••••" 
-                  name="password" 
-                  type={showPass ? "text" : "password"} 
-                  value={formData.password} 
-                  onChange={handleChange} 
+              <div style={{ position: 'relative' }}>
+                <input
+                  style={styles.input(errors.password)}
+                  placeholder="••••••"
+                  name="password"
+                  type={showPass ? "text" : "password"}
+                  value={formData.password}
+                  onChange={handleChange}
                 />
-                <div 
-                  style={styles.iconBox} 
+                <div
+                  style={styles.iconBox}
                   onClick={() => setShowPass(!showPass)}
                 >
-                  {showPass ? <EyeOff size={isMobile ? 20 : 18}/> : <Eye size={isMobile ? 20 : 18}/>}
+                  {showPass ? <EyeOff size={isMobile ? 20 : 18} /> : <Eye size={isMobile ? 20 : 18} />}
                 </div>
               </div>
               {errors.password && (
                 <div style={styles.errorText}>
-                  <AlertCircle size={isMobile ? 14 : 12}/> {errors.password}
+                  <AlertCircle size={isMobile ? 14 : 12} /> {errors.password}
                 </div>
               )}
             </div>
@@ -376,7 +383,7 @@ const StudentSignIn = ({ onLogin }) => {
             <Link to="/forgot-password" style={styles.forgotPass}>Forgot Password?</Link>
 
             {/* Button with type="submit" - no onClick */}
-            <button 
+            <button
               type="submit"
               style={styles.actionBtn}
               disabled={loading}
@@ -388,9 +395,9 @@ const StudentSignIn = ({ onLogin }) => {
           {/* DYNAMIC REGISTRATION LINK */}
           <div style={styles.bottomLink}>
             Don't have an account?{' '}
-            <Link 
-              to={isStudent ? "/signup" : "/teacher-signup"} 
-              style={{color: '#6366f1', fontWeight:'bold', textDecoration:'none'}}
+            <Link
+              to={isStudent ? "/signup" : "/teacher-signup"}
+              style={{ color: '#6366f1', fontWeight: 'bold', textDecoration: 'none' }}
             >
               Register {isStudent ? 'as Student' : 'as Teacher'}
             </Link>

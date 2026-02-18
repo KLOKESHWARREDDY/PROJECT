@@ -6,7 +6,7 @@ const Notifications = ({ theme, user, registrations = [], notificationsList = []
   const navigate = useNavigate();
   const isDark = theme === 'dark';
   const isTeacher = user?.role === 'teacher';
-  
+
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth < 768);
@@ -15,9 +15,9 @@ const Notifications = ({ theme, user, registrations = [], notificationsList = []
   }, []);
 
   // --- TEACHER STATS CALCULATION ---
-  const pendingCount = registrations.filter(r => r.status === 'Pending').length;
-  const approvedCount = registrations.filter(r => r.status === 'Approved').length;
-  const rejectedCount = registrations.filter(r => r.status === 'Rejected').length;
+  const pendingCount = registrations.filter(r => r.status === 'pending').length;
+  const approvedCount = registrations.filter(r => r.status === 'approved').length;
+  const rejectedCount = registrations.filter(r => r.status === 'rejected').length;
 
   const styles = {
     container: {
@@ -35,9 +35,9 @@ const Notifications = ({ theme, user, registrations = [], notificationsList = []
       color: isDark ? '#fff' : '#64748b', display: 'flex', alignItems: 'center'
     },
     pageTitle: { fontSize: isMobile ? '6vw' : '2vw', fontWeight: '800' },
-    
+
     list: { display: 'flex', flexDirection: 'column', gap: '2vh' },
-    
+
     // Card Style
     item: {
       display: 'flex', alignItems: 'center', gap: '3vw',
@@ -70,7 +70,7 @@ const Notifications = ({ theme, user, registrations = [], notificationsList = []
       </div>
 
       <div style={styles.list}>
-        
+
         {/* --- TEACHER VIEW (Registration Stats) --- */}
         {isTeacher ? (
           <>
@@ -111,19 +111,24 @@ const Notifications = ({ theme, user, registrations = [], notificationsList = []
           /* --- STUDENT VIEW (General Notifications) --- */
           notificationsList.length > 0 ? (
             notificationsList.map((notif) => (
-              <div key={notif.id} style={styles.item}>
-                <div style={styles.iconBox('#4f46e5', notif.bgColor || '#e0e7ff')}>
-                  {notif.icon || <Bell size={20} />}
+              <div key={notif._id || notif.id} style={styles.item}>
+                <div style={styles.iconBox('#4f46e5', notif.read ? '#f1f5f9' : '#e0e7ff')}>
+                  {notif.type === 'registration' ? <ClipboardList size={20} /> :
+                    notif.type === 'approval' ? <CheckCircle size={20} /> :
+                      <Bell size={20} />}
                 </div>
                 <div style={styles.info}>
                   <div style={styles.title}>{notif.title}</div>
-                  <div style={styles.count}>{notif.desc}</div>
-                  <div style={styles.time}>{notif.time}</div>
+                  <div style={styles.count}>{notif.message || notif.desc}</div>
+                  <div style={styles.time}>
+                    {notif.createdAt ? new Date(notif.createdAt).toLocaleString() : notif.time}
+                  </div>
                 </div>
+                {!notif.read && <div style={{ width: 8, height: 8, borderRadius: '50%', backgroundColor: '#4f46e5' }}></div>}
               </div>
             ))
           ) : (
-            <div style={{textAlign:'center', color:'#64748b', marginTop:'5vh'}}>
+            <div style={{ textAlign: 'center', color: '#64748b', marginTop: '5vh' }}>
               No new notifications
             </div>
           )

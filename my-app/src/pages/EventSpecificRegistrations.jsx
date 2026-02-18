@@ -1,49 +1,26 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { ArrowLeft, Check, X, User, Mail, Phone, Filter } from 'lucide-react';
-import axios from 'axios';
 
-const EventSpecificRegistrations = ({ events, onApprove, onReject, theme }) => {
+const EventSpecificRegistrations = ({ events, registrations = [], onApprove, onReject, theme }) => {
   const navigate = useNavigate();
   const { id } = useParams(); // Get ID from URL
   const isDark = theme === 'dark';
-  
-  // State for registrations data
-  const [registrations, setRegistrations] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [relatedRegistrations, setRelatedRegistrations] = useState([]);
 
   // Find event from props for display title
   const eventItem = events.find(e => e.id === id || e._id === id);
 
-  console.log("EventSpecificRegistrations - Received ID:", id);
-
-  // Fetch registrations from API
   useEffect(() => {
-    const fetchRegistrations = async () => {
-      try {
-        setLoading(true);
-        const token = localStorage.getItem('token');
-        const response = await axios.get(`/api/registrations/event/${id}`, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-        console.log("Event registrations response:", response.data);
-        setRegistrations(response.data);
-        setError(null);
-      } catch (err) {
-        console.error('Error fetching event registrations:', err);
-        setError(err.response?.data?.message || 'Failed to fetch registrations');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    if (id) {
-      fetchRegistrations();
+    if (registrations.length > 0) {
+      const filtered = registrations.filter(r =>
+        (r.event?._id === id || r.event === id)
+      );
+      setRelatedRegistrations(filtered);
     }
-  }, [id]);
-  
-  const [activeFilter, setActiveFilter] = useState("Pending"); 
+  }, [registrations, id]);
+
+  const [activeFilter, setActiveFilter] = useState("Pending");
 
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   useEffect(() => {
@@ -53,9 +30,10 @@ const EventSpecificRegistrations = ({ events, onApprove, onReject, theme }) => {
   }, []);
 
   // Filter registrations by status (lowercase comparison)
-  const filteredList = registrations.filter(reg => {
-    console.log("Filtering:", activeFilter.toLowerCase(), "===", reg.status);
-    return reg.status === activeFilter.toLowerCase();
+  const filteredList = relatedRegistrations.filter(reg => {
+    // Check if status matches (handle different casing if needed, though App.js should normalize)
+    const status = reg.status?.toLowerCase() || 'pending';
+    return status === activeFilter.toLowerCase();
   });
 
   const styles = {
@@ -74,10 +52,10 @@ const EventSpecificRegistrations = ({ events, onApprove, onReject, theme }) => {
       color: isDark ? '#fff' : '#64748b', display: 'flex', alignItems: 'center'
     },
     pageTitle: { fontSize: isMobile ? '5vw' : '1.8vw', fontWeight: '800' },
-    subTitle: { fontSize: isMobile ? '3.5vw' : '1vw', color: '#6366f1', marginLeft: 'auto', fontWeight:'600' },
+    subTitle: { fontSize: isMobile ? '3.5vw' : '1vw', color: '#6366f1', marginLeft: 'auto', fontWeight: '600' },
 
     filterContainer: {
-      display: 'flex', gap: '1vw', marginBottom: '3vh', 
+      display: 'flex', gap: '1vw', marginBottom: '3vh',
       padding: '0.5vh', backgroundColor: isDark ? '#1e293b' : '#fff',
       borderRadius: '2vw', width: 'fit-content',
       border: isDark ? '1px solid #334155' : '1px solid #e2e8f0'
@@ -108,8 +86,8 @@ const EventSpecificRegistrations = ({ events, onApprove, onReject, theme }) => {
     },
     cardInfo: { flex: 1 },
     name: { fontSize: isMobile ? '4vw' : '1.1vw', fontWeight: 'bold', color: isDark ? '#fff' : '#1e293b' },
-    detail: { fontSize: isMobile ? '3vw' : '0.85vw', color: '#64748b', display:'flex', alignItems:'center', gap:'5px', marginTop:'4px' },
-    
+    detail: { fontSize: isMobile ? '3vw' : '0.85vw', color: '#64748b', display: 'flex', alignItems: 'center', gap: '5px', marginTop: '4px' },
+
     actions: { display: 'flex', gap: '1vw' },
     actionBtn: (type) => ({
       width: isMobile ? '10vw' : '2.5vw', height: isMobile ? '10vw' : '2.5vw',
@@ -133,9 +111,9 @@ const EventSpecificRegistrations = ({ events, onApprove, onReject, theme }) => {
         <button style={styles.backBtn} onClick={() => navigate(-1)}>
           <ArrowLeft size={isMobile ? 24 : 24} />
         </button>
-        <div style={{display:'flex', flexDirection:'column'}}>
+        <div style={{ display: 'flex', flexDirection: 'column' }}>
           <h1 style={styles.pageTitle}>Event Registrations</h1>
-          <span style={{fontSize:'0.9rem', color:'#64748b'}}>{eventItem?.title}</span>
+          <span style={{ fontSize: '0.9rem', color: '#64748b' }}>{eventItem?.title}</span>
         </div>
       </div>
 
@@ -150,7 +128,7 @@ const EventSpecificRegistrations = ({ events, onApprove, onReject, theme }) => {
       <div style={styles.listContainer}>
         {filteredList.length === 0 ? (
           <div style={styles.emptyState}>
-            <Filter size={40} style={{opacity:0.3, marginBottom:'10px'}}/>
+            <Filter size={40} style={{ opacity: 0.3, marginBottom: '10px' }} />
             <p>No {activeFilter.toLowerCase()} registrations for this event.</p>
           </div>
         ) : (
