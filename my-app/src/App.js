@@ -364,8 +364,15 @@ function App() {
     if (!isAuthenticated) return;
     try {
       const response = await api.get('/notifications');
-      setNotifications(response.data);
-      const unread = response.data.filter(n => !n.read).length;
+      // Backend returns { notifications: [], unreadCount: 0 }
+      // We need to extract the array
+      const notifs = response.data.notifications || [];
+      setNotifications(notifs);
+
+      const unread = response.data.unreadCount !== undefined
+        ? response.data.unreadCount
+        : notifs.filter(n => !n.read).length;
+
       setUnreadCount(unread);
     } catch (error) {
       console.log('[App.js] Failed to fetch notifications:', error);

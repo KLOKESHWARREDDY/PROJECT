@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Eye, EyeOff, ArrowLeft, LogIn, AlertCircle } from 'lucide-react';
 import axios from 'axios';
+import { toast } from 'react-toastify';
 
 const StudentSignIn = ({ onLogin }) => {
   const navigate = useNavigate();
@@ -273,8 +274,8 @@ const StudentSignIn = ({ onLogin }) => {
 
     } catch (err) {
       console.error("Login Error Details:", err);
-      // DEBUG: Show exact error
-      alert(`Login Failed: ${err.response?.data?.message || err.message}`);
+      // Display styled toast notification instead of native alert
+      toast.error(err.response?.data?.message || "Invalid email or password");
 
       // NO navigate here
       // NO onLogin here

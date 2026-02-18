@@ -2,3 +2,31 @@
 [2026-02-18T05:59:54.871Z] Login Attempt: Email='kv@gmail.com', PasswordLength=6
 User Found: true, Role: student
 Password Match: true
+
+[2026-02-18T06:36:50.846Z] Login Attempt: Email='lokesh1.kk2007@gmail.com', PasswordLength=10
+User Found: true, Role: student
+Password Match: false
+
+[2026-02-18T06:37:49.360Z] Login Attempt: Email='kushal@gmail.com', PasswordLength=8
+User Found: true, Role: teacher
+Password Match: true
+
+[2026-02-18T06:39:16.406Z] Login Attempt: Email='lokesh1.kk2007@gmail.com', PasswordLength=8
+User Found: true, Role: student
+Password Match: false
+
+[2026-02-18T06:42:21.298Z] Login Attempt: Email='lokesh1.kk2007@gmail.com', PasswordLength=10
+User Found: true, Role: student
+Password Match: true
+
+[2026-02-18T06:46:30.415Z] Login Attempt: Email='kushal@gmail.com', PasswordLength=8
+User Found: true, Role: teacher
+Password Match: true
+
+[2026-02-18T06:47:32.800Z] Login Attempt: Email='kushal@gmail.com', PasswordLength=8
+User Found: true, Role: teacher
+Password Match: true
+
+[2026-02-18T06:47:48.824Z] Login Attempt: Email='lokesh1.kk2007@gmail.com', PasswordLength=10
+User Found: true, Role: student
+Password Match: true
