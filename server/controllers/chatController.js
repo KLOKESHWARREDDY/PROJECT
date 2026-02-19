@@ -1,6 +1,14 @@
 import ChatMessage from '../models/ChatMessage.js';
 
-// Get chat history for a user
+// CHAT CONTROLLER - Handles chatbot conversations
+// This controller manages chat history and AI bot responses
+
+// GET CHAT HISTORY - Returns all messages for current user
+// Step 1: Get user ID from authentication middleware
+// Step 2: Query MongoDB for messages matching user ID
+// Step 3: Sort by timestamp (oldest first for chat flow)
+// Step 4: Return messages array
+// Request: GET /api/chat/history (requires authentication)
 export const getChatHistory = async (req, res) => {
     try {
         const userId = req.user._id;
@@ -12,7 +20,17 @@ export const getChatHistory = async (req, res) => {
     }
 };
 
-// Send a message (and get bot response)
+// SEND MESSAGE - Process user message and generate bot response
+// Step 1: Get user ID from authentication middleware
+// Step 2: Extract message from request body
+// Step 3: Validate message is provided
+// Step 4: Save user message to database with isBot: false
+// Step 5: Convert message to lowercase for matching
+// Step 6: Check message against keywords (hello, event, ticket, register, contact)
+// Step 7: Generate appropriate bot response based on keywords
+// Step 8: Save bot response to database with isBot: true
+// Step 9: Return both user and bot messages
+// Request: POST /api/chat/message with body { message }
 export const sendMessage = async (req, res) => {
     try {
         const userId = req.user._id;

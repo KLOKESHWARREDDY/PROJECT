@@ -58,10 +58,10 @@ const Profile = ({ user: initialUser, theme, onLogout, setUser }) => {
         });
 
         const latestUser = response.data;
-        
+
         // Update local state with fresh data
         setLocalUser(latestUser);
-        
+
         // Update parent state if provided
         if (setUser) {
           setUser({ ...latestUser, token: token });
@@ -69,9 +69,9 @@ const Profile = ({ user: initialUser, theme, onLogout, setUser }) => {
 
         // Update localStorage
         localStorage.setItem('user', JSON.stringify({ ...latestUser, token: token }));
-        
+
         console.log('✅ Profile data fetched:', latestUser.email, '- Role:', latestUser.role);
-        
+
       } catch (error) {
         console.error('Error fetching user data:', error.response?.data?.message || error.message);
       } finally {
@@ -90,7 +90,7 @@ const Profile = ({ user: initialUser, theme, onLogout, setUser }) => {
 
   // ✅ GET FULL IMAGE URL
   const getImageUrl = (url) => {
-    if (!url) return 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200&q=80';
+    if (!url) return 'https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png';
     if (url.startsWith('http')) return url;
     if (url.startsWith('/uploads')) return `http://localhost:5000${url}`;
     return url;
@@ -237,29 +237,29 @@ const Profile = ({ user: initialUser, theme, onLogout, setUser }) => {
   };
 
   const settingsOptions = [
-    { 
-      label: 'Edit Profile', 
-      sub: 'Update personal info', 
-      icon: <User size={isMobile ? 20 : 24} />, 
-      path: '/edit-profile', 
-      color: '#6366f1', 
-      bg: '#e0e7ff' 
+    {
+      label: 'Edit Profile',
+      sub: 'Update personal info',
+      icon: <User size={isMobile ? 20 : 24} />,
+      path: '/edit-profile',
+      color: '#6366f1',
+      bg: '#e0e7ff'
     },
-    { 
-      label: 'Security', 
-      sub: 'Change password', 
-      icon: <Lock size={isMobile ? 20 : 24} />, 
-      path: '/change-password', 
-      color: '#10b981', 
-      bg: '#d1fae5' 
+    {
+      label: 'Security',
+      sub: 'Change password',
+      icon: <Lock size={isMobile ? 20 : 24} />,
+      path: '/change-password',
+      color: '#10b981',
+      bg: '#d1fae5'
     },
-    { 
-      label: 'Log Out', 
-      sub: 'Sign out of account', 
-      icon: <LogOut size={isMobile ? 20 : 24} />, 
-      action: onLogout, 
-      color: '#ef4444', 
-      bg: '#fee2e2' 
+    {
+      label: 'Log Out',
+      sub: 'Sign out of account',
+      icon: <LogOut size={isMobile ? 20 : 24} />,
+      action: onLogout,
+      color: '#ef4444',
+      bg: '#fee2e2'
     }
   ];
 
@@ -297,9 +297,9 @@ const Profile = ({ user: initialUser, theme, onLogout, setUser }) => {
       <div style={styles.mainGrid}>
         <div style={styles.profileCard}>
           <div style={styles.avatarContainer}>
-            <img 
-              src={imageError ? 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200&q=80' : imageUrl} 
-              alt="Profile" 
+            <img
+              src={imageError ? 'https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png' : imageUrl}
+              alt="Profile"
               style={styles.avatar}
               onError={handleImageError}
             />
@@ -330,8 +330,8 @@ const Profile = ({ user: initialUser, theme, onLogout, setUser }) => {
             <h3 style={{ ...styles.sectionTitle, borderBottom: 'none', marginBottom: 12 }}>Account Settings</h3>
             <div style={styles.settingsGrid}>
               {settingsOptions.map((opt, index) => (
-                <div 
-                  key={index} 
+                <div
+                  key={index}
                   style={styles.settingCard(opt.bg, opt.color)}
                   onClick={() => opt.path ? navigate(opt.path) : opt.action()}
                   onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(-3px)'}

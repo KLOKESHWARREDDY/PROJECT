@@ -50,21 +50,21 @@ const TeacherDashboard = ({ user, events, theme, toggleTheme, onLogout }) => {
     if (!user || !user.name || user.name === 'Guest') {
       return;
     }
-    
+
     const fetchLatestUserData = async () => {
       try {
         const token = localStorage.getItem('token');
         if (!token) return;
-        
+
         const response = await authAPI.getProfile();
-        
+
         setCurrentUser(response.data);
         localStorage.setItem('user', JSON.stringify(response.data));
       } catch (error) {
         console.log('Could not fetch latest user data:', error.message);
       }
     };
-    
+
     fetchLatestUserData();
   }, [user]);
 
@@ -78,9 +78,9 @@ const TeacherDashboard = ({ user, events, theme, toggleTheme, onLogout }) => {
           setLoadingRegs(false);
           return;
         }
-        
+
         const response = await registrationAPI.getAllPendingRegistrations();
-        
+
         // Backend returns { count: number }
         const pendingCount = response.data?.count || 0;
         setRealPendingCount(pendingCount);
@@ -91,7 +91,7 @@ const TeacherDashboard = ({ user, events, theme, toggleTheme, onLogout }) => {
         setLoadingRegs(false);
       }
     };
-    
+
     fetchPendingRegistrations();
   }, []);
 
@@ -101,23 +101,23 @@ const TeacherDashboard = ({ user, events, theme, toggleTheme, onLogout }) => {
       try {
         const token = localStorage.getItem('token');
         console.log("Teacher token:", token);
-        
+
         const response = await eventAPI.getTeacherEvents();
         console.log("Teacher events response:", response.data);
-        
+
         setTeacherEvents(response.data);
       } catch (error) {
         console.log('Error fetching teacher events:', error.message);
         setTeacherEvents([]);
       }
     };
-    
+
     fetchTeacherEvents();
   }, []);
 
   // ✅ GET FULL IMAGE URL
   const getImageUrl = (url) => {
-    if (!url) return 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200&q=80';
+    if (!url) return 'https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png';
     if (url.startsWith('http')) return url;
     if (url.startsWith('/uploads')) return `http://localhost:5000${url}`;
     return url;
@@ -128,228 +128,228 @@ const TeacherDashboard = ({ user, events, theme, toggleTheme, onLogout }) => {
     setImageError(true);
   };
 
-  const recentEvents = teacherEvents.slice(0, 4); 
+  const recentEvents = teacherEvents.slice(0, 4);
   const totalParticipants = teacherEvents.reduce((sum, event) => sum + (event.registrations || 0), 0);
 
   const styles = {
-    container: { 
-      padding: isMobile ? '16px' : '30px', 
-      backgroundColor: isDark ? '#0f172a' : '#f8fafc', 
-      minHeight: '100vh', 
-      fontFamily: "'Inter', sans-serif", 
-      maxWidth: isMobile ? '100vw' : '95vw', 
-      margin: '0 auto' 
+    container: {
+      padding: isMobile ? '16px' : '30px',
+      backgroundColor: isDark ? '#0f172a' : '#f8fafc',
+      minHeight: '100vh',
+      fontFamily: "'Inter', sans-serif",
+      maxWidth: isMobile ? '100vw' : '95vw',
+      margin: '0 auto'
     },
-    header: { 
-      display: 'flex', 
-      justifyContent: 'space-between', 
-      alignItems: 'center', 
-      marginBottom: '30px', 
-      flexWrap: 'wrap', 
-      gap: isMobile ? '12px' : '30px' 
+    header: {
+      display: 'flex',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      marginBottom: '30px',
+      flexWrap: 'wrap',
+      gap: isMobile ? '12px' : '30px'
     },
-    profileSection: { 
-      display: 'flex', 
-      alignItems: 'center', 
-      gap: isMobile ? '12px' : '15px', 
-      cursor: 'pointer' 
+    profileSection: {
+      display: 'flex',
+      alignItems: 'center',
+      gap: isMobile ? '12px' : '15px',
+      cursor: 'pointer'
     },
-    avatar: { 
-      width: isMobile ? '48px' : '60px', 
-      height: isMobile ? '48px' : '60px', 
-      borderRadius: '50%', 
-      objectFit: 'cover', 
+    avatar: {
+      width: isMobile ? '48px' : '60px',
+      height: isMobile ? '48px' : '60px',
+      borderRadius: '50%',
+      objectFit: 'cover',
       border: '2px solid #4f46e5',
       backgroundColor: '#f3f4f6'
     },
     welcomeText: { display: 'flex', flexDirection: 'column' },
-    hello: { 
-      fontSize: isMobile ? '14px' : '16px', 
-      color: '#64748b', 
-      fontWeight: '500' 
+    hello: {
+      fontSize: isMobile ? '14px' : '16px',
+      color: '#64748b',
+      fontWeight: '500'
     },
-    name: { 
-      fontSize: isMobile ? '18px' : '22px', 
-      fontWeight: '800', 
-      color: isDark ? '#fff' : '#1e293b' 
+    name: {
+      fontSize: isMobile ? '18px' : '22px',
+      fontWeight: '800',
+      color: isDark ? '#fff' : '#1e293b'
     },
-    rightHeader: { 
-      display: 'flex', 
-      alignItems: 'center', 
-      gap: isMobile ? '12px' : '15px' 
+    rightHeader: {
+      display: 'flex',
+      alignItems: 'center',
+      gap: isMobile ? '12px' : '15px'
     },
-    createBtn: { 
-      backgroundColor: '#4f46e5', 
-      color: '#fff', 
-      padding: isMobile ? '12px 20px' : '12px 24px', 
-      borderRadius: '50px', 
-      border: 'none', 
-      fontWeight: 'bold', 
-      fontSize: isMobile ? '14px' : '16px', 
-      cursor: 'pointer', 
-      display: 'flex', 
-      alignItems: 'center', 
-      gap: '8px', 
-      boxShadow: '0 4px 12px rgba(79, 70, 229, 0.3)', 
-      whiteSpace: 'nowrap' 
+    createBtn: {
+      backgroundColor: '#4f46e5',
+      color: '#fff',
+      padding: isMobile ? '12px 20px' : '12px 24px',
+      borderRadius: '50px',
+      border: 'none',
+      fontWeight: 'bold',
+      fontSize: isMobile ? '14px' : '16px',
+      cursor: 'pointer',
+      display: 'flex',
+      alignItems: 'center',
+      gap: '8px',
+      boxShadow: '0 4px 12px rgba(79, 70, 229, 0.3)',
+      whiteSpace: 'nowrap'
     },
-    iconBtn: { 
-      width: isMobile ? '40px' : '50px', 
-      height: isMobile ? '40px' : '50px', 
-      borderRadius: '50%', 
-      backgroundColor: isDark ? '#1e293b' : '#fff', 
-      border: isDark ? '1px solid #334155' : '1px solid #e2e8f0', 
-      color: isDark ? '#fff' : '#64748b', 
-      display: 'flex', 
-      alignItems: 'center', 
-      justifyContent: 'center', 
-      cursor: 'pointer', 
+    iconBtn: {
+      width: isMobile ? '40px' : '50px',
+      height: isMobile ? '40px' : '50px',
+      borderRadius: '50%',
+      backgroundColor: isDark ? '#1e293b' : '#fff',
+      border: isDark ? '1px solid #334155' : '1px solid #e2e8f0',
+      color: isDark ? '#fff' : '#64748b',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      cursor: 'pointer',
       transition: 'transform 0.2s',
-      position: 'relative' 
+      position: 'relative'
     },
-    heroBanner: { 
-      display: 'flex', 
-      justifyContent: 'space-between', 
-      alignItems: 'center', 
-      backgroundColor: isDark ? '#312e81' : '#e0e7ff', 
-      borderRadius: isMobile ? '20px' : '25px', 
-      padding: isMobile ? '20px' : '45px', 
-      marginBottom: '40px', 
-      position: 'relative', 
-      overflow: 'hidden', 
-      boxShadow: '0 10px 30px rgba(0,0,0,0.05)', 
+    heroBanner: {
+      display: 'flex',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      backgroundColor: isDark ? '#312e81' : '#e0e7ff',
+      borderRadius: isMobile ? '20px' : '25px',
+      padding: isMobile ? '20px' : '45px',
+      marginBottom: '40px',
+      position: 'relative',
+      overflow: 'hidden',
+      boxShadow: '0 10px 30px rgba(0,0,0,0.05)',
       height: isMobile ? 'auto' : '180px',
       minHeight: isMobile ? '180px' : 'auto'
     },
     heroContent: { maxWidth: isMobile ? '100%' : '500px', zIndex: 2 },
-    heroTitle: { 
-      fontSize: isMobile ? '24px' : '36px', 
-      fontWeight: '800', 
-      marginBottom: '12px', 
-      color: isDark ? '#fff' : '#1e1b4b', 
-      lineHeight: '1.2' 
+    heroTitle: {
+      fontSize: isMobile ? '24px' : '36px',
+      fontWeight: '800',
+      marginBottom: '12px',
+      color: isDark ? '#fff' : '#1e1b4b',
+      lineHeight: '1.2'
     },
-    heroText: { 
-      fontSize: isMobile ? '14px' : '18px', 
-      marginBottom: '20px', 
-      color: isDark ? '#c7d2fe' : '#4338ca', 
-      lineHeight: '1.6' 
+    heroText: {
+      fontSize: isMobile ? '14px' : '18px',
+      marginBottom: '20px',
+      color: isDark ? '#c7d2fe' : '#4338ca',
+      lineHeight: '1.6'
     },
-    heroBtn: { 
-      backgroundColor: '#1e1b4b', 
-      color: '#fff', 
-      border: 'none', 
-      padding: isMobile ? '12px 24px' : '12px 30px', 
-      borderRadius: isMobile ? '12px' : '14px', 
-      fontWeight: 'bold', 
-      fontSize: isMobile ? '14px' : '16px', 
-      cursor: 'pointer', 
-      boxShadow: '0 4px 12px rgba(30, 27, 75, 0.3)' 
+    heroBtn: {
+      backgroundColor: '#1e1b4b',
+      color: '#fff',
+      border: 'none',
+      padding: isMobile ? '12px 24px' : '12px 30px',
+      borderRadius: isMobile ? '12px' : '14px',
+      fontWeight: 'bold',
+      fontSize: isMobile ? '14px' : '16px',
+      cursor: 'pointer',
+      boxShadow: '0 4px 12px rgba(30, 27, 75, 0.3)'
     },
-    heroImage: { 
-      height: '160px', 
-      objectFit: 'contain', 
-      display: isMobile ? 'none' : 'block' 
+    heroImage: {
+      height: '160px',
+      objectFit: 'contain',
+      display: isMobile ? 'none' : 'block'
     },
-    statsRow: { 
-      display: 'flex', 
-      gap: isMobile ? '12px' : '30px', 
-      marginBottom: '40px', 
-      flexWrap: 'wrap' 
+    statsRow: {
+      display: 'flex',
+      gap: isMobile ? '12px' : '30px',
+      marginBottom: '40px',
+      flexWrap: 'wrap'
     },
-    statCard: { 
-      flex: 1, 
-      minWidth: isMobile ? '150px' : '200px', 
-      backgroundColor: isDark ? '#1e293b' : '#fff', 
-      padding: isMobile ? '16px' : '24px', 
-      borderRadius: isMobile ? '16px' : '20px', 
-      border: isDark ? '1px solid #334155' : '1px solid #e2e8f0', 
-      display: 'flex', 
-      alignItems: 'center', 
-      gap: isMobile ? '12px' : '20px', 
-      boxShadow: '0 4px 6px rgba(0,0,0,0.02)', 
-      cursor: 'pointer', 
-      transition: 'transform 0.2s' 
+    statCard: {
+      flex: 1,
+      minWidth: isMobile ? '150px' : '200px',
+      backgroundColor: isDark ? '#1e293b' : '#fff',
+      padding: isMobile ? '16px' : '24px',
+      borderRadius: isMobile ? '16px' : '20px',
+      border: isDark ? '1px solid #334155' : '1px solid #e2e8f0',
+      display: 'flex',
+      alignItems: 'center',
+      gap: isMobile ? '12px' : '20px',
+      boxShadow: '0 4px 6px rgba(0,0,0,0.02)',
+      cursor: 'pointer',
+      transition: 'transform 0.2s'
     },
-    statIconBox: (bg, color) => ({ 
-      width: isMobile ? '40px' : '60px', 
-      height: isMobile ? '40px' : '60px', 
-      borderRadius: isMobile ? '12px' : '16px', 
-      backgroundColor: bg, 
-      color: color, 
-      display: 'flex', 
-      alignItems: 'center', 
-      justifyContent: 'center' 
+    statIconBox: (bg, color) => ({
+      width: isMobile ? '40px' : '60px',
+      height: isMobile ? '40px' : '60px',
+      borderRadius: isMobile ? '12px' : '16px',
+      backgroundColor: bg,
+      color: color,
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center'
     }),
-    statNumber: { 
-      fontSize: isMobile ? '20px' : '28px', 
-      fontWeight: 'bold', 
-      color: isDark ? '#fff' : '#1e293b' 
+    statNumber: {
+      fontSize: isMobile ? '20px' : '28px',
+      fontWeight: 'bold',
+      color: isDark ? '#fff' : '#1e293b'
     },
-    statLabel: { 
-      color: isDark ? '#cbd5e1' : '#64748b', 
-      fontSize: isMobile ? '12px' : '14px' 
+    statLabel: {
+      color: isDark ? '#cbd5e1' : '#64748b',
+      fontSize: isMobile ? '12px' : '14px'
     },
-    sectionHeader: { 
-      display: 'flex', 
-      justifyContent: 'space-between', 
-      alignItems: 'center', 
-      marginBottom: '20px' 
+    sectionHeader: {
+      display: 'flex',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      marginBottom: '20px'
     },
-    sectionTitle: { 
-      fontSize: isMobile ? '20px' : '24px', 
-      fontWeight: 'bold', 
-      color: isDark ? '#fff' : '#1e293b' 
+    sectionTitle: {
+      fontSize: isMobile ? '20px' : '24px',
+      fontWeight: 'bold',
+      color: isDark ? '#fff' : '#1e293b'
     },
-    seeAll: { 
-      color: '#3b82f6', 
-      cursor: 'pointer', 
-      fontSize: isMobile ? '14px' : '16px', 
-      fontWeight: '600', 
-      display: 'flex', 
-      alignItems: 'center', 
-      gap: '8px' 
+    seeAll: {
+      color: '#3b82f6',
+      cursor: 'pointer',
+      fontSize: isMobile ? '14px' : '16px',
+      fontWeight: '600',
+      display: 'flex',
+      alignItems: 'center',
+      gap: '8px'
     },
-    grid: { 
-      display: 'grid', 
-      gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fill, minmax(280px, 1fr))', 
-      gap: isMobile ? '16px' : '30px' 
+    grid: {
+      display: 'grid',
+      gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fill, minmax(280px, 1fr))',
+      gap: isMobile ? '16px' : '30px'
     },
-    eventCard: { 
-      backgroundColor: isDark ? '#1e293b' : '#fff', 
-      borderRadius: isMobile ? '16px' : '20px', 
-      overflow: 'hidden', 
-      border: isDark ? '1px solid #334155' : '1px solid #e2e8f0', 
-      transition: 'all 0.2s', 
-      cursor: 'pointer', 
-      display: 'flex', 
-      flexDirection: 'column', 
-      boxShadow: '0 2px 10px rgba(0,0,0,0.03)' 
+    eventCard: {
+      backgroundColor: isDark ? '#1e293b' : '#fff',
+      borderRadius: isMobile ? '16px' : '20px',
+      overflow: 'hidden',
+      border: isDark ? '1px solid #334155' : '1px solid #e2e8f0',
+      transition: 'all 0.2s',
+      cursor: 'pointer',
+      display: 'flex',
+      flexDirection: 'column',
+      boxShadow: '0 2px 10px rgba(0,0,0,0.03)'
     },
-    cardImage: { 
-      width: '100%', 
-      height: isMobile ? '140px' : '180px', 
-      objectFit: 'cover' 
+    cardImage: {
+      width: '100%',
+      height: isMobile ? '140px' : '180px',
+      objectFit: 'cover'
     },
-    cardBody: { 
-      padding: isMobile ? '16px' : '20px', 
-      flex: 1, 
-      display: 'flex', 
-      flexDirection: 'column' 
+    cardBody: {
+      padding: isMobile ? '16px' : '20px',
+      flex: 1,
+      display: 'flex',
+      flexDirection: 'column'
     },
-    cardTitle: { 
-      fontSize: isMobile ? '16px' : '18px', 
-      fontWeight: 'bold', 
-      marginBottom: '8px', 
-      color: isDark ? '#fff' : '#1e293b' 
+    cardTitle: {
+      fontSize: isMobile ? '16px' : '18px',
+      fontWeight: 'bold',
+      marginBottom: '8px',
+      color: isDark ? '#fff' : '#1e293b'
     },
-    cardMeta: { 
-      fontSize: isMobile ? '12px' : '14px', 
-      color: '#64748b', 
-      marginBottom: '6px', 
-      display: 'flex', 
-      alignItems: 'center', 
-      gap: '8px' 
+    cardMeta: {
+      fontSize: isMobile ? '12px' : '14px',
+      color: '#64748b',
+      marginBottom: '6px',
+      display: 'flex',
+      alignItems: 'center',
+      gap: '8px'
     }
   };
 
@@ -381,9 +381,9 @@ const TeacherDashboard = ({ user, events, theme, toggleTheme, onLogout }) => {
     <div style={styles.container}>
       <div style={styles.header}>
         <div style={styles.profileSection} onClick={() => navigate('/profile')}>
-          <img 
-            src={imageError ? 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200&q=80' : imageUrl} 
-            alt="Profile" 
+          <img
+            src={imageError ? 'https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png' : imageUrl}
+            alt="Profile"
             style={styles.avatar}
             onError={handleImageError}
           />
@@ -395,13 +395,13 @@ const TeacherDashboard = ({ user, events, theme, toggleTheme, onLogout }) => {
 
         <div style={styles.rightHeader}>
           <button style={styles.createBtn} onClick={() => navigate('/create-event')}>
-             <Plus size={isMobile ? 16 : 18} /> {isMobile ? "Add" : "Create Event"}
+            <Plus size={isMobile ? 16 : 18} /> {isMobile ? "Add" : "Create Event"}
           </button>
-          
+
           <div style={styles.iconBtn} onClick={toggleTheme}>
             {isDark ? <Sun size={isMobile ? 20 : 20} color="#fbbf24" /> : <Moon size={isMobile ? 20 : 20} />}
           </div>
-          
+
           <div style={styles.iconBtn} onClick={() => navigate('/notifications')}>
             <Bell size={isMobile ? 20 : 20} />
           </div>
@@ -446,7 +446,7 @@ const TeacherDashboard = ({ user, events, theme, toggleTheme, onLogout }) => {
           <div style={styles.sectionTitle}>My Events</div>
           <div style={styles.seeAll} onClick={() => navigate('/teacher-events')}>View all <ArrowRight size={16} /></div>
         </div>
-        
+
         <div style={styles.grid}>
           {recentEvents.map(event => (
             <div key={event.id || event._id} style={styles.eventCard} onClick={() => {

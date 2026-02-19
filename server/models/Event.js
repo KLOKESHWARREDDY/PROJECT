@@ -1,5 +1,35 @@
 import mongoose from 'mongoose';
 
+/**
+ * Event Model
+ * =============================================================================
+ * Purpose: Defines the schema for event data in EventSphere
+ * 
+ * This model represents events that teachers can create and students can register for.
+ * Events have a draft/publish system for content management.
+ * 
+ * Schema Fields:
+ * - title: Event name
+ * - description: Event details
+ * - date: Event date/time
+ * - location: Event venue
+ * - teacher: Reference to creating teacher (User)
+ * - category: Event category (default: 'Tech')
+ * - image: URL to event banner image
+ * - status: Event lifecycle - 'draft', 'published', or 'completed'
+ * - createdBy: User who created the event
+ * - updatedAt: Last modification timestamp
+ * - publishedAt: When event was published
+ * - publishAt: Scheduled publish date (for future publishing)
+ * - isDeleted: Soft delete flag
+ * - createdAt: Creation timestamp
+ * 
+ * Indexes:
+ * - status + isDeleted: Efficient filtering of active events
+ * - teacher + status: Quick lookup of teacher's events
+ * =============================================================================
+ */
+
 const eventSchema = new mongoose.Schema({
   title: {
     type: String,

@@ -1,5 +1,20 @@
 import mongoose from "mongoose";
 
+/**
+ * Database Connection Module
+ * =============================================================================
+ * Purpose: Establishes and manages connection to MongoDB database
+ * 
+ * This module provides a reusable function to connect to MongoDB using Mongoose.
+ * It includes connection event handlers for monitoring database status.
+ * 
+ * Usage: Import and call connectDB() in server/server.js before starting the server
+ * 
+ * Environment Variables Required:
+ * - MONGO_URI: MongoDB connection string (from .env file)
+ * =============================================================================
+ */
+
 const connectDB = async () => {
   try {
     // Debug: Log that we're attempting to connect

@@ -1,7 +1,16 @@
 import Ticket from '../models/Ticket.js';
 import PDFDocument from 'pdfkit';
 
-// GET /api/tickets/my - Get all tickets for the logged-in student
+// TICKET CONTROLLER - Handles ticket operations
+// This controller manages getting tickets, verifying tickets, and generating PDFs
+
+// GET MY TICKENS - Returns all tickets for logged-in student
+// Step 1: Get user ID from authentication middleware
+// Step 2: Query MongoDB for tickets matching student ID
+// Step 3: Populate event and registration details
+// Step 4: Sort by creation date (newest first)
+// Step 5: Return tickets array
+// Request: GET /api/tickets/my (requires authentication)
 export const getMyTickets = async (req, res) => {
   try {
     const tickets = await Ticket.find({ student: req.user._id })
@@ -16,7 +25,13 @@ export const getMyTickets = async (req, res) => {
   }
 };
 
-// GET /api/tickets/:id - Get single ticket by ID
+// GET TICKET BY ID - Returns single ticket details
+// Step 1: Extract ticket ID from request parameters
+// Step 2: Find ticket in database
+// Step 3: Check if ticket exists
+// Step 4: Verify user is ticket owner or teacher (event creator)
+// Step 5: Return ticket data
+// Request: GET /api/tickets/:id
 export const getTicketById = async (req, res) => {
   try {
     const ticket = await Ticket.findById(req.params.id)
@@ -41,7 +56,14 @@ export const getTicketById = async (req, res) => {
   }
 };
 
-// GET /api/tickets/verify/:code - Verify ticket by code
+// VERIFY TICKET - Validates ticket by code (for event entry)
+// Step 1: Extract ticket code from request parameters
+// Step 2: Search for ticket with matching code
+// Step 3: If not found, return invalid response
+// Step 4: If already used, return used response with timestamp
+// Step 5: If cancelled, return cancelled response
+// Step 6: If valid, return valid response with ticket details
+// Request: GET /api/tickets/verify/:code
 export const verifyTicket = async (req, res) => {
   try {
     const { code } = req.params;
@@ -100,7 +122,15 @@ export const verifyTicket = async (req, res) => {
   }
 };
 
-// PUT /api/tickets/:id/use - Mark ticket as used (check-in)
+// USE TICKET - Marks ticket as used (for event check-in)
+// Step 1: Extract ticket ID from request parameters
+// Step 2: Find ticket in database
+// Step 3: Check if ticket exists
+// Step 4: Check if ticket already used - return error if so
+// Step 5: Check if ticket is cancelled - return error if so
+// Step 6: Update ticket status to 'used'
+// Step 7: Save to database and return success
+// Request: PUT /api/tickets/:id/use
 export const useTicket = async (req, res) => {
   try {
     const ticket = await Ticket.findById(req.params.id);
@@ -130,7 +160,19 @@ export const useTicket = async (req, res) => {
   }
 };
 
-// GET /api/tickets/:id/pdf - Download ticket as PDF
+// DOWNLOAD TICKET PDF - Generates PDF ticket for download
+// Step 1: Extract ticket ID from request parameters
+// Step 2: Find ticket with populated student and event data
+// Step 3: Check if ticket exists
+// Step 4: Verify user is ticket owner or teacher
+// Step 5: Set response headers for PDF download
+// Step 6: Create new PDF document using PDFKit
+// Step 7: Add event name, student details, date, location to PDF
+// Step 8: Add ticket code box with visual styling
+// Step 9: Convert QR code base64 to image and add to PDF
+// Step 10: Add footer with ticket ID and issue date
+// Step 11: Send PDF to client
+// Request: GET /api/tickets/:id/pdf
 export const downloadTicketPDF = async (req, res) => {
   try {
     const ticket = await Ticket.findById(req.params.id)

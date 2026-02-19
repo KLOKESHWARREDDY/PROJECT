@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Check, X, User, Mail, Calendar, Filter, Ticket } from 'lucide-react';
+import { ArrowLeft, Check, X, User, Mail, Calendar, Filter, Ticket, Search } from 'lucide-react';
 import { registrationAPI } from '../api';
 import { toast } from 'react-toastify';
 
@@ -11,6 +11,12 @@ const TeacherRegistrations = ({ theme, registrations = [], onApprove, onReject }
   // State for Filter
   const [activeFilter, setActiveFilter] = useState("Pending");
 
+  // UI State for Search/Filter
+  const [showSearch, setShowSearch] = useState(false);
+  const [showFilter, setShowFilter] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedDepartment, setSelectedDepartment] = useState("All");
+
   // RESPONSIVE CHECK
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   useEffect(() => {
@@ -19,10 +25,29 @@ const TeacherRegistrations = ({ theme, registrations = [], onApprove, onReject }
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  // Filter Logic - use lowercase for comparison since backend returns lowercase status
-  const filteredList = registrations.filter(reg =>
-    (reg.status?.toLowerCase() || 'pending') === activeFilter.toLowerCase()
-  );
+  // Get unique departments
+  const departments = ['All', ...new Set(registrations
+    .map(r => r.student?.department)
+    .filter(Boolean)
+  )];
+
+  // Filter Logic
+  const filteredList = registrations.filter(reg => {
+    // 1. Tab Status Filter
+    const statusMatch = (reg.status?.toLowerCase() || 'pending') === activeFilter.toLowerCase();
+
+    // 2. Department Filter
+    const deptMatch = selectedDepartment === 'All' || reg.student?.department === selectedDepartment;
+
+    // 3. Search Query
+    const query = searchQuery.toLowerCase();
+    const searchMatch = !query ||
+      reg.student?.name?.toLowerCase().includes(query) ||
+      reg.student?.email?.toLowerCase().includes(query) ||
+      reg.event?.title?.toLowerCase().includes(query); // Added event title search for this page
+
+    return statusMatch && deptMatch && searchMatch;
+  });
 
   console.log('Active filter:', activeFilter);
   console.log('Total registrations:', registrations.length);
@@ -72,7 +97,7 @@ const TeacherRegistrations = ({ theme, registrations = [], onApprove, onReject }
 
     // Filter Tabs
     filterContainer: {
-      display: 'flex', gap: '1vw', marginBottom: '3vh',
+      display: 'flex', gap: '1vw',
       padding: '0.5vh', backgroundColor: isDark ? '#1e293b' : '#fff',
       borderRadius: '2vw', width: 'fit-content',
       border: isDark ? '1px solid #334155' : '1px solid #e2e8f0'
@@ -85,6 +110,64 @@ const TeacherRegistrations = ({ theme, registrations = [], onApprove, onReject }
       color: isActive ? '#fff' : (isDark ? '#94a3b8' : '#64748b'),
       transition: 'all 0.2s',
       boxShadow: isActive ? '0 2px 10px rgba(79, 70, 229, 0.3)' : 'none'
+    }),
+
+    controlsContainer: {
+      display: 'flex',
+      justifyContent: 'space-between',
+      alignItems: 'flex-start',
+      flexWrap: 'wrap',
+      gap: '2vw',
+      marginBottom: '3vh'
+    },
+
+    // Right side action buttons
+    toolBar: {
+      display: 'flex', gap: '1vw', alignItems: 'center'
+    },
+    toolBtn: (isActive) => ({
+      padding: isMobile ? '1vh' : '0.8vh',
+      borderRadius: '50%',
+      border: isDark ? '1px solid #334155' : '1px solid #e2e8f0',
+      cursor: 'pointer',
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      backgroundColor: isActive ? '#4f46e5' : (isDark ? '#1e293b' : '#fff'),
+      color: isActive ? '#fff' : (isDark ? '#cbd5e1' : '#64748b'),
+      transition: 'all 0.2s'
+    }),
+
+    // Search Input Info
+    searchContainer: {
+      width: '100%',
+      marginBottom: '2vh',
+      animation: 'fadeIn 0.3s ease'
+    },
+    searchInput: {
+      width: '100%',
+      padding: isMobile ? '1.5vh 3vw' : '1.2vh 1.5vw',
+      borderRadius: '1vw',
+      border: isDark ? '1px solid #334155' : '1px solid #e2e8f0',
+      backgroundColor: isDark ? '#1e293b' : '#fff',
+      color: isDark ? '#fff' : '#1e293b',
+      outline: 'none',
+      fontSize: isMobile ? '3.5vw' : '0.9vw'
+    },
+
+    // Department Filter List
+    deptList: {
+      display: 'flex', gap: '1vw', flexWrap: 'wrap',
+      marginBottom: '2vh',
+      animation: 'fadeIn 0.3s ease'
+    },
+    deptChip: (isActive) => ({
+      padding: isMobile ? '0.8vh 3vw' : '0.5vh 1.2vw',
+      borderRadius: '1.5vw', border: '1px solid',
+      borderColor: isActive ? '#4f46e5' : (isDark ? '#334155' : '#e2e8f0'),
+      cursor: 'pointer',
+      fontSize: isMobile ? '3vw' : '0.8vw',
+      backgroundColor: isActive ? 'rgba(79, 70, 229, 0.1)' : (isDark ? '#1e293b' : '#fff'),
+      color: isActive ? '#4f46e5' : (isDark ? '#94a3b8' : '#64748b'),
+      transition: 'all 0.2s'
     }),
 
     // Stats Summary Card
@@ -194,18 +277,68 @@ const TeacherRegistrations = ({ theme, registrations = [], onApprove, onReject }
         <h1 style={styles.pageTitle}>Registrations</h1>
       </div>
 
-      {/* Filter Tabs */}
-      <div style={styles.filterContainer}>
-        {['Pending', 'Approved', 'Rejected'].map((tab) => (
+      <div style={styles.controlsContainer}>
+        {/* Filter Tabs */}
+        <div style={styles.filterContainer}>
+          {['Pending', 'Approved', 'Rejected'].map((tab) => (
+            <button
+              key={tab}
+              style={styles.filterTab(activeFilter === tab)}
+              onClick={() => setActiveFilter(tab)}
+            >
+              {tab === 'Pending' ? 'New Requests' : tab}
+            </button>
+          ))}
+        </div>
+
+        {/* Search & Filter Buttons */}
+        <div style={styles.toolBar}>
           <button
-            key={tab}
-            style={styles.filterTab(activeFilter === tab)}
-            onClick={() => setActiveFilter(tab)}
+            style={styles.toolBtn(showSearch)}
+            onClick={() => { setShowSearch(!showSearch); setShowFilter(false); }}
+            title="Search"
           >
-            {tab === 'Pending' ? 'New Requests' : tab}
+            {showSearch ? <X size={20} /> : <div style={{ display: 'flex', gap: '0.5vw' }}><Search size={20} /></div>}
           </button>
-        ))}
+
+          <button
+            style={styles.toolBtn(showFilter)}
+            onClick={() => { setShowFilter(!showFilter); setShowSearch(false); }}
+            title="Filter by Department"
+          >
+            {showFilter ? <X size={20} /> : <div style={{ display: 'flex', gap: '0.5vw' }}><Filter size={20} /></div>}
+          </button>
+        </div>
       </div>
+
+      {/* Search Input Area */}
+      {showSearch && (
+        <div style={styles.searchContainer}>
+          <input
+            type="text"
+            placeholder="Search by name, email, or event title..."
+            style={styles.searchInput}
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            autoFocus
+          />
+        </div>
+      )}
+
+      {/* Department Filter Area */}
+      {showFilter && (
+        <div style={styles.deptList}>
+          {departments.map(dept => (
+            <button
+              key={dept}
+              style={styles.deptChip(selectedDepartment === dept)}
+              onClick={() => setSelectedDepartment(dept)}
+            >
+              {dept}
+            </button>
+          ))}
+        </div>
+      )}
 
       {/* Dynamic Stats Card */}
       <div style={styles.statsCard}>

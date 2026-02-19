@@ -57,7 +57,12 @@ export const authAPI = {
     const formData = new FormData();
     formData.append('profileImage', file);
     const token = localStorage.getItem('token');
-    const response = await fetch(`${API_URL}/auth/upload-profile-image`, {
+
+    const uploadUrl = `${API_URL}/uploads/upload-profile-image`;
+    authAPI.DEBUG_UPLOAD_URL = uploadUrl; // Expose for debugging
+    console.log('[API] Uploading to:', uploadUrl);
+
+    const response = await fetch(uploadUrl, {
       method: 'POST',
       headers: { 'Authorization': `Bearer ${token}` },
       body: formData,

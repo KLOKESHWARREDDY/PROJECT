@@ -61,6 +61,7 @@ const AppContent = ({
   const location = useLocation();
   const isDark = theme === 'dark';
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+  const [chatOpen, setChatOpen] = useState(false);
 
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth < 768);
@@ -141,13 +142,13 @@ const AppContent = ({
           <Route path="/settings/language" element={<LanguageSelection currentLanguage="English" setLanguage={() => { }} theme={theme} />} />
           <Route path="/notifications" element={<Notifications theme={theme} user={user} registrations={registrations} notificationsList={notifications} />} />
           <Route path="/privacy" element={<PrivacyPolicy theme={theme} />} />
-          <Route path="/help" element={<HelpCenter theme={theme} />} />
+          <Route path="/help" element={<HelpCenter theme={theme} openChat={() => setChatOpen(true)} />} />
           <Route path="/settings" element={<Settings theme={theme} user={user} />} />
           <Route path="*" element={<Navigate to="/" />} />
         </Routes>
       </div>
       {shouldShowNav && isMobile && <BottomNav theme={theme} user={user} />}
-      <ChatBot user={user} />
+      <ChatBot user={user} isOpen={chatOpen} setIsOpen={setChatOpen} />
     </div>
   );
 };
@@ -346,7 +347,7 @@ function App() {
     } catch (error) {
       console.log('[App.js] Failed to fetch registrations:', error.message);
     }
-  }, [isAuthenticated, user, user?.token]);
+  }, [isAuthenticated, user?.role, user?._id, user?.token]);
 
   // Trigger registration refresh when needed
   const refreshRegistrations = useCallback(async () => {
@@ -444,33 +445,12 @@ function App() {
     }
   }, []);
 
-  const handleCreateEvent = useCallback(async (newEvent) => {
-    try {
-      const token = localStorage.getItem('token') || user?.token;
-      const response = await api.post('/events', newEvent, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-
-      const backendEvent = {
-        id: response.data._id,
-        _id: response.data._id,
-        title: response.data.title,
-        date: new Date(response.data.date).toISOString().slice(0, 16).replace('T', ' '),
-        location: response.data.location,
-        category: 'Event',
-        image: 'https://images.unsplash.com/photo-1485827404703-89b55fcc595e?w=800&q=80',
-        description: response.data.description,
-        status: response.data.status || 'draft'
-      };
-
-      setAllEvents(prev => [backendEvent, ...prev]);
-      console.log('[App.js] Event created successfully');
-    } catch (error) {
-      console.log('[App.js] Failed to create event:', error.message);
-      const mockEvent = { ...newEvent, id: Date.now() };
-      setAllEvents(prev => [mockEvent, ...prev]);
-    }
-  }, [user?.token]);
+  const handleCreateEvent = useCallback((newEvent) => {
+    // The event is already created in the backend by CreateEvent.jsx
+    // We just need to update the local state with the returned event data
+    setAllEvents(prev => [newEvent, ...prev]);
+    console.log('[App.js] Event added to state:', newEvent.title);
+  }, []);
 
   const handleDeleteEvent = useCallback(async (eventId, navigateCallback) => {
     console.log('[App] Deleting event:', eventId);

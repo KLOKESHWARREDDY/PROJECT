@@ -3,8 +3,7 @@ import { MessageCircle, X, Send } from 'lucide-react';
 import api from '../api';
 import './ChatBot.css';
 
-const ChatBot = ({ user }) => {
-    const [isOpen, setIsOpen] = useState(false);
+const ChatBot = ({ user, isOpen, setIsOpen }) => {
     const [messages, setMessages] = useState([]);
     const [input, setInput] = useState('');
     const [isLoading, setIsLoading] = useState(false);
@@ -60,6 +59,7 @@ const ChatBot = ({ user }) => {
 
         setMessages(prev => [...prev, userMsg]);
         setInput('');
+/* Subheading or description text */
         setIsLoading(true);
 
         try {
@@ -67,6 +67,7 @@ const ChatBot = ({ user }) => {
             if (token) {
                 // Authenticated chat
                 const res = await api.post('/chat/send', { message: userMsg.message });
+/* Container for the toggle switch between user types */
                 setMessages(prev => {
                     // Replace temp message if needed, or just append bot response
                     // Here we just append the real saved messages from DB to be safe, 

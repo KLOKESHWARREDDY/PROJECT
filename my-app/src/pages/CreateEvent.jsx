@@ -20,18 +20,18 @@ function CreateEvent({ onCreate, theme }) {
   const [date, setDate] = useState("");
   const [time, setTime] = useState("");
   const [location, setLocation] = useState("");
-  const [category, setCategory] = useState("Technology");
+  const [category, setCategory] = useState("");
   const [eventImage, setEventImage] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  
+
   // Track unsaved changes
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
-  const initialValues = useRef({ eventName: "", description: "", date: "", time: "", location: "", category: "Technology" });
+  const initialValues = useRef({ eventName: "", description: "", date: "", time: "", location: "", category: "" });
 
   // Track form changes
   useEffect(() => {
-    const hasChanges = 
+    const hasChanges =
       eventName !== initialValues.current.eventName ||
       description !== initialValues.current.description ||
       date !== initialValues.current.date ||
@@ -39,7 +39,7 @@ function CreateEvent({ onCreate, theme }) {
       location !== initialValues.current.location ||
       category !== initialValues.current.category ||
       eventImage !== null;
-    
+
     setHasUnsavedChanges(hasChanges);
   }, [eventName, description, date, time, location, category, eventImage]);
 
@@ -47,6 +47,7 @@ function CreateEvent({ onCreate, theme }) {
   const [showSuccessPopup, setShowSuccessPopup] = useState(false);
   const [showCancelPopup, setShowCancelPopup] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
+  const [showErrorPopup, setShowErrorPopup] = useState(false);
 
   // --- ACTIONS ---
 
@@ -107,9 +108,9 @@ function CreateEvent({ onCreate, theme }) {
       setSuccessMessage("Draft Saved!");
       setShowSuccessPopup(true);
       setTimeout(() => {
-        navigate('/teacher-events'); 
+        navigate('/teacher-events');
       }, 1500);
-      
+
     } catch (err) {
       console.log('Error saving draft:', err);
       console.error('Error message:', err.message);
@@ -129,7 +130,7 @@ function CreateEvent({ onCreate, theme }) {
   // 2. Publish Event (saves to backend with status 'published')
   const handlePublish = async () => {
     setError("");
-    
+
     // Validation
     if (!eventName) {
       setError("Event name is required");
@@ -159,7 +160,7 @@ function CreateEvent({ onCreate, theme }) {
 
       // Combine date and time
       const dateTime = new Date(`${date}T${time}`);
-      
+
       // Create event data for backend - status: published
       const eventData = {
         title: eventName,
@@ -205,11 +206,11 @@ function CreateEvent({ onCreate, theme }) {
       onCreate(newEvent);
       setSuccessMessage("Event Published!");
       setShowSuccessPopup(true);
-      
+
       setTimeout(() => {
-        navigate('/teacher-events'); 
+        navigate('/teacher-events');
       }, 1500);
-      
+
     } catch (err) {
       console.log('Error publishing event:', err);
       console.error('Error message:', err.message);
@@ -243,6 +244,11 @@ function CreateEvent({ onCreate, theme }) {
   const handleImageUpload = (e) => {
     const file = e.target.files[0];
     if (file) {
+      if (file.size > 10 * 1024 * 1024) { // 10MB validation
+        setShowErrorPopup(true);
+        e.target.value = null; // Reset input
+        return;
+      }
       const reader = new FileReader();
       reader.onloadend = () => setEventImage(reader.result);
       reader.readAsDataURL(file);
@@ -263,7 +269,7 @@ function CreateEvent({ onCreate, theme }) {
     header: { display: 'flex', alignItems: 'center', gap: '2vw', marginBottom: '3vh' },
     backBtn: { background: 'none', border: 'none', cursor: 'pointer', color: isDark ? '#fff' : '#64748b', display: 'flex', alignItems: 'center' },
     pageTitle: { fontSize: isMobile ? '6vw' : '2vw', fontWeight: '800' },
-    
+
     form: {
       backgroundColor: isDark ? '#1e293b' : '#fff',
       padding: isMobile ? '5vw' : '2.5vw',
@@ -271,7 +277,7 @@ function CreateEvent({ onCreate, theme }) {
       boxShadow: '0 4px 20px rgba(0,0,0,0.05)',
       border: isDark ? '1px solid #334155' : '1px solid #e2e8f0'
     },
-    
+
     uploadBox: {
       border: isDark ? '2px dashed #475569' : '2px dashed #cbd5e1',
       borderRadius: '1.5vw',
@@ -292,9 +298,10 @@ function CreateEvent({ onCreate, theme }) {
       backgroundColor: isDark ? '#0f172a' : '#fff',
       color: isDark ? '#fff' : '#1e293b',
       fontSize: isMobile ? '4vw' : '1vw',
-      outline: 'none'
+      outline: 'none',
+      boxSizing: 'border-box'
     },
-    row: { display: 'flex', gap: isMobile ? '3vw' : '1.5vw', marginBottom: '2.5vh' },
+    row: { display: 'flex', gap: isMobile ? '3vw' : '40px', marginBottom: '2.5vh' },
     col: { flex: 1 },
 
     // Error message
@@ -306,7 +313,7 @@ function CreateEvent({ onCreate, theme }) {
 
     // Buttons Container
     buttonRow: { display: 'flex', gap: '1vw', marginTop: '2vh' },
-    
+
     // Save as Draft Button
     draftBtn: {
       flex: 1,
@@ -324,7 +331,7 @@ function CreateEvent({ onCreate, theme }) {
     publishBtn: {
       flex: 1,
       padding: isMobile ? '2vh' : '1.5vh',
-      backgroundColor: loading ? '#94a3b8' : '#10b981', 
+      backgroundColor: loading ? '#94a3b8' : '#10b981',
       color: '#fff',
       border: 'none',
       borderRadius: isMobile ? '2vw' : '0.8vw',
@@ -347,7 +354,7 @@ function CreateEvent({ onCreate, theme }) {
 
     // Popup Styles
     popupOverlay: {
-      position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.6)', 
+      position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.6)',
       zIndex: 999, display: 'flex', alignItems: 'flex-end', justifyContent: 'center'
     },
     popup: {
@@ -383,10 +390,10 @@ function CreateEvent({ onCreate, theme }) {
         )}
 
         {/* Image Upload */}
-        <div style={{marginBottom:'2.5vh'}}>
+        <div style={{ marginBottom: '2.5vh' }}>
           <div style={styles.label}>Event Cover Image</div>
           <div style={styles.uploadBox} onClick={() => document.getElementById('fileInput').click()}>
-            {eventImage ? <img src={eventImage} style={styles.previewImg} alt="Preview"/> : (
+            {eventImage ? <img src={eventImage} style={styles.previewImg} alt="Preview" /> : (
               <>
                 <Upload size={32} color="#94a3b8" />
                 <span style={styles.uploadText}>Tap to upload image</span>
@@ -397,76 +404,149 @@ function CreateEvent({ onCreate, theme }) {
         </div>
 
         {/* Event Name */}
-        <div style={{marginBottom:'2.5vh'}}>
+        <div style={{ marginBottom: '2.5vh' }}>
           <label style={styles.label}>Event Name *</label>
-          <input 
-            style={styles.input} 
-            placeholder="e.g. AI Workshop" 
-            value={eventName} 
-            onChange={(e) => setEventName(e.target.value)} 
+          <input
+            style={styles.input}
+            placeholder="e.g. AI Workshop"
+            value={eventName}
+            onChange={(e) => setEventName(e.target.value)}
           />
         </div>
 
         {/* Date & Time */}
         <div style={styles.row}>
           <div style={styles.col}>
-            <label style={styles.label}><Calendar size={16}/> Date *</label>
+            <label style={styles.label}><Calendar size={16} /> Date *</label>
             <input style={styles.input} type="date" value={date} onChange={(e) => setDate(e.target.value)} />
           </div>
           <div style={styles.col}>
-            <label style={styles.label}><Clock size={16}/> Time *</label>
-            <input style={styles.input} type="time" value={time} onChange={(e) => setTime(e.target.value)} />
+            <label style={styles.label}><Clock size={16} /> Time *</label>
+            <div style={{ display: 'flex', gap: '5px' }}>
+              {/* Hour */}
+              <select
+                style={{ ...styles.input, flex: 1, minWidth: '60px' }}
+                value={time ? (parseInt(time.split(':')[0]) % 12 || 12).toString().padStart(2, '0') : ''}
+                onChange={(e) => {
+                  const newHour12 = parseInt(e.target.value);
+                  const currentMin = time ? parseInt(time.split(':')[1]) : 0;
+                  const currentHour24 = time ? parseInt(time.split(':')[0]) : 12;
+                  const isPM = currentHour24 >= 12;
+
+                  let newHour24 = newHour12;
+                  if (isPM && newHour12 !== 12) newHour24 += 12;
+                  else if (!isPM && newHour12 === 12) newHour24 = 0;
+
+                  setTime(`${newHour24.toString().padStart(2, '0')}:${currentMin.toString().padStart(2, '0')}`);
+                }}
+              >
+                <option value="" disabled>Hr</option>
+                {Array.from({ length: 12 }, (_, i) => i + 1).map(h => (
+                  <option key={h} value={h.toString().padStart(2, '0')}>{h.toString().padStart(2, '0')}</option>
+                ))}
+              </select>
+
+              <span style={{ display: 'flex', alignItems: 'center', fontWeight: 'bold', color: isDark ? '#fff' : '#333' }}>:</span>
+
+              {/* Minute */}
+              <select
+                style={{ ...styles.input, flex: 1, minWidth: '60px' }}
+                value={time ? time.split(':')[1] : ''}
+                onChange={(e) => {
+                  const newMin = e.target.value;
+                  const currentHour24 = time ? parseInt(time.split(':')[0]) : 12; // Default to 12 PM if empty
+                  setTime(`${currentHour24.toString().padStart(2, '0')}:${newMin}`);
+                }}
+              >
+                <option value="" disabled>Min</option>
+                {Array.from({ length: 12 }, (_, i) => i * 5).map(m => (
+                  <option key={m} value={m.toString().padStart(2, '0')}>{m.toString().padStart(2, '0')}</option>
+                ))}
+              </select>
+
+              {/* AM/PM */}
+              <select
+                style={{ ...styles.input, flex: 1, minWidth: '70px' }}
+                value={time ? (parseInt(time.split(':')[0]) >= 12 ? 'PM' : 'AM') : 'PM'} // Default to PM
+                onChange={(e) => {
+                  const newPeriod = e.target.value;
+                  if (!time) {
+                    setTime(newPeriod === 'AM' ? '00:00' : '12:00');
+                    return;
+                  }
+
+                  const [h, m] = time.split(':');
+                  let hour = parseInt(h);
+
+                  if (newPeriod === 'AM' && hour >= 12) hour -= 12;
+                  else if (newPeriod === 'PM' && hour < 12) hour += 12;
+
+                  setTime(`${hour.toString().padStart(2, '0')}:${m}`);
+                }}
+              >
+                <option value="AM">AM</option>
+                <option value="PM">PM</option>
+              </select>
+            </div>
           </div>
         </div>
 
         {/* Category & Location */}
         <div style={styles.row}>
-           <div style={styles.col}>
-             <label style={styles.label}><Tag size={16}/> Category</label>
-             <select style={styles.input} value={category} onChange={(e) => setCategory(e.target.value)}>
-               <option>Technology</option>
-               <option>Cultural</option>
-               <option>Sports</option>
-               <option>Workshop</option>
-               <option>Seminar</option>
-             </select>
-           </div>
-           <div style={styles.col}>
-             <label style={styles.label}><MapPin size={16}/> Location *</label>
-             <input style={styles.input} placeholder="e.g. Auditorium" value={location} onChange={(e) => setLocation(e.target.value)} />
-           </div>
+          <div style={styles.col}>
+            <label style={styles.label}><Tag size={16} /> Category</label>
+            <select
+              style={{
+                ...styles.input,
+                color: category === "" ? '#9ca3af' : styles.input.color
+              }}
+              value={category}
+              onChange={(e) => setCategory(e.target.value)}
+            >
+              <option value="" disabled>Select Category</option>
+              <option>Technology</option>
+              <option>Cultural</option>
+              <option>Sports</option>
+              <option>Workshop</option>
+              <option>Seminar</option>
+            </select>
+          </div>
+          <div style={styles.col}>
+            <label style={styles.label}><MapPin size={16} /> Location *</label>
+            <input style={styles.input} placeholder="e.g. Auditorium" value={location} onChange={(e) => setLocation(e.target.value)} />
+          </div>
         </div>
 
         {/* Description */}
-        <div style={{marginBottom:'2.5vh'}}>
-          <label style={styles.label}><AlignLeft size={16}/> Description *</label>
-          <textarea 
-            style={{...styles.input, height: '100px', resize: 'none'}} 
-            placeholder="Event details..." 
-            value={description} 
-            onChange={(e) => setDescription(e.target.value)} 
+        <div style={{ marginBottom: '2.5vh' }}>
+          <label style={styles.label}><AlignLeft size={16} /> Description *</label>
+          <textarea
+            style={{ ...styles.input, height: '100px', resize: 'none' }}
+            placeholder="Event details..."
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
           />
         </div>
 
         {/* Submit Buttons Row */}
         <div style={styles.buttonRow}>
           {/* Save as Draft Button */}
-          <button 
-            style={styles.draftBtn} 
+          <button
+            style={styles.draftBtn}
             onClick={handleSaveDraft}
             disabled={loading}
           >
-            <FileText size={isMobile ? 16 : 18}/>
+            <FileText size={isMobile ? 16 : 18} />
             {loading ? 'Saving...' : 'Save Draft'}
           </button>
 
           {/* Publish Button */}
-          <button 
-            style={styles.publishBtn} 
+          <button
+            style={styles.publishBtn}
             onClick={handlePublish}
             disabled={loading}
           >
-            <Send size={isMobile ? 16 : 18}/>
+            <Send size={isMobile ? 16 : 18} />
             {loading ? 'Publishing...' : 'Publish'}
           </button>
         </div>
@@ -479,10 +559,27 @@ function CreateEvent({ onCreate, theme }) {
 
       {/* Success Popup */}
       {showSuccessPopup && (
-        <div style={{position:'fixed', inset:0, background:'rgba(0,0,0,0.5)', display:'flex', alignItems:'center', justifyContent:'center', zIndex:1000}}>
-          <div style={{background:'#fff', padding:'30px', borderRadius:'20px', textAlign:'center', animation:'popIn 0.3s ease'}}>
-            <CheckCircle size={50} color="#10b981" style={{marginBottom:'10px'}}/>
-            <h3 style={{color:'#1f2937'}}>{successMessage}</h3>
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
+          <div style={{ background: '#fff', padding: '30px', borderRadius: '20px', textAlign: 'center', animation: 'popIn 0.3s ease' }}>
+            <CheckCircle size={50} color="#10b981" style={{ marginBottom: '10px' }} />
+            <h3 style={{ color: '#1f2937' }}>{successMessage}</h3>
+          </div>
+        </div>
+      )}
+
+      {/* Error Popup for Image Upload */}
+      {showErrorPopup && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }} onClick={() => setShowErrorPopup(false)}>
+          <div style={{ background: '#fff', padding: '30px', borderRadius: '20px', textAlign: 'center', animation: 'popIn 0.3s ease', maxWidth: '90vw', width: '400px' }} onClick={(e) => e.stopPropagation()}>
+            <AlertTriangle size={50} color="#ef4444" style={{ marginBottom: '10px', margin: '0 auto', display: 'block' }} />
+            <h3 style={{ color: '#1f2937', marginBottom: '10px' }}>File Too Large</h3>
+            <p style={{ color: '#4b5563', marginBottom: '20px' }}>The size of the uploaded image should be less than 10MB.</p>
+            <button
+              onClick={() => setShowErrorPopup(false)}
+              style={{ padding: '10px 25px', backgroundColor: '#ef4444', color: '#fff', border: 'none', borderRadius: '10px', fontSize: '1rem', fontWeight: '600', cursor: 'pointer' }}
+            >
+              Okay
+            </button>
           </div>
         </div>
       )}
@@ -492,20 +589,20 @@ function CreateEvent({ onCreate, theme }) {
         <div style={styles.popupOverlay} onClick={() => setShowCancelPopup(false)}>
           <div style={styles.popup} onClick={(e) => e.stopPropagation()}>
             <div style={styles.popupTitle}>
-              <AlertTriangle size={24} color="#f59e0b" style={{marginRight: '8px'}}/>
+              <AlertTriangle size={24} color="#f59e0b" style={{ marginRight: '8px' }} />
               You have unsaved changes
             </div>
-            
+
             <button style={styles.popupOption('#15803d', '#dcfce7')} onClick={handleSaveDraft}>
-              <FileText size={20}/> Save as Draft
+              <FileText size={20} /> Save as Draft
             </button>
-            
+
             <button style={styles.popupOption('#b91c1c', '#fee2e2')} onClick={handleDiscard}>
-              <Trash2 size={20}/> Discard Changes
+              <Trash2 size={20} /> Discard Changes
             </button>
-            
-            <button style={styles.popupOption(isDark?'#fff':'#333', isDark?'#334155':'#f1f5f9')} onClick={() => setShowCancelPopup(false)}>
-              <X size={20}/> Cancel
+
+            <button style={styles.popupOption(isDark ? '#fff' : '#333', isDark ? '#334155' : '#f1f5f9')} onClick={() => setShowCancelPopup(false)}>
+              <X size={20} /> Cancel
             </button>
           </div>
         </div>

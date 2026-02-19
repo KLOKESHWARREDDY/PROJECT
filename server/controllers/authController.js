@@ -5,11 +5,42 @@ import crypto from 'crypto';
 import nodemailer from 'nodemailer';
 import { OAuth2Client } from 'google-auth-library';
 
+/**
+ * Authentication Controller
+ * =============================================================================
+ * Purpose: Handles all user authentication operations
+ * 
+ * This controller manages user registration, login, profile management,
+ * password reset, and Google OAuth authentication.
+ * 
+ * Functions:
+ * - registerUser: Create new user account
+ * - loginUser: Authenticate existing user
+ * - googleAuth: Handle Google OAuth login/signup
+ * - getUserProfile: Retrieve user profile data
+ * - updateUserProfile: Update user profile information
+ * - forgotPassword: Generate password reset token
+ * - resetPassword: Update password with reset token
+ * - changePassword: Change password while logged in
+ * 
+ * Dependencies:
+ * - bcryptjs: Password hashing
+ * - jsonwebtoken: JWT token generation
+ * - nodemailer: Email sending
+ * - google-auth-library: Google OAuth verification
+ * =============================================================================
+ */
+
+// Generate JWT token for authenticated user
+// Creates a token valid for 30 days
 const generateToken = (id) => {
   return jwt.sign({ id }, process.env.JWT_SECRET || 'eventsphere_secret_key_2024', { expiresIn: '30d' });
 };
 
-// Register User - Complete with Debugging
+// Register new user account
+// Validates required fields, checks for existing user, hashes password
+// Returns user data with JWT token
+// Request body: { name, email, password, role, college, regNo, department }
 export const registerUser = async (req, res) => {
   console.log('\n========== REGISTER CONTROLLER ==========');
   console.log('Request URL:', req.url);
@@ -24,7 +55,7 @@ export const registerUser = async (req, res) => {
     // Debug: Check if req.body is empty
     if (!req.body || Object.keys(req.body).length === 0) {
       console.error('❌ req.body is EMPTY - Express JSON middleware may not be working');
-      return res.status(400).json({ 
+      return res.status(400).json({
         message: 'Request body is empty. Please check API configuration.',
         hint: 'Make sure Content-Type header is application/json'
       });
@@ -39,9 +70,9 @@ export const registerUser = async (req, res) => {
       if (!email) missing.push('email');
       if (!password) missing.push('password');
       if (!role) missing.push('role');
-      
+
       console.error('❌ Missing fields:', missing);
-      return res.status(400).json({ 
+      return res.status(400).json({
         message: `Missing required fields: ${missing.join(', ')}`,
         missingFields: missing
       });
@@ -97,28 +128,31 @@ export const registerUser = async (req, res) => {
   } catch (error) {
     console.error('❌ Registration Error:', error);
     console.error('Error stack:', error.stack);
-    
+
     // Handle specific MongoDB errors
     if (error.name === 'ValidationError') {
       const validationErrors = Object.values(error.errors).map(e => e.message);
-      return res.status(400).json({ 
+      return res.status(400).json({
         message: 'Validation error',
-        errors: validationErrors 
+        errors: validationErrors
       });
     }
-    
+
     if (error.code === 11000) {
       return res.status(400).json({ message: 'Email already exists' });
     }
-    
-    res.status(500).json({ 
+
+    res.status(500).json({
       message: 'Server error during registration',
-      error: error.message 
+      error: error.message
     });
   }
 };
 
-// Login User - Complete with Debugging
+// Login existing user
+// Validates credentials, compares password, returns JWT token
+// Request body: { email, password }
+// Response: User data with JWT token
 export const loginUser = async (req, res) => {
   console.log('\n========== LOGIN CONTROLLER ==========');
   console.log('Request URL:', req.url);
@@ -133,7 +167,7 @@ export const loginUser = async (req, res) => {
     // Debug: Check if req.body is empty
     if (!req.body || Object.keys(req.body).length === 0) {
       console.error('❌ req.body is EMPTY');
-      return res.status(400).json({ 
+      return res.status(400).json({
         message: 'Request body is empty. Please check API configuration.'
       });
     }
@@ -162,7 +196,7 @@ export const loginUser = async (req, res) => {
 
     // Check password
     let isMatch = false;
-    
+
     if (user.password.startsWith('$2')) {
       // Password is hashed - use bcrypt.compare
       isMatch = await bcrypt.compare(password, user.password);
@@ -171,7 +205,7 @@ export const loginUser = async (req, res) => {
       // Legacy: Plain text password
       isMatch = (password === user.password);
       console.log('✅ Plain text compare result:', isMatch);
-      
+
       // Auto-upgrade to hashed password
       if (isMatch) {
         console.log('🔄 Upgrading to hashed password...');
@@ -204,14 +238,17 @@ export const loginUser = async (req, res) => {
   } catch (error) {
     console.error('❌ Login Error:', error);
     console.error('Error stack:', error.stack);
-    res.status(500).json({ 
+    res.status(500).json({
       message: 'Server error during login',
-      error: error.message 
+      error: error.message
     });
   }
 };
 
-// Google Auth - Verify token and login/register user
+// Google OAuth Authentication
+// Verifies Google token, creates new user if not exists, returns JWT
+// Request body: { credential: google_id_token }
+// New Google users get default role: 'student'
 export const googleAuth = async (req, res) => {
   try {
     const { credential } = req.body;
@@ -285,17 +322,20 @@ export const googleAuth = async (req, res) => {
 };
 
 // Get User Profile
+// Retrieves profile data for authenticated user
+// Uses user ID from JWT token (set by authMiddleware)
+// Returns user data without password
 export const getUserProfile = async (req, res) => {
   try {
     // Get user by ID from JWT token - exclude password
     const userId = req.user?._id || req.user?.id;
-    
+
     if (!userId) {
       return res.status(400).json({ message: 'User ID not found in token' });
     }
-    
+
     const user = await User.findById(userId).select('-password');
-    
+
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
@@ -319,6 +359,9 @@ export const getUserProfile = async (req, res) => {
 };
 
 // Update User Profile
+// Updates profile information for authenticated user
+// Request body: { name, college, regNo, department, profileImage }
+// Only updates fields that are provided
 export const updateUserProfile = async (req, res) => {
   try {
     console.log('📝 Update Profile Request Body:', req.body);
@@ -377,6 +420,9 @@ export const updateUserProfile = async (req, res) => {
 };
 
 // Forgot Password
+// Generates password reset token and sends reset email
+// Request body: { email }
+// Returns generic message to prevent email enumeration
 export const forgotPassword = async (req, res) => {
   try {
     const { email } = req.body;
@@ -445,6 +491,10 @@ export const forgotPassword = async (req, res) => {
 };
 
 // Reset Password
+// Updates password using valid reset token
+// Params: { token: reset_token }
+// Request body: { password }
+// Token expires after 10 minutes
 export const resetPassword = async (req, res) => {
   try {
     const { token } = req.params;
@@ -491,30 +541,44 @@ export const resetPassword = async (req, res) => {
   }
 };
 
-// Change Password (while logged in)
+// CHANGE PASSWORD - Allows logged in user to change their password
+// This function is called when user wants to update their password while logged in
+// Requires current password verification for security
 export const changePassword = async (req, res) => {
+  console.log('\n========== CHANGE PASSWORD CONTROLLER ==========');
+  console.log('Request Body:', JSON.stringify(req.body, null, 2));
+  console.log('User from Token:', req.user ? req.user.email : 'No User');
+
   try {
     const userId = req.user._id;
     const { currentPassword, newPassword } = req.body;
 
     if (!currentPassword || !newPassword) {
+      console.log('❌ Missing fields');
       return res.status(400).json({ message: "Please fill all fields" });
     }
 
     const user = await User.findById(userId);
     if (!user) {
+      console.log('❌ User not found');
       return res.status(404).json({ message: "User not found" });
     }
 
+    console.log('✅ Found user:', user.email);
+    console.log('Checking password match...');
     const isMatch = await bcrypt.compare(currentPassword, user.password);
+
     if (!isMatch) {
+      console.log('❌ Current password incorrect');
       return res.status(400).json({ message: "Current password incorrect" });
     }
 
     if (newPassword.length < 6) {
+      console.log('❌ New password too short');
       return res.status(400).json({ message: "Password must be at least 6 characters" });
     }
 
+    console.log('Hashing new password...');
     const hashedPassword = await bcrypt.hash(newPassword, 10);
     user.password = hashedPassword;
     await user.save();
@@ -523,7 +587,7 @@ export const changePassword = async (req, res) => {
 
     res.json({ message: "Password updated successfully" });
   } catch (error) {
-    console.error('Change Password Error:', error);
+    console.error('❌ Change Password Error:', error);
     res.status(500).json({ message: error.message || "Server error" });
   }
 };

@@ -16,21 +16,41 @@ import { isTeacher } from '../middleware/roleMiddleware.js';
 
 const router = express.Router();
 
-// Event Routes
-router.get('/', protect, getEvents);  // Get all published events (public)
-router.get('/my-events', protect, isTeacher, getTeacherEvents);  // Get only THIS teacher's events (all)
-router.get('/:id', protect, getEventById);  // Get single event by ID
-router.post('/', protect, isTeacher, createEvent);  // Create event (teacher only)
-router.put('/:id', protect, isTeacher, updateEvent);  // Update event (teacher only)
-router.delete('/:id', protect, isTeacher, deleteEvent);  // Delete event (teacher only) - soft delete
+// EVENT ROUTES - Handles event CRUD operations
+// Teachers can create/update/delete events, students can view published events
 
-// ========== Draft + Publish Routes ==========
-router.put('/:id/publish', protect, isTeacher, publishEvent);  // Publish event
-router.put('/:id/unpublish', protect, isTeacher, unpublishEvent);  // Unpublish event (back to draft)
-router.put('/:id/complete', protect, isTeacher, completeEvent);  // Archive event
-router.put('/:id/schedule', protect, isTeacher, schedulePublishEvent);  // Schedule publish
+// GET /api/events - Get all published events (requires authentication)
+router.get('/', protect, getEvents);
 
-// Test route
+// GET /api/events/my-events - Get teacher's own events (requires teacher role)
+router.get('/my-events', protect, isTeacher, getTeacherEvents);
+
+// GET /api/events/:id - Get single event by ID
+router.get('/:id', protect, getEventById);
+
+// POST /api/events - Create new event (teacher only)
+router.post('/', protect, isTeacher, createEvent);
+
+// PUT /api/events/:id - Update event (teacher only)
+router.put('/:id', protect, isTeacher, updateEvent);
+
+// DELETE /api/events/:id - Delete event (teacher only) - soft delete
+router.delete('/:id', protect, isTeacher, deleteEvent);
+
+// DRAFT + PUBLISH ROUTES
+// PUT /api/events/:id/publish - Publish event (teacher only)
+router.put('/:id/publish', protect, isTeacher, publishEvent);
+
+// PUT /api/events/:id/unpublish - Unpublish event (teacher only)
+router.put('/:id/unpublish', protect, isTeacher, unpublishEvent);
+
+// PUT /api/events/:id/complete - Mark event as completed (teacher only)
+router.put('/:id/complete', protect, isTeacher, completeEvent);
+
+// PUT /api/events/:id/schedule - Schedule event publish (teacher only)
+router.put('/:id/schedule', protect, isTeacher, schedulePublishEvent);
+
+// TEST ROUTE
 router.get("/test", (req, res) => {
   res.json({ message: "Events routes working" });
 });

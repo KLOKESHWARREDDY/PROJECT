@@ -4,7 +4,11 @@ import { protect } from '../middleware/authMiddleware.js';
 
 const router = express.Router();
 
-// Test endpoint to verify server is receiving data
+// AUTH ROUTES - Handles user authentication and profile management
+// These routes manage user registration, login, and profile updates
+
+// TEST ENDPOINT - Verifies server receives JSON data correctly
+// Used for debugging request body parsing
 router.post("/test-register", (req, res) => {
   console.log('[TEST] Raw req.body:', req.body);
   console.log('[TEST] Content-Type:', req.headers['content-type']);
@@ -15,21 +19,33 @@ router.post("/test-register", (req, res) => {
   });
 });
 
-// Auth Routes
+// AUTHENTICATION ROUTES
+// POST /api/auth/register - Create new user account
 router.post('/register', registerUser);
+
+// POST /api/auth/login - Authenticate user and get token
 router.post('/login', loginUser);
+
+// POST /api/auth/google - Login/register with Google OAuth
 router.post('/google', googleAuth);
+
+// GET /api/auth/profile - Get current user profile (requires authentication)
 router.get('/profile', protect, getUserProfile);
+
+// PUT /api/auth/profile - Update user profile (requires authentication)
 router.put('/profile', protect, updateUserProfile);
 
-// Password Reset Routes
+// PASSWORD RESET ROUTES
+// POST /api/auth/forgot-password - Send password reset email
 router.post('/forgot-password', forgotPassword);
+
+// PUT /api/auth/reset-password/:token - Reset password with token
 router.put('/reset-password/:token', resetPassword);
 
-// Change Password (while logged in)
+// PUT /api/auth/change-password - Change password while logged in
 router.put('/change-password', protect, changePassword);
 
-// Test route
+// TEST ROUTE - Verify routes are working
 router.get("/test", (req, res) => {
   res.json({ message: "Auth routes working" });
 });

@@ -1,12 +1,18 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { ArrowLeft, Check, X, User, Mail, Phone, Filter } from 'lucide-react';
+import { ArrowLeft, Check, X, User, Mail, Phone, Filter, Search } from 'lucide-react';
 
 const EventSpecificRegistrations = ({ events, registrations = [], onApprove, onReject, theme }) => {
   const navigate = useNavigate();
   const { id } = useParams(); // Get ID from URL
   const isDark = theme === 'dark';
   const [relatedRegistrations, setRelatedRegistrations] = useState([]);
+
+  // UI State
+  const [showSearch, setShowSearch] = useState(false);
+  const [showFilter, setShowFilter] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedDepartment, setSelectedDepartment] = useState("All");
 
   // Find event from props for display title
   const eventItem = events.find(e => e.id === id || e._id === id);
@@ -29,11 +35,29 @@ const EventSpecificRegistrations = ({ events, registrations = [], onApprove, onR
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  // Filter registrations by status (lowercase comparison)
+  // Get unique departments
+  const departments = ['All', ...new Set(relatedRegistrations
+    .map(r => r.student?.department)
+    .filter(Boolean)
+  )];
+
+  // Filter registrations
   const filteredList = relatedRegistrations.filter(reg => {
-    // Check if status matches (handle different casing if needed, though App.js should normalize)
+    // 1. Tab Status Filter
     const status = reg.status?.toLowerCase() || 'pending';
-    return status === activeFilter.toLowerCase();
+    const statusMatch = status === activeFilter.toLowerCase();
+
+    // 2. Department Filter
+    const deptMatch = selectedDepartment === 'All' || reg.student?.department === selectedDepartment;
+
+    // 3. Search Query
+    const query = searchQuery.toLowerCase();
+    const searchMatch = !query ||
+      reg.student?.name?.toLowerCase().includes(query) ||
+      reg.student?.email?.toLowerCase().includes(query) ||
+      reg.student?.regNo?.toLowerCase().includes(query);
+
+    return statusMatch && deptMatch && searchMatch;
   });
 
   const styles = {
@@ -54,8 +78,18 @@ const EventSpecificRegistrations = ({ events, registrations = [], onApprove, onR
     pageTitle: { fontSize: isMobile ? '5vw' : '1.8vw', fontWeight: '800' },
     subTitle: { fontSize: isMobile ? '3.5vw' : '1vw', color: '#6366f1', marginLeft: 'auto', fontWeight: '600' },
 
+    controlsContainer: {
+      display: 'flex',
+      justifyContent: 'space-between',
+      alignItems: 'flex-start',
+      flexWrap: 'wrap',
+      gap: '2vw',
+      marginBottom: '3vh'
+    },
+
+    // Left side tabs
     filterContainer: {
-      display: 'flex', gap: '1vw', marginBottom: '3vh',
+      display: 'flex', gap: '1vw',
       padding: '0.5vh', backgroundColor: isDark ? '#1e293b' : '#fff',
       borderRadius: '2vw', width: 'fit-content',
       border: isDark ? '1px solid #334155' : '1px solid #e2e8f0'
@@ -66,6 +100,55 @@ const EventSpecificRegistrations = ({ events, registrations = [], onApprove, onR
       fontSize: isMobile ? '3.5vw' : '0.9vw', fontWeight: '600',
       backgroundColor: isActive ? '#4f46e5' : 'transparent',
       color: isActive ? '#fff' : (isDark ? '#94a3b8' : '#64748b'),
+      transition: 'all 0.2s'
+    }),
+
+    // Right side action buttons
+    toolBar: {
+      display: 'flex', gap: '1vw', alignItems: 'center'
+    },
+    toolBtn: (isActive) => ({
+      padding: isMobile ? '1vh' : '0.8vh',
+      borderRadius: '50%',
+      border: isDark ? '1px solid #334155' : '1px solid #e2e8f0',
+      cursor: 'pointer',
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      backgroundColor: isActive ? '#4f46e5' : (isDark ? '#1e293b' : '#fff'),
+      color: isActive ? '#fff' : (isDark ? '#cbd5e1' : '#64748b'),
+      transition: 'all 0.2s'
+    }),
+
+    // Search Input Info
+    searchContainer: {
+      width: '100%',
+      marginBottom: '2vh',
+      animation: 'fadeIn 0.3s ease'
+    },
+    searchInput: {
+      width: '100%',
+      padding: isMobile ? '1.5vh 3vw' : '1.2vh 1.5vw',
+      borderRadius: '1vw',
+      border: isDark ? '1px solid #334155' : '1px solid #e2e8f0',
+      backgroundColor: isDark ? '#1e293b' : '#fff',
+      color: isDark ? '#fff' : '#1e293b',
+      outline: 'none',
+      fontSize: isMobile ? '3.5vw' : '0.9vw'
+    },
+
+    // Department Filter List
+    deptList: {
+      display: 'flex', gap: '1vw', flexWrap: 'wrap',
+      marginBottom: '2vh',
+      animation: 'fadeIn 0.3s ease'
+    },
+    deptChip: (isActive) => ({
+      padding: isMobile ? '0.8vh 3vw' : '0.5vh 1.2vw',
+      borderRadius: '1.5vw', border: '1px solid',
+      borderColor: isActive ? '#4f46e5' : (isDark ? '#334155' : '#e2e8f0'),
+      cursor: 'pointer',
+      fontSize: isMobile ? '3vw' : '0.8vw',
+      backgroundColor: isActive ? 'rgba(79, 70, 229, 0.1)' : (isDark ? '#1e293b' : '#fff'),
+      color: isActive ? '#4f46e5' : (isDark ? '#94a3b8' : '#64748b'),
       transition: 'all 0.2s'
     }),
 
@@ -117,19 +200,70 @@ const EventSpecificRegistrations = ({ events, registrations = [], onApprove, onR
         </div>
       </div>
 
-      <div style={styles.filterContainer}>
-        {['Pending', 'Approved', 'Rejected'].map((tab) => (
-          <button key={tab} style={styles.filterTab(activeFilter === tab)} onClick={() => setActiveFilter(tab)}>
-            {tab}
+      <div style={styles.controlsContainer}>
+        {/* Status Tabs */}
+        <div style={styles.filterContainer}>
+          {['Pending', 'Approved', 'Rejected'].map((tab) => (
+            <button key={tab} style={styles.filterTab(activeFilter === tab)} onClick={() => setActiveFilter(tab)}>
+              {tab}
+            </button>
+          ))}
+        </div>
+
+        {/* Search & Filter Buttons */}
+        <div style={styles.toolBar}>
+          <button
+            style={styles.toolBtn(showSearch)}
+            onClick={() => { setShowSearch(!showSearch); setShowFilter(false); }}
+            title="Search"
+          >
+            {showSearch ? <X size={20} /> : <div style={{ display: 'flex', gap: '0.5vw' }}><Search size={20} /></div>}
           </button>
-        ))}
+
+          <button
+            style={styles.toolBtn(showFilter)}
+            onClick={() => { setShowFilter(!showFilter); setShowSearch(false); }}
+            title="Filter by Department"
+          >
+            {showFilter ? <X size={20} /> : <div style={{ display: 'flex', gap: '0.5vw' }}><Filter size={20} /></div>}
+          </button>
+        </div>
       </div>
+
+      {/* Search Input Area */}
+      {showSearch && (
+        <div style={styles.searchContainer}>
+          <input
+            type="text"
+            placeholder="Search by name, email, or reg no..."
+            style={styles.searchInput}
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            autoFocus
+          />
+        </div>
+      )}
+
+      {/* Department Filter Area */}
+      {showFilter && (
+        <div style={styles.deptList}>
+          {departments.map(dept => (
+            <button
+              key={dept}
+              style={styles.deptChip(selectedDepartment === dept)}
+              onClick={() => setSelectedDepartment(dept)}
+            >
+              {dept}
+            </button>
+          ))}
+        </div>
+      )}
 
       <div style={styles.listContainer}>
         {filteredList.length === 0 ? (
           <div style={styles.emptyState}>
             <Filter size={40} style={{ opacity: 0.3, marginBottom: '10px' }} />
-            <p>No {activeFilter.toLowerCase()} registrations for this event.</p>
+            <p>No {activeFilter.toLowerCase()} registrations found.</p>
           </div>
         ) : (
           filteredList.map((reg) => (
@@ -138,6 +272,7 @@ const EventSpecificRegistrations = ({ events, registrations = [], onApprove, onR
               <div style={styles.cardInfo}>
                 <div style={styles.name}>{reg.student?.name || 'Unknown'}</div>
                 <div style={styles.detail}><Mail size={12} /> {reg.student?.email || 'No email'}</div>
+                {reg.student?.department && <div style={styles.detail}>{reg.student.department}</div>}
               </div>
 
               {activeFilter === 'Pending' ? (

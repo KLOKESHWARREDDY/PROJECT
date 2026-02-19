@@ -6,7 +6,7 @@ import { authAPI } from '../api';
 const EditProfile = ({ user, setUser, theme }) => {
   const navigate = useNavigate();
   const isDark = theme === 'dark';
-  
+
   const fileInputRef = useRef(null);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
@@ -26,9 +26,23 @@ const EditProfile = ({ user, setUser, theme }) => {
     email: user?.email || '',
   });
 
+  // Sync form data with user prop when it becomes available
+  useEffect(() => {
+    if (user) {
+      setFormData({
+        name: user.name || '',
+        college: user.college || '',
+        regNo: user.regNo || '',
+        email: user.email || '',
+      });
+      setPreviewUrl(user.profileImage || '');
+    }
+  }, [user]);
+
   // DEBUG: Log user role
   useEffect(() => {
     console.log('🔐 EditProfile - User role:', user?.role);
+    console.log('🔄 EditProfile Loaded - v2 (Upload Fix Applied)');
   }, [user]);
 
   const handleFileChange = async (e) => {
@@ -44,7 +58,7 @@ const EditProfile = ({ user, setUser, theme }) => {
       setMessage('Image uploaded! Now save other changes.');
     } catch (error) {
       console.error('Upload error:', error);
-      setMessage('Error uploading image: ' + error.message);
+      setMessage(`Upload Failed: ${error.message}`);
     } finally {
       setLoading(false);
     }
@@ -61,13 +75,13 @@ const EditProfile = ({ user, setUser, theme }) => {
         regNo: formData.regNo,
         profileImage: previewUrl
       };
-      
+
       const response = await authAPI.updateProfile(data);
 
       // Update localStorage with new user data
       const savedUser = localStorage.getItem('user');
       let updatedUserData = response.data;
-      
+
       if (savedUser) {
         const parsed = JSON.parse(savedUser);
         updatedUserData = {
@@ -76,7 +90,7 @@ const EditProfile = ({ user, setUser, theme }) => {
           token: parsed.token
         };
       }
-      
+
       localStorage.setItem('user', JSON.stringify(updatedUserData));
 
       if (setUser) {
@@ -84,7 +98,7 @@ const EditProfile = ({ user, setUser, theme }) => {
       }
 
       setMessage('Profile saved successfully!');
-      
+
       setTimeout(() => {
         navigate('/profile');
       }, 1000);
@@ -136,9 +150,9 @@ const EditProfile = ({ user, setUser, theme }) => {
       marginTop: 10, color: '#4f46e5', fontWeight: '600', fontSize: isMobile ? 14 : 16, cursor: 'pointer'
     },
     form: { display: 'flex', flexDirection: 'column', gap: 20 },
-    label: { 
-      fontSize: isMobile ? 14 : 16, fontWeight: '600', marginBottom: 8, 
-      color: isDark ? '#cbd5e1' : '#475569' 
+    label: {
+      fontSize: isMobile ? 14 : 16, fontWeight: '600', marginBottom: 8,
+      color: isDark ? '#cbd5e1' : '#475569'
     },
     input: {
       width: '100%', padding: isMobile ? 12 : 14,
@@ -159,8 +173,8 @@ const EditProfile = ({ user, setUser, theme }) => {
     },
     message: {
       marginTop: 15, padding: 12,
-      backgroundColor: message.includes('saved') ? '#dcfce7' : '#fee2e2',
-      color: message.includes('saved') ? '#166534' : '#991b1b',
+      backgroundColor: (message.includes('saved') || message.includes('uploaded')) ? '#dcfce7' : '#fee2e2',
+      color: (message.includes('saved') || message.includes('uploaded')) ? '#166534' : '#991b1b',
       borderRadius: 8, fontSize: isMobile ? 14 : 14, textAlign: 'center'
     }
   };
@@ -168,7 +182,7 @@ const EditProfile = ({ user, setUser, theme }) => {
   const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
 
   const getImageUrl = (url) => {
-    if (!url) return 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200&q=80';
+    if (!url) return 'https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png';
     if (url.startsWith('http')) return url;
     if (url.startsWith('/uploads')) return `http://localhost:5000${url}`;
     return url;
@@ -185,16 +199,17 @@ const EditProfile = ({ user, setUser, theme }) => {
 
       <div style={styles.avatarContainer}>
         <div style={styles.avatarWrapper}>
-          <img 
-            src={getImageUrl(previewUrl)} 
-            alt="Profile" 
+          <img
+            src={`${getImageUrl(previewUrl)}?t=${new Date().getTime()}`}
+            alt="Profile"
             style={styles.avatar}
             onError={(e) => {
-              e.target.src = 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200&q=80';
+              console.error('Image load failed for:', e.target.src);
+              e.target.src = 'https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png';
             }}
           />
-          <div 
-            style={{...styles.cameraBtn, opacity: loading ? 0.7 : 1}}
+          <div
+            style={{ ...styles.cameraBtn, opacity: loading ? 0.7 : 1 }}
             onClick={() => fileInputRef.current.click()}
           >
             <Camera size={isMobile ? 16 : 18} />
@@ -203,10 +218,10 @@ const EditProfile = ({ user, setUser, theme }) => {
         <span style={styles.changeText} onClick={() => fileInputRef.current.click()}>
           {loading ? 'Uploading...' : 'Change Photo'}
         </span>
-        <input 
-          type="file" 
-          ref={fileInputRef} 
-          style={{ display: 'none' }} 
+        <input
+          type="file"
+          ref={fileInputRef}
+          style={{ display: 'none' }}
           accept="image/*"
           onChange={handleFileChange}
         />
@@ -217,46 +232,46 @@ const EditProfile = ({ user, setUser, theme }) => {
       <div style={styles.form}>
         <div>
           <label style={styles.label}>Full Name</label>
-          <input 
-            style={styles.input} 
-            name="name" 
-            value={formData.name} 
-            onChange={(e) => setFormData({ ...formData, name: e.target.value })} 
+          <input
+            style={styles.input}
+            name="name"
+            value={formData.name}
+            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
           />
         </div>
 
         <div>
           <label style={styles.label}>College Name</label>
-          <input 
-            style={styles.input} 
-            name="college" 
-            value={formData.college} 
-            onChange={(e) => setFormData({ ...formData, college: e.target.value })} 
+          <input
+            style={styles.input}
+            name="college"
+            value={formData.college}
+            onChange={(e) => setFormData({ ...formData, college: e.target.value })}
           />
         </div>
 
         <div>
           <label style={styles.label}>Register Number</label>
-          <input 
-            style={styles.input} 
-            name="regNo" 
-            value={formData.regNo} 
-            onChange={(e) => setFormData({ ...formData, regNo: e.target.value })} 
+          <input
+            style={styles.input}
+            name="regNo"
+            value={formData.regNo}
+            onChange={(e) => setFormData({ ...formData, regNo: e.target.value })}
           />
         </div>
 
         <div>
           <label style={styles.label}>Email (cannot change)</label>
-          <input 
-            style={{...styles.input, opacity: 0.7}} 
-            name="email" 
-            value={formData.email} 
-            disabled 
+          <input
+            style={{ ...styles.input, opacity: 0.7 }}
+            name="email"
+            value={formData.email}
+            disabled
           />
         </div>
 
-        <button 
-          style={styles.saveBtn} 
+        <button
+          style={styles.saveBtn}
           onClick={handleSave}
           disabled={loading}
         >

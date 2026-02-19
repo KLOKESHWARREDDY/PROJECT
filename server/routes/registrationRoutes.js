@@ -15,6 +15,9 @@ import { isTeacher } from '../middleware/roleMiddleware.js';
 
 const router = express.Router();
 
+// REGISTRATION ROUTES - Handles event registration operations
+// Students register for events, teachers approve/reject registrations
+
 // Create new registration
 router.post("/", protect, createRegistration);
 

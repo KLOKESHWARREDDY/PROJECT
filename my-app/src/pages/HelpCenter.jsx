@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { HelpCircle, Mail, ChevronDown, ChevronUp, MessageCircle, FileText } from 'lucide-react';
 
-const HelpCenter = ({ theme }) => {
+const HelpCenter = ({ theme, openChat }) => {
   const isDark = theme === 'dark';
   const [openIndex, setOpenIndex] = useState(null);
 
@@ -105,7 +105,7 @@ const HelpCenter = ({ theme }) => {
 
   return (
     <div style={styles.container}>
-      
+
       {/* HEADER */}
       <div style={styles.header}>
         <div style={{ display: 'inline-flex', padding: '12px', borderRadius: '50%', backgroundColor: '#dcfce7', color: '#166534', marginBottom: '20px' }}>
@@ -117,16 +117,16 @@ const HelpCenter = ({ theme }) => {
 
       {/* FAQ SECTION */}
       <div>
-        <h2 style={styles.sectionTitle}><FileText size={20}/> Frequently Asked Questions</h2>
+        <h2 style={styles.sectionTitle}><FileText size={20} /> Frequently Asked Questions</h2>
         <div style={styles.faqContainer}>
           {faqs.map((faq, index) => (
             <div key={index} style={styles.faqItem}>
-              <div 
-                style={styles.questionBox} 
+              <div
+                style={styles.questionBox}
                 onClick={() => setOpenIndex(openIndex === index ? null : index)}
               >
                 {faq.question}
-                {openIndex === index ? <ChevronUp size={20} color="#6366f1"/> : <ChevronDown size={20} color="#94a3b8"/>}
+                {openIndex === index ? <ChevronUp size={20} color="#6366f1" /> : <ChevronDown size={20} color="#94a3b8" />}
               </div>
               {openIndex === index && (
                 <div style={styles.answerBox}>
@@ -140,10 +140,11 @@ const HelpCenter = ({ theme }) => {
 
       {/* CONTACT CARDS */}
       <div style={styles.contactGrid}>
-        <div 
+        <div
           style={styles.contactCard}
           onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(-5px)'}
           onMouseLeave={(e) => e.currentTarget.style.transform = 'translateY(0)'}
+          onClick={() => window.location.href = 'mailto:support@eventsphere.edu'}
         >
           <div style={{ marginBottom: '15px', color: '#6366f1' }}><Mail size={32} /></div>
           <h3 style={{ marginBottom: '10px', color: isDark ? '#fff' : '#1e293b' }}>Email Support</h3>
@@ -151,10 +152,11 @@ const HelpCenter = ({ theme }) => {
           <div style={{ fontWeight: 'bold', color: '#6366f1' }}>support@eventsphere.edu</div>
         </div>
 
-        <div 
+        <div
           style={styles.contactCard}
           onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(-5px)'}
           onMouseLeave={(e) => e.currentTarget.style.transform = 'translateY(0)'}
+          onClick={openChat}
         >
           <div style={{ marginBottom: '15px', color: '#22c55e' }}><MessageCircle size={32} /></div>
           <h3 style={{ marginBottom: '10px', color: isDark ? '#fff' : '#1e293b' }}>Live Chat</h3>

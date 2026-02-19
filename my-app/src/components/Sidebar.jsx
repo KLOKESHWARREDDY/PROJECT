@@ -15,26 +15,26 @@ const Sidebar = ({ user, theme, onLogout }) => {
       setIconSize(window.innerWidth < 1400 ? 18 : 22);
     };
     window.addEventListener('resize', handleResize);
-    handleResize(); 
+    handleResize();
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
   // Handle case where user is null or undefined
   const isTeacher = user?.role === 'teacher';
 
-  const menuItems = isTeacher 
+  const menuItems = isTeacher
     ? [
-        { label: 'Dashboard', icon: <Home size={iconSize} />, path: '/' },
-        { label: 'My Events', icon: <CalendarCheck size={iconSize} />, path: '/teacher-events' },
-        { label: 'Registrations', icon: <CheckSquare size={iconSize} />, path: '/teacher-registrations' },
-        { label: 'Profile', icon: <User size={iconSize} />, path: '/profile' },
-      ]
+      { label: 'Dashboard', icon: <Home size={iconSize} />, path: '/' },
+      { label: 'My Events', icon: <CalendarCheck size={iconSize} />, path: '/teacher-events' },
+      { label: 'Registrations', icon: <CheckSquare size={iconSize} />, path: '/teacher-registrations' },
+      { label: 'Profile', icon: <User size={iconSize} />, path: '/profile' },
+    ]
     : [
-        { label: 'Dashboard', icon: <Home size={iconSize} />, path: '/' },
-        { label: 'Events', icon: <Calendar size={iconSize} />, path: '/events' },
-        { label: 'My Tickets', icon: <Ticket size={iconSize} />, path: '/my-events' },
-        { label: 'Profile', icon: <User size={iconSize} />, path: '/profile' },
-      ];
+      { label: 'Dashboard', icon: <Home size={iconSize} />, path: '/' },
+      { label: 'Events', icon: <Calendar size={iconSize} />, path: '/events' },
+      { label: 'My Tickets', icon: <Ticket size={iconSize} />, path: '/my-events' },
+      { label: 'Profile', icon: <User size={iconSize} />, path: '/profile' },
+    ];
 
   const footerItems = [
     { label: 'Privacy Policy', icon: <Shield size={iconSize} />, path: '/privacy' },
@@ -43,7 +43,7 @@ const Sidebar = ({ user, theme, onLogout }) => {
 
   // ✅ GET FULL IMAGE URL
   const getImageUrl = (url) => {
-    if (!url) return 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200&q=80';
+    if (!url) return 'https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png';
     if (url.startsWith('http')) return url;
     if (url.startsWith('/uploads')) return `http://localhost:5000${url}`;
     return url;
@@ -91,15 +91,15 @@ const Sidebar = ({ user, theme, onLogout }) => {
       justifyContent: isExpanded ? 'flex-start' : 'center',
       transition: 'all 0.2s'
     }),
-    navLabel: { 
+    navLabel: {
       fontWeight: '600', fontSize: 14, display: isExpanded ? 'block' : 'none', whiteSpace: 'nowrap'
     },
-    userSection: { 
+    userSection: {
       marginTop: 'auto', padding: '12px 0', display: 'flex', alignItems: 'center',
       gap: 12, justifyContent: isExpanded ? 'flex-start' : 'center',
       paddingLeft: isExpanded ? 16 : 0
     },
-    avatar: { 
+    avatar: {
       width: 36, height: 36, minWidth: 30, minHeight: 30,
       borderRadius: '50%', objectFit: 'cover',
       backgroundColor: '#f3f4f6'
@@ -124,46 +124,46 @@ const Sidebar = ({ user, theme, onLogout }) => {
         {menuItems.map((item) => {
           const isActive = location.pathname === item.path;
           return (
-            <div 
-              key={item.label} 
-              style={styles.navItem(isActive)} 
+            <div
+              key={item.label}
+              style={styles.navItem(isActive)}
               onClick={() => navigate(item.path)}
               title={!isExpanded ? item.label : ''}
             >
-              <div style={{display:'flex', justifyContent:'center', minWidth:'20px'}}>{item.icon}</div>
+              <div style={{ display: 'flex', justifyContent: 'center', minWidth: '20px' }}>{item.icon}</div>
               <span style={styles.navLabel}>{item.label}</span>
             </div>
           );
         })}
-        
-        <div style={{height: '1px', backgroundColor: isDark ? '#334155' : '#e2e8f0', margin: '12px 16px'}} />
+
+        <div style={{ height: '1px', backgroundColor: isDark ? '#334155' : '#e2e8f0', margin: '12px 16px' }} />
 
         {footerItems.map((item) => (
-           <div 
-            key={item.label} 
-            style={styles.navItem(location.pathname === item.path)} 
+          <div
+            key={item.label}
+            style={styles.navItem(location.pathname === item.path)}
             onClick={() => navigate(item.path)}
             title={!isExpanded ? item.label : ''}
           >
-             <div style={{display:'flex', justifyContent:'center', minWidth:'20px'}}>{item.icon}</div>
-             <span style={styles.navLabel}>{item.label}</span>
-           </div>
+            <div style={{ display: 'flex', justifyContent: 'center', minWidth: '20px' }}>{item.icon}</div>
+            <span style={styles.navLabel}>{item.label}</span>
+          </div>
         ))}
       </div>
 
       <div style={styles.userSection}>
-        <img 
-          src={imageError ? 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200&q=80' : imageUrl} 
-          alt="User" 
+        <img
+          src={imageError ? 'https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png' : imageUrl}
+          alt="User"
           style={styles.avatar}
           onError={handleImageError}
         />
         <div style={styles.userName}>{user?.name ? user.name.split(' ')[0] : 'User'}</div>
       </div>
 
-      <div style={{...styles.navItem(false), color:'#ef4444', marginTop:'8px'}} onClick={onLogout} title={!isExpanded ? "Log Out" : ""}>
-         <div style={{display:'flex', justifyContent:'center', minWidth:'20px'}}><LogOut size={iconSize} /></div>
-         <span style={styles.navLabel}>Log Out</span>
+      <div style={{ ...styles.navItem(false), color: '#ef4444', marginTop: '8px' }} onClick={onLogout} title={!isExpanded ? "Log Out" : ""}>
+        <div style={{ display: 'flex', justifyContent: 'center', minWidth: '20px' }}><LogOut size={iconSize} /></div>
+        <span style={styles.navLabel}>Log Out</span>
       </div>
     </div>
   );

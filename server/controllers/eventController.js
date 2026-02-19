@@ -3,7 +3,17 @@ import Registration from '../models/Registration.js';
 import Ticket from '../models/Ticket.js';
 import Notification from '../models/Notification.js';
 
-// Create Event (Teacher only) - Default status: draft
+// EVENT CONTROLLER - Handles all event-related operations
+// This controller manages creating, reading, updating, and deleting events
+// Teachers can create events, students can view published events
+
+// CREATE EVENT - Teacher creates a new event
+// Step 1: Extract event data from request body (title, description, date, location, etc.)
+// Step 2: Check if user is authenticated (req.user must exist)
+// Step 3: Set default status to 'draft' unless explicitly set to 'published'
+// Step 4: Save new event to MongoDB with teacher reference
+// Step 5: Return created event data to client
+// Request: POST /api/events with body containing event details
 export const createEvent = async (req, res) => {
   try {
     const { title, description, date, location, category, image, status } = req.body;
@@ -45,7 +55,12 @@ export const createEvent = async (req, res) => {
   }
 };
 
-// Get ALL Events - For Students (only published events, not archived)
+// GET ALL EVENTS - Returns published events for students
+// Step 1: Query MongoDB for events with status 'published' and isDeleted false
+// Step 2: Populate teacher field with name and email for display
+// Step 3: Sort by publishedAt date (newest first)
+// Step 4: Return array of events to client
+// Request: GET /api/events (public endpoint)
 export const getEvents = async (req, res) => {
   try {
     const events = await Event.find({
@@ -63,7 +78,13 @@ export const getEvents = async (req, res) => {
   }
 };
 
-// Get Teacher's Events - Shows ALL events (draft, published, archived)
+// GET TEACHER'S EVENTS - Returns all events created by the logged-in teacher
+// Step 1: Verify user is authenticated
+// Step 2: Query MongoDB for events where teacher matches current user
+// Step 3: Include all event statuses (draft, published, archived)
+// Step 4: Populate teacher details
+// Step 5: Return teacher's events
+// Request: GET /api/events/my-events (requires teacher authentication)
 export const getTeacherEvents = async (req, res) => {
   try {
     if (!req.user || !req.user._id) {
@@ -91,7 +112,13 @@ export const getTeacherEvents = async (req, res) => {
   }
 };
 
-// Get Single Event by ID
+// GET SINGLE EVENT - Returns event details by ID
+// Step 1: Extract event ID from request parameters
+// Step 2: Find event in MongoDB by ID
+// Step 3: Check if user is event owner OR event is published
+// Step 4: If not authorized, return 403 error
+// Step 5: Return event data
+// Request: GET /api/events/:id
 export const getEventById = async (req, res) => {
   try {
     console.log("Requested ID:", req.params.id);
@@ -120,7 +147,14 @@ export const getEventById = async (req, res) => {
   }
 };
 
-// Update Event
+// UPDATE EVENT - Updates event details
+// Step 1: Extract event ID from request parameters
+// Step 2: Extract update data from request body
+// Step 3: Build query - only teacher who owns event can update
+// Step 4: Update event in MongoDB with new data
+// Step 5: If title/date/location changed, notify registered students
+// Step 6: Return updated event
+// Request: PUT /api/events/:id
 export const updateEvent = async (req, res) => {
   try {
     const { id } = req.params;
@@ -176,7 +210,14 @@ export const updateEvent = async (req, res) => {
   }
 };
 
-// Delete Event - Soft delete
+// DELETE EVENT - Soft deletes an event (marks as archived)
+// Step 1: Extract event ID from request parameters
+// Step 2: Verify user is authenticated
+// Step 3: Find and update event - set isDeleted true and status 'archived'
+// Step 4: Only the event owner (teacher) can delete
+// Step 5: Notify all registered students about deletion
+// Step 6: Return success message
+// Request: DELETE /api/events/:id (requires teacher authentication)
 export const deleteEvent = async (req, res) => {
   try {
     const { id } = req.params;
@@ -240,7 +281,14 @@ const createNotification = async (userId, title, message, type, relatedId = null
   }
 };
 
-// Publish Event - Make it visible to public
+// PUBLISH EVENT - Makes event visible to students
+// Step 1: Extract event ID from request parameters
+// Step 2: Verify user is authenticated
+// Step 3: Update event status to 'published' and set publishedAt timestamp
+// Step 4: Only the event owner can publish
+// Step 5: Notify approved registrants about the published event
+// Step 6: Return success message with updated event
+// Request: PUT /api/events/:id/publish (requires teacher authentication)
 export const publishEvent = async (req, res) => {
   try {
     const { id } = req.params;
@@ -285,7 +333,13 @@ export const publishEvent = async (req, res) => {
   }
 };
 
-// Unpublish Event - Revert to draft
+// UNPUBLISH EVENT - Reverts event back to draft status
+// Step 1: Extract event ID from request parameters
+// Step 2: Verify user is authenticated
+// Step 3: Update event status back to 'draft' and clear publishedAt
+// Step 4: Only the event owner can unpublish
+// Step 5: Return success message with updated event
+// Request: PUT /api/events/:id/unpublish (requires teacher authentication)
 export const unpublishEvent = async (req, res) => {
   try {
     const { id } = req.params;
@@ -317,7 +371,13 @@ export const unpublishEvent = async (req, res) => {
   }
 };
 
-// Complete Event - Mark as completed
+// COMPLETE EVENT - Marks event as finished
+// Step 1: Extract event ID from request parameters
+// Step 2: Verify user is authenticated
+// Step 3: Update event status to 'completed'
+// Step 4: Only the event owner can mark as completed
+// Step 5: Return success message with updated event
+// Request: PUT /api/events/:id/complete (requires teacher authentication)
 export const completeEvent = async (req, res) => {
   try {
     const { id } = req.params;
@@ -349,7 +409,14 @@ export const completeEvent = async (req, res) => {
   }
 };
 
-// Schedule Publish Event
+// SCHEDULE PUBLISH EVENT - Sets a future date to automatically publish
+// Step 1: Extract event ID from request parameters
+// Step 2: Extract publishAt date from request body
+// Step 3: Verify user is authenticated
+// Step 4: Validate that schedule date is in the future
+// Step 5: Update event with scheduled publish date
+// Step 6: Return success message with event
+// Request: PUT /api/events/:id/schedule (requires teacher authentication)
 export const schedulePublishEvent = async (req, res) => {
   try {
     const { id } = req.params;

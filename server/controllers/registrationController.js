@@ -5,7 +5,14 @@ import Notification from '../models/Notification.js';
 import mongoose from 'mongoose';
 import QRCode from 'qrcode';
 
-// Helper to create notification
+// REGISTRATION CONTROLLER - Handles student event registrations
+// This controller manages registration creation, approval, rejection, and cancellation
+// Students register for events, teachers approve/reject registrations
+
+// Helper function to create notification - used internally
+// Step 1: Create notification object with user, title, message, type
+// Step 2: Save to MongoDB
+// Step 3: Handle any errors silently (non-blocking)
 const createNotification = async (userId, title, message, type, relatedId = null) => {
   try {
     await Notification.create({
@@ -20,7 +27,16 @@ const createNotification = async (userId, title, message, type, relatedId = null
   }
 };
 
-// Create new registration
+// CREATE REGISTRATION - Student registers for an event
+// Step 1: Extract eventId from request body
+// Step 2: Get student ID from authenticated user (req.user)
+// Step 3: Validate eventId is provided
+// Step 4: Check if event exists in database
+// Step 5: Check if student already registered for this event
+// Step 6: Create new registration with status 'pending'
+// Step 7: Send notification to event teacher
+// Step 8: Return success message with registration data
+// Request: POST /api/registrations with body { eventId }
 export const createRegistration = async (req, res) => {
   try {
     const { eventId } = req.body;
@@ -88,7 +104,14 @@ export const createRegistration = async (req, res) => {
   }
 };
 
-// Get student's registrations
+// GET STUDENT REGISTRATIONS - Returns all registrations for a specific student
+// Step 1: Extract student ID from request parameters
+// Step 2: Verify requesting user owns these registrations
+// Step 3: Query MongoDB for registrations matching student ID
+// Step 4: Populate event and teacher details
+// Step 5: Sort by creation date (newest first)
+// Step 6: Return array of registrations
+// Request: GET /api/registrations/student/:id
 export const getStudentRegistrations = async (req, res) => {
   try {
     const studentId = req.params.id;
@@ -114,7 +137,13 @@ export const getStudentRegistrations = async (req, res) => {
   }
 };
 
-// Get teacher's registrations (all registrations for teacher's events)
+// GET TEACHER REGISTRATIONS - Returns all registrations for teacher's events
+// Step 1: Get teacher ID from authenticated user
+// Step 2: Query MongoDB for registrations where teacher matches logged in user
+// Step 3: Populate student and event details
+// Step 4: Sort by creation date (newest first)
+// Step 5: Return array of all registrations across teacher's events
+// Request: GET /api/registrations/teacher (requires teacher authentication)
 export const getTeacherRegistrations = async (req, res) => {
   try {
     console.log("=== GET TEACHER REGISTRATIONS ===");
@@ -166,7 +195,17 @@ export const getEventRegistrations = async (req, res) => {
   }
 };
 
-// Approve registration
+// APPROVE REGISTRATION - Teacher approves a student's registration
+// Step 1: Extract registration ID from request parameters
+// Step 2: Find registration in database
+// Step 3: Verify teacher owns the event
+// Step 4: Update registration status to 'approved'
+// Step 5: Generate unique ticket code
+// Step 6: Generate QR code for the ticket
+// Step 7: Create ticket in database
+// Step 8: Send notification to student
+// Step 9: Return success with registration and ticket code
+// Request: PUT /api/registrations/:id/approve
 export const approveRegistration = async (req, res) => {
   try {
     const { id } = req.params;
@@ -242,7 +281,14 @@ export const approveRegistration = async (req, res) => {
   }
 };
 
-// Reject registration
+// REJECT REGISTRATION - Teacher rejects a student's registration
+// Step 1: Extract registration ID from request parameters
+// Step 2: Find registration in database
+// Step 3: Verify teacher owns the event
+// Step 4: Update registration status to 'rejected'
+// Step 5: Send notification to student
+// Step 6: Return success message
+// Request: PUT /api/registrations/:id/reject
 export const rejectRegistration = async (req, res) => {
   try {
     const { id } = req.params;
@@ -288,7 +334,15 @@ export const rejectRegistration = async (req, res) => {
   }
 };
 
-// Cancel registration (student cancels their own)
+// CANCEL REGISTRATION - Student cancels their own registration
+// Step 1: Extract registration ID from request parameters
+// Step 2: Get user ID from authenticated user
+// Step 3: Find registration in database
+// Step 4: Verify student owns this registration
+// Step 5: If already approved, also delete the associated ticket
+// Step 6: Delete registration from database
+// Step 7: Return success message
+// Request: DELETE /api/registrations/:id (student only)
 export const cancelRegistration = async (req, res) => {
   try {
     const { id } = req.params;

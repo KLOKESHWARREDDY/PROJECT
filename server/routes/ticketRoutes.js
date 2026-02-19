@@ -11,13 +11,22 @@ import {
 
 const router = express.Router();
 
-// Student routes
-router.get('/my', protect, getMyTickets); // Get student's tickets
-router.get('/:id', protect, getTicketById); // Get single ticket
-router.get('/:id/pdf', protect, downloadTicketPDF); // Download ticket PDF
+// TICKET ROUTES - Handles ticket operations
+// Students can view/download tickets, teachers can verify and use tickets
 
-// Teacher routes
-router.get('/verify/:code', protect, isTeacher, verifyTicket); // Verify ticket by code
-router.put('/:id/use', protect, isTeacher, useTicket); // Mark ticket as used
+// GET /api/tickets/my - Get student's tickets (requires authentication)
+router.get('/my', protect, getMyTickets);
+
+// GET /api/tickets/:id - Get single ticket details
+router.get('/:id', protect, getTicketById);
+
+// GET /api/tickets/:id/pdf - Download ticket as PDF
+router.get('/:id/pdf', protect, downloadTicketPDF);
+
+// GET /api/tickets/verify/:code - Verify ticket by code (teacher only)
+router.get('/verify/:code', protect, isTeacher, verifyTicket);
+
+// PUT /api/tickets/:id/use - Mark ticket as used (teacher only)
+router.put('/:id/use', protect, isTeacher, useTicket);
 
 export default router;

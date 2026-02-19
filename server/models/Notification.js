@@ -1,5 +1,28 @@
 import mongoose from 'mongoose';
 
+/**
+ * Notification Model
+ * =============================================================================
+ * Purpose: Stores user notifications for various events in the system
+ * 
+ * This model tracks notifications sent to users about important events
+ * such as registration updates, event approvals, and system announcements.
+ * 
+ * Schema Fields:
+ * - user: Reference to the user who receives the notification
+ * - title: Notification title/heading
+ * - message: Notification content/details
+ * - type: Notification category - 'registration', 'approval', 'publish', 'delete', 'general'
+ * - relatedId: Optional reference to related entity (e.g., event ID)
+ * - isRead: Read status flag (true = read, false = unread)
+ * - timestamps: Auto-created createdAt and updatedAt fields
+ * 
+ * Indexes:
+ * - user + createdAt: Quick lookup sorted by date
+ * - user + isRead: Filter unread notifications
+ * =============================================================================
+ */
+
 const notificationSchema = new mongoose.Schema({
   user: {
     type: mongoose.Schema.Types.ObjectId,
