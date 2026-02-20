@@ -251,7 +251,7 @@ const EditProfile = ({ user, setUser, theme }) => {
         </div>
 
         <div>
-          <label style={styles.label}>Register Number</label>
+          <label style={styles.label}>{user?.role === 'teacher' ? 'Employee ID' : 'Registration ID'}</label>
           <input
             style={styles.input}
             name="regNo"

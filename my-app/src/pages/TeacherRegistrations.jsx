@@ -1,10 +1,9 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft, Check, X, User, Mail, Calendar, Filter, Ticket, Search } from 'lucide-react';
-import { registrationAPI } from '../api';
-import { toast } from 'react-toastify';
+import ConfirmationModal from '../components/ConfirmationModal';
 
-const TeacherRegistrations = ({ theme, registrations = [], onApprove, onReject }) => {
+const TeacherRegistrations = ({ theme, registrations = [], onApprove, onReject, onApproveAll, onRejectAll }) => {
   const navigate = useNavigate();
   const isDark = theme === 'dark';
 
@@ -17,6 +16,16 @@ const TeacherRegistrations = ({ theme, registrations = [], onApprove, onReject }
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedDepartment, setSelectedDepartment] = useState("All");
 
+  // Modal State
+  const [modal, setModal] = useState({
+    isOpen: false,
+    title: '',
+    message: '',
+    onConfirm: () => { },
+    isDanger: false,
+    confirmText: 'Confirm'
+  });
+
   // RESPONSIVE CHECK
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   useEffect(() => {
@@ -25,11 +34,8 @@ const TeacherRegistrations = ({ theme, registrations = [], onApprove, onReject }
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  // Get unique departments
-  const departments = ['All', ...new Set(registrations
-    .map(r => r.student?.department)
-    .filter(Boolean)
-  )];
+  // Standard Departments
+  const departments = ['All', 'CSE', 'ECE', 'MECH', 'CIVIL', 'EEE', 'IT', 'AI & DS', 'MBA', 'MCA'];
 
   // Filter Logic
   const filteredList = registrations.filter(reg => {
@@ -308,6 +314,49 @@ const TeacherRegistrations = ({ theme, registrations = [], onApprove, onReject }
           >
             {showFilter ? <X size={20} /> : <div style={{ display: 'flex', gap: '0.5vw' }}><Filter size={20} /></div>}
           </button>
+
+          {/* Bulk Actions - Only for Pending */}
+          {activeFilter === 'Pending' && filteredList.length > 0 && (
+            <>
+              <button
+                style={{ ...styles.toolBtn(false), backgroundColor: '#fee2e2', color: '#991b1b', borderColor: '#fca5a5' }}
+                onClick={() => {
+                  const ids = filteredList.map(r => r._id);
+                  if (ids.length === 0) return;
+                  setModal({
+                    isOpen: true,
+                    title: 'Reject All Registrations',
+                    message: `Are you sure you want to REJECT ALL ${ids.length} visible pending registrations? This action cannot be undone.`,
+                    onConfirm: () => onRejectAll(ids),
+                    isDanger: true,
+                    confirmText: 'Reject All'
+                  });
+                }}
+                title="Reject All Visible"
+              >
+                <span style={{ fontSize: isMobile ? '3vw' : '0.8vw', fontWeight: 'bold' }}>Reject All</span>
+              </button>
+
+              <button
+                style={{ ...styles.toolBtn(false), backgroundColor: '#dcfce7', color: '#166534', borderColor: '#86efac' }}
+                onClick={() => {
+                  const ids = filteredList.map(r => r._id);
+                  if (ids.length === 0) return;
+                  setModal({
+                    isOpen: true,
+                    title: 'Approve All Registrations',
+                    message: `Are you sure you want to APPROVE ALL ${ids.length} visible pending registrations? Tickets will be generated for all students.`,
+                    onConfirm: () => onApproveAll(ids),
+                    isDanger: false,
+                    confirmText: 'Approve All'
+                  });
+                }}
+                title="Approve All Visible"
+              >
+                <span style={{ fontSize: isMobile ? '3vw' : '0.8vw', fontWeight: 'bold' }}>Approve All</span>
+              </button>
+            </>
+          )}
         </div>
       </div>
 
@@ -440,6 +489,15 @@ const TeacherRegistrations = ({ theme, registrations = [], onApprove, onReject }
         )}
       </div>
 
+      <ConfirmationModal
+        isOpen={modal.isOpen}
+        onClose={() => setModal({ ...modal, isOpen: false })}
+        onConfirm={modal.onConfirm}
+        title={modal.title}
+        message={modal.message}
+        isDanger={modal.isDanger}
+        confirmText={modal.confirmText}
+      />
     </div>
   );
 };

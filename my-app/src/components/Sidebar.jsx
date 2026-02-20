@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Home, Calendar, Ticket, User, LogOut, Menu, Shield, HelpCircle, CalendarCheck, CheckSquare } from 'lucide-react';
+import { Home, Calendar, Ticket, Menu, Shield, HelpCircle, CalendarCheck, CheckSquare, User, LogOut } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 
 const Sidebar = ({ user, theme, onLogout }) => {
@@ -93,23 +93,8 @@ const Sidebar = ({ user, theme, onLogout }) => {
     }),
     navLabel: {
       fontWeight: '600', fontSize: 14, display: isExpanded ? 'block' : 'none', whiteSpace: 'nowrap'
-    },
-    userSection: {
-      marginTop: 'auto', padding: '12px 0', display: 'flex', alignItems: 'center',
-      gap: 12, justifyContent: isExpanded ? 'flex-start' : 'center',
-      paddingLeft: isExpanded ? 16 : 0
-    },
-    avatar: {
-      width: 36, height: 36, minWidth: 30, minHeight: 30,
-      borderRadius: '50%', objectFit: 'cover',
-      backgroundColor: '#f3f4f6'
-    },
-    userName: {
-      display: isExpanded ? 'block' : 'none', fontSize: 14, fontWeight: 'bold', color: isDark ? '#fff' : '#333'
     }
   };
-
-  const imageUrl = getImageUrl(user?.profileImage);
 
   return (
     <div style={styles.sidebar}>
@@ -149,22 +134,23 @@ const Sidebar = ({ user, theme, onLogout }) => {
             <span style={styles.navLabel}>{item.label}</span>
           </div>
         ))}
+
+        <div
+          style={styles.navItem(false)}
+          onClick={() => {
+            onLogout();
+            navigate('/');
+          }}
+          title={!isExpanded ? 'Log Out' : ''}
+        >
+          <div style={{ display: 'flex', justifyContent: 'center', minWidth: '20px' }}>
+            <LogOut size={iconSize} color="#ef4444" />
+          </div>
+          <span style={{ ...styles.navLabel, color: '#ef4444' }}>Log Out</span>
+        </div>
       </div>
 
-      <div style={styles.userSection}>
-        <img
-          src={imageError ? 'https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png' : imageUrl}
-          alt="User"
-          style={styles.avatar}
-          onError={handleImageError}
-        />
-        <div style={styles.userName}>{user?.name ? user.name.split(' ')[0] : 'User'}</div>
-      </div>
-
-      <div style={{ ...styles.navItem(false), color: '#ef4444', marginTop: '8px' }} onClick={onLogout} title={!isExpanded ? "Log Out" : ""}>
-        <div style={{ display: 'flex', justifyContent: 'center', minWidth: '20px' }}><LogOut size={iconSize} /></div>
-        <span style={styles.navLabel}>Log Out</span>
-      </div>
+      {/* User Section Removed as per request */}
     </div>
   );
 };

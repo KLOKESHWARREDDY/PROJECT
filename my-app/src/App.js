@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { BrowserRouter as Router, Routes, Route, useLocation, Navigate } from 'react-router-dom';
-import { CheckCircle, XCircle } from 'lucide-react';
+
 import axios from 'axios';
 import { toast } from 'react-toastify';
 import './App.css';
@@ -56,7 +56,8 @@ const AppContent = ({
   searchTerm, setSearchTerm, registeredEvents, filteredEvents,
   notifications, unreadCount, markNotificationsRead,
   handleCreateEvent, handleDeleteEvent, handleUpdateEvent,
-  registrations, handleApproveReg, handleRejectReg
+  registrations, handleApproveReg, handleRejectReg,
+  handleApproveAll, handleRejectAll
 }) => {
   const location = useLocation();
   const isDark = theme === 'dark';
@@ -118,10 +119,10 @@ const AppContent = ({
               <Route path="/edit-event/:id" element={<EditEvent events={allEvents} onUpdate={handleUpdateEvent} theme={theme} />} />
               <Route path="/teacher-events" element={<TeacherMyEvents events={allEvents} theme={theme} />} />
               <Route path="/teacher-event-details/:id" element={<TeacherEventDetails events={allEvents} onDelete={handleDeleteEvent} theme={theme} />} />
-              <Route path="/teacher-registrations" element={<TeacherRegistrations registrations={registrations} onApprove={handleApproveReg} onReject={handleRejectReg} theme={theme} />} />
+              <Route path="/teacher-registrations" element={<TeacherRegistrations registrations={registrations} onApprove={handleApproveReg} onReject={handleRejectReg} onApproveAll={handleApproveAll} onRejectAll={handleRejectAll} theme={theme} />} />
               <Route path="/ticket/:id" element={<TicketConfirmation allEvents={allEvents} theme={theme} onCancel={handleCancel} />} />
               <Route path="/ticket-confirmation/:id" element={<TicketConfirmation allEvents={allEvents} theme={theme} onCancel={handleCancel} />} />
-              <Route path="/event-registrations/:id" element={<EventSpecificRegistrations events={allEvents} registrations={registrations} onApprove={handleApproveReg} onReject={handleRejectReg} theme={theme} />} />
+              <Route path="/event-registrations/:id" element={<EventSpecificRegistrations events={allEvents} registrations={registrations} onApprove={handleApproveReg} onReject={handleRejectReg} onApproveAll={handleApproveAll} onRejectAll={handleRejectAll} theme={theme} />} />
             </>
           )}
 
@@ -349,10 +350,7 @@ function App() {
     }
   }, [isAuthenticated, user?.role, user?._id, user?.token]);
 
-  // Trigger registration refresh when needed
-  const refreshRegistrations = useCallback(async () => {
-    await fetchRegistrations();
-  }, [fetchRegistrations]);
+
 
   useEffect(() => {
     fetchRegistrations();
@@ -534,6 +532,65 @@ function App() {
     }
   }, []);
 
+  const handleApproveAll = useCallback(async (regIds) => {
+    try {
+      console.log('[App.js] Approving ALL registrations:', regIds);
+      const response = await registrationAPI.approveAll(regIds);
+      console.log('[App.js] Approve All response:', response.data);
+
+      // Update local registrations state
+      // The backend returns results which contains updated registration objects with ticketIds
+      const validResults = response.data.results || [];
+      const updatedMap = new Map();
+      validResults.forEach(r => updatedMap.set(r._id, r));
+
+      setRegistrations(prev => prev.map(r => {
+        if (updatedMap.has(r._id)) {
+          // Merge the updated info (status, ticketId)
+          const updated = updatedMap.get(r._id);
+          return { ...r, status: 'approved', ticketId: updated.ticketId || updated.ticketCode };
+        }
+        return r;
+      }));
+
+      // If there were errors, show toast
+      if (response.data.errors && response.data.errors.length > 0) {
+        toast.warning(`Approved ${validResults.length} registrations. ${response.data.errors.length} failed.`);
+      } else {
+        toast.success(`Approved ${validResults.length} registrations!`);
+      }
+
+    } catch (error) {
+      console.log('[App.js] Failed to approve all:', error.response?.data || error.message);
+      toast.error('Failed to approve all: ' + (error.response?.data?.message || error.message));
+    }
+  }, []);
+
+  const handleRejectAll = useCallback(async (regIds) => {
+    try {
+      console.log('[App.js] Rejecting ALL registrations:', regIds);
+      const response = await registrationAPI.rejectAll(regIds);
+      console.log('[App.js] Reject All response:', response.data);
+
+      const validResults = response.data.results || [];
+      const updatedIds = new Set(validResults.map(r => r._id));
+
+      setRegistrations(prev => prev.map(r =>
+        updatedIds.has(r._id) ? { ...r, status: 'rejected' } : r
+      ));
+
+      if (response.data.errors && response.data.errors.length > 0) {
+        toast.warning(`Rejected ${validResults.length} registrations. ${response.data.errors.length} failed.`);
+      } else {
+        toast.success(`Rejected ${validResults.length} registrations.`);
+      }
+
+    } catch (error) {
+      console.log('[App.js] Failed to reject all:', error.response?.data || error.message);
+      toast.error('Failed to reject all: ' + (error.response?.data?.message || error.message));
+    }
+  }, []);
+
   const markNotificationsRead = useCallback(async () => {
     try {
       await api.put('/notifications/read-all');
@@ -590,6 +647,7 @@ function App() {
         handleRegister={handleRegister} handleCancel={handleCancel} markNotificationsRead={markNotificationsRead}
         handleCreateEvent={handleCreateEvent} handleDeleteEvent={handleDeleteEvent} handleUpdateEvent={handleUpdateEvent}
         handleApproveReg={handleApproveReg} handleRejectReg={handleRejectReg}
+        handleApproveAll={handleApproveAll} handleRejectAll={handleRejectAll}
       />
     </Router>
   );

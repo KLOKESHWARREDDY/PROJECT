@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { ArrowLeft, Check, X, User, Mail, Phone, Filter, Search } from 'lucide-react';
+import { ArrowLeft, Check, X, User, Mail, Filter, Search } from 'lucide-react';
+import ConfirmationModal from '../components/ConfirmationModal';
 
-const EventSpecificRegistrations = ({ events, registrations = [], onApprove, onReject, theme }) => {
+const EventSpecificRegistrations = ({ events, registrations = [], onApprove, onReject, onApproveAll, onRejectAll, theme }) => {
   const navigate = useNavigate();
   const { id } = useParams(); // Get ID from URL
   const isDark = theme === 'dark';
@@ -13,6 +14,16 @@ const EventSpecificRegistrations = ({ events, registrations = [], onApprove, onR
   const [showFilter, setShowFilter] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedDepartment, setSelectedDepartment] = useState("All");
+
+  // Modal State
+  const [modal, setModal] = useState({
+    isOpen: false,
+    title: '',
+    message: '',
+    onConfirm: () => { },
+    isDanger: false,
+    confirmText: 'Confirm'
+  });
 
   // Find event from props for display title
   const eventItem = events.find(e => e.id === id || e._id === id);
@@ -36,10 +47,8 @@ const EventSpecificRegistrations = ({ events, registrations = [], onApprove, onR
   }, []);
 
   // Get unique departments
-  const departments = ['All', ...new Set(relatedRegistrations
-    .map(r => r.student?.department)
-    .filter(Boolean)
-  )];
+  // Standard Departments
+  const departments = ['All', 'CSE', 'ECE', 'MECH', 'CIVIL', 'EEE', 'IT', 'AI & DS', 'MBA', 'MCA'];
 
   // Filter registrations
   const filteredList = relatedRegistrations.filter(reg => {
@@ -227,6 +236,49 @@ const EventSpecificRegistrations = ({ events, registrations = [], onApprove, onR
           >
             {showFilter ? <X size={20} /> : <div style={{ display: 'flex', gap: '0.5vw' }}><Filter size={20} /></div>}
           </button>
+
+          {/* Bulk Actions - Only for Pending */}
+          {activeFilter === 'Pending' && filteredList.length > 0 && (
+            <>
+              <button
+                style={{ ...styles.toolBtn(false), backgroundColor: '#fee2e2', color: '#991b1b', borderColor: '#fca5a5' }}
+                onClick={() => {
+                  const ids = filteredList.map(r => r._id);
+                  if (ids.length === 0) return;
+                  setModal({
+                    isOpen: true,
+                    title: 'Reject All Registrations',
+                    message: `Are you sure you want to REJECT ALL ${ids.length} visible pending registrations?`,
+                    onConfirm: () => onRejectAll(ids),
+                    isDanger: true,
+                    confirmText: 'Reject All'
+                  });
+                }}
+                title="Reject All Visible"
+              >
+                <span style={{ fontSize: isMobile ? '3vw' : '0.8vw', fontWeight: 'bold' }}>Reject All</span>
+              </button>
+
+              <button
+                style={{ ...styles.toolBtn(false), backgroundColor: '#dcfce7', color: '#166534', borderColor: '#86efac' }}
+                onClick={() => {
+                  const ids = filteredList.map(r => r._id);
+                  if (ids.length === 0) return;
+                  setModal({
+                    isOpen: true,
+                    title: 'Approve All Registrations',
+                    message: `Are you sure you want to APPROVE ALL ${ids.length} visible pending registrations?`,
+                    onConfirm: () => onApproveAll(ids),
+                    isDanger: false,
+                    confirmText: 'Approve All'
+                  });
+                }}
+                title="Approve All Visible"
+              >
+                <span style={{ fontSize: isMobile ? '3vw' : '0.8vw', fontWeight: 'bold' }}>Approve All</span>
+              </button>
+            </>
+          )}
         </div>
       </div>
 
@@ -287,6 +339,15 @@ const EventSpecificRegistrations = ({ events, registrations = [], onApprove, onR
           ))
         )}
       </div>
+      <ConfirmationModal
+        isOpen={modal.isOpen}
+        onClose={() => setModal({ ...modal, isOpen: false })}
+        onConfirm={modal.onConfirm}
+        title={modal.title}
+        message={modal.message}
+        isDanger={modal.isDanger}
+        confirmText={modal.confirmText}
+      />
     </div>
   );
 };

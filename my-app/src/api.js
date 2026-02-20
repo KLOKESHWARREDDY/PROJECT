@@ -112,6 +112,12 @@ export const registrationAPI = {
   // Reject registration
   reject: (id) => api.put(`/registrations/reject/${id}`),
 
+  // Approve ALL
+  approveAll: (ids) => api.put('/registrations/approve-all', { registrationIds: ids }),
+
+  // Reject ALL
+  rejectAll: (ids) => api.put('/registrations/reject-all', { registrationIds: ids }),
+
   // Cancel registration (student cancels)
   cancel: (id) => api.delete(`/registrations/${id}`),
 

@@ -321,7 +321,7 @@ const Profile = ({ user: initialUser, theme, onLogout, setUser }) => {
               <span style={styles.infoValue}>{user?.department || 'N/A'}</span>
             </div>
             <div style={{ ...styles.infoRow, borderBottom: 'none' }}>
-              <span style={styles.infoLabel}>Registration ID</span>
+              <span style={styles.infoLabel}>{user?.role === 'teacher' ? 'Employee ID' : 'Registration ID'}</span>
               <span style={styles.infoValue}>{user?.regNo || 'N/A'}</span>
             </div>
           </div>

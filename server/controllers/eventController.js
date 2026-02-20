@@ -1,4 +1,5 @@
 import Event from '../models/Event.js';
+import User from '../models/User.js';
 import Registration from '../models/Registration.js';
 import Ticket from '../models/Ticket.js';
 import Notification from '../models/Notification.js';
@@ -55,14 +56,16 @@ export const createEvent = async (req, res) => {
   }
 };
 
-// GET ALL EVENTS - Returns published events for students
-// Step 1: Query MongoDB for events with status 'published' and isDeleted false
-// Step 2: Populate teacher field with name and email for display
-// Step 3: Sort by publishedAt date (newest first)
-// Step 4: Return array of events to client
-// Request: GET /api/events (public endpoint)
+// Request: GET /api/events (public endpoint, but authenticated in App.js)
 export const getEvents = async (req, res) => {
   try {
+    // If the user is a teacher, return THEIR events (including drafts)
+    // accessible via the same endpoint to simplify frontend logic
+    if (req.user && req.user.role === 'teacher') {
+      console.log('Redirecting GET /events to getTeacherEvents for teacher:', req.user.email);
+      return getTeacherEvents(req, res);
+    }
+
     const events = await Event.find({
       status: 'published',
       isDeleted: false
@@ -317,15 +320,22 @@ export const publishEvent = async (req, res) => {
     res.json({ message: 'Event published successfully', event });
 
     // Notify all registered students about the event
-    const registrations = await Registration.find({ event: id, status: 'approved' });
-    for (const reg of registrations) {
-      await createNotification(
-        reg.student,
-        'Event Published',
-        `The event "${event.title}" is now live!`,
-        'publish',
-        id
-      );
+    // Notify ALL students about the new event
+    // Find all users with role 'student'
+    const students = await User.find({ role: 'student' });
+
+    // Create notifications for all students
+    const notifications = students.map(student => ({
+      user: student._id,
+      title: 'New Event Published! 📢',
+      message: `New event "${event.title}" is now live! Check it out.`,
+      type: 'publish',
+      relatedId: id
+    }));
+
+    if (notifications.length > 0) {
+      await Notification.insertMany(notifications);
+      console.log(`Sent new event notification to ${notifications.length} students.`);
     }
   } catch (error) {
     console.error('Publish Event Error:', error);

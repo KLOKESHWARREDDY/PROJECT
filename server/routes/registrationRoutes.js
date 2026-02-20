@@ -8,7 +8,9 @@ import {
   rejectRegistration,
   cancelRegistration,
   getRegistrationById,
-  getPendingRegistrationsCount
+  getPendingRegistrationsCount,
+  approveAllRegistrations,
+  rejectAllRegistrations
 } from '../controllers/registrationController.js';
 import { protect } from '../middleware/authMiddleware.js';
 import { isTeacher } from '../middleware/roleMiddleware.js';
@@ -38,6 +40,12 @@ router.put("/approve/:id", protect, isTeacher, approveRegistration);
 
 // Reject registration
 router.put("/reject/:id", protect, isTeacher, rejectRegistration);
+
+// Approve ALL registrations
+router.put("/approve-all", protect, isTeacher, approveAllRegistrations);
+
+// Reject ALL registrations
+router.put("/reject-all", protect, isTeacher, rejectAllRegistrations);
 
 // Cancel registration (student cancels their own)
 router.delete("/:id", protect, cancelRegistration);

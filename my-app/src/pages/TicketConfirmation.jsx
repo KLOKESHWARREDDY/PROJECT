@@ -1,14 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { QRCodeSVG } from 'qrcode.react'; 
+import { QRCodeSVG } from 'qrcode.react';
 import { ArrowLeft, Download, Share2, MapPin, Calendar, Clock, User, Mail } from 'lucide-react';
 import axios from 'axios';
+import { jsPDF } from 'jspdf';
+import html2canvas from 'html2canvas';
 
 const TicketConfirmation = ({ allEvents, theme, onCancel }) => {
   const { id } = useParams();
   const navigate = useNavigate();
   const isDark = theme === 'dark';
-  
+
   // State for ticket data
   const [ticket, setTicket] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -24,7 +26,7 @@ const TicketConfirmation = ({ allEvents, theme, onCancel }) => {
       try {
         setLoading(true);
         console.log('Fetching ticket for registration ID:', id);
-        
+
         const token = localStorage.getItem('token');
         const response = await axios.get(`/api/registrations/ticket/${id}`, {
           headers: {
@@ -32,7 +34,7 @@ const TicketConfirmation = ({ allEvents, theme, onCancel }) => {
             'Content-Type': 'application/json'
           }
         });
-        
+
         console.log('API Response:', response.data);
         setTicket(response.data);
         setError(null);
@@ -80,7 +82,7 @@ const TicketConfirmation = ({ allEvents, theme, onCancel }) => {
         padding: '20px'
       }}>
         <div style={{ color: '#ef4444', marginBottom: '20px' }}>{error}</div>
-        <button 
+        <button
           onClick={() => navigate(-1)}
           style={{
             padding: '10px 20px',
@@ -113,6 +115,30 @@ const TicketConfirmation = ({ allEvents, theme, onCancel }) => {
     );
   }
 
+  const handleDownloadPDF = async () => {
+    const ticketElement = document.getElementById('ticket-content');
+    if (!ticketElement) return;
+
+    try {
+      const canvas = await html2canvas(ticketElement, {
+        scale: 2, // Higher quality
+        useCORS: true,
+        backgroundColor: null
+      });
+
+      const imgData = canvas.toDataURL('image/png');
+      const pdf = new jsPDF('p', 'mm', 'a4');
+
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+
+      pdf.addImage(imgData, 'PNG', 0, 10, pdfWidth, pdfHeight);
+      pdf.save(`Ticket-${ticketCode}.pdf`);
+    } catch (err) {
+      console.error('PDF Download failed:', err);
+    }
+  };
+
   // Use ticket data with optional chaining
   const eventTitle = ticket?.event?.title || 'Event';
   const eventDate = ticket?.event?.date ? new Date(ticket.event.date).toLocaleDateString('en-US', {
@@ -135,7 +161,7 @@ const TicketConfirmation = ({ allEvents, theme, onCancel }) => {
       padding: '20px',
       fontFamily: "'Inter', sans-serif"
     },
-    
+
     // 1. TICKET CONTAINER
     ticketWrapper: {
       width: '100%',
@@ -161,8 +187,8 @@ const TicketConfirmation = ({ allEvents, theme, onCancel }) => {
       boxShadow: '0 4px 15px rgba(0,0,0,0.2)'
     },
     eventTitle: { fontSize: '22px', fontWeight: '800', lineHeight: '1.3', marginBottom: '8px' },
-    eventCategory: { 
-      display: 'inline-block', padding: '4px 12px', borderRadius: '20px', 
+    eventCategory: {
+      display: 'inline-block', padding: '4px 12px', borderRadius: '20px',
       background: 'rgba(255,255,255,0.2)', fontSize: '12px', fontWeight: '600',
       backdropFilter: 'blur(4px)'
     },
@@ -228,12 +254,12 @@ const TicketConfirmation = ({ allEvents, theme, onCancel }) => {
         <div style={{ cursor: 'pointer', padding: '10px', background: '#fff', borderRadius: '12px' }} onClick={() => navigate(-1)}>
           <ArrowLeft size={20} color="#1e293b" />
         </div>
-        <span style={{ marginLeft: '15px', fontWeight: '700', fontSize: '18px', color: isDark?'#fff':'#1e293b' }}>Ticket Details</span>
+        <span style={{ marginLeft: '15px', fontWeight: '700', fontSize: '18px', color: isDark ? '#fff' : '#1e293b' }}>Ticket Details</span>
       </div>
 
       {/* The Ticket Card */}
-      <div style={styles.ticketWrapper}>
-        
+      <div id="ticket-content" style={styles.ticketWrapper}>
+
         {/* Top: Gradient Header */}
         <div style={styles.ticketTop}>
           <div style={{ fontSize: '50px', marginBottom: '10px' }}>🎫</div>
@@ -282,23 +308,23 @@ const TicketConfirmation = ({ allEvents, theme, onCancel }) => {
 
         {/* Bottom: QR Code */}
         <div style={styles.ticketBottom}>
-           <div style={{ background: '#fff', padding: '10px', display: 'inline-block', borderRadius: '12px', border: '1px solid #f1f5f9' }}>
-             {ticket?.qrCode ? (
-               <QRCodeSVG value={ticket.qrCode} size={140} fgColor="#1e293b" />
-             ) : (
-               <QRCodeSVG value={`TICKET-${ticketCode}`} size={140} fgColor="#1e293b" />
-             )}
-           </div>
-           <div style={styles.scanText}>TICKET CODE: {ticketCode}</div>
+          <div style={{ background: '#fff', padding: '10px', display: 'inline-block', borderRadius: '12px', border: '1px solid #f1f5f9' }}>
+            {ticket?.qrCode ? (
+              <QRCodeSVG value={ticket.qrCode} size={140} fgColor="#1e293b" />
+            ) : (
+              <QRCodeSVG value={`TICKET-${ticketCode}`} size={140} fgColor="#1e293b" />
+            )}
+          </div>
+          <div style={styles.scanText}>TICKET CODE: {ticketCode}</div>
         </div>
       </div>
 
       {/* Action Buttons */}
       <div style={styles.actionRow}>
-        <button style={{...styles.actionBtn, ...styles.downloadBtn}}>
+        <button style={{ ...styles.actionBtn, ...styles.downloadBtn }} onClick={handleDownloadPDF}>
           <Download size={18} /> Download
         </button>
-        <button style={{...styles.actionBtn, ...styles.shareBtn}}>
+        <button style={{ ...styles.actionBtn, ...styles.shareBtn }}>
           <Share2 size={18} /> Share
         </button>
       </div>

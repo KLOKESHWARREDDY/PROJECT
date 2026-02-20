@@ -94,6 +94,15 @@ export const createRegistration = async (req, res) => {
       registration._id
     );
 
+    // Send confirmation notification to student
+    await createNotification(
+      studentId,
+      'Registration Requested',
+      `You successfully requested to join "${eventWithTeacher.title}". Status: Pending.`,
+      'registration_sent',
+      registration._id
+    );
+
     res.status(201).json({
       message: 'Registration successful! Awaiting approval.',
       registration,
@@ -320,7 +329,7 @@ export const rejectRegistration = async (req, res) => {
       registration.student._id,
       'Registration Rejected',
       `Your registration for "${registration.event.title}" has been rejected.`,
-      'approval',
+      'rejection',
       registration._id
     );
 
@@ -419,6 +428,182 @@ export const getPendingRegistrationsCount = async (req, res) => {
     res.json({ count });
   } catch (error) {
     console.error('Get Pending Count Error:', error);
+    res.status(500).json({ message: error.message || 'Server error' });
+  }
+};
+
+// APPROVE ALL REGISTRATIONS
+export const approveAllRegistrations = async (req, res) => {
+  try {
+    const { registrationIds } = req.body;
+    console.log("=== APPROVE ALL REGISTRATIONS ===");
+    console.log("Registration IDs:", registrationIds);
+
+    if (!registrationIds || !Array.isArray(registrationIds) || registrationIds.length === 0) {
+      return res.status(400).json({ message: 'No registration IDs provided' });
+    }
+
+    const results = [];
+    const errors = [];
+
+    // Process each registration
+    // Note: We process them sequentially to avoid race conditions and ensure proper ticket generation
+    for (const id of registrationIds) {
+      try {
+        const registration = await Registration.findById(id);
+        if (!registration) {
+          errors.push({ id, message: 'Registration not found' });
+          continue;
+        }
+
+        // Verify teacher owns the event
+        const event = await Event.findById(registration.event);
+        if (!event) {
+          errors.push({ id, message: 'Event not found' });
+          continue;
+        }
+
+        if (event.teacher.toString() !== req.user._id.toString()) {
+          errors.push({ id, message: 'Not authorized' });
+          continue;
+        }
+
+        if (registration.status === 'approved') {
+          // Already approved, just skip or add to results if needed
+          results.push(registration);
+          continue;
+        }
+
+        // Update status
+        registration.status = 'approved';
+        await registration.save();
+
+        // Generate ticket
+        const ticketCode = 'TKT-' + Date.now().toString(36).toUpperCase() +
+          Math.random().toString(36).substring(2, 8).toUpperCase();
+
+        const qrData = JSON.stringify({
+          ticketCode: ticketCode,
+          eventId: registration.event,
+          studentId: registration.student
+        });
+
+        const qrCodeDataURL = await QRCode.toDataURL(qrData, { width: 200 });
+
+        // Create ticket
+        const ticket = await Ticket.create({
+          student: registration.student,
+          event: registration.event,
+          registration: registration._id,
+          ticketCode: ticketCode,
+          qrCode: qrCodeDataURL,
+        });
+
+        // Update registration with ticket
+        registration.ticketId = ticket.ticketCode;
+        await registration.save();
+
+        // Send notification
+        // We do this async to not block the loop too much, but for now await is safer
+        // To optimize, we could fire and forget notifications or use a queue
+        await createNotification(
+          registration.student,
+          'Registration Approved',
+          `Your registration for "${event.title}" has been approved!`,
+          'approval',
+          registration._id
+        );
+
+        results.push({ ...registration.toObject(), ticketId: ticket.ticketCode });
+
+      } catch (err) {
+        console.error(`Error approving registration ${id}:`, err);
+        errors.push({ id, message: err.message });
+      }
+    }
+
+    console.log(`Approved ${results.length} registrations, ${errors.length} failed`);
+    res.json({
+      message: `Approved ${results.length} registrations`,
+      results,
+      errors
+    });
+
+  } catch (error) {
+    console.error('Approve All Error:', error);
+    res.status(500).json({ message: error.message || 'Server error' });
+  }
+};
+
+// REJECT ALL REGISTRATIONS
+export const rejectAllRegistrations = async (req, res) => {
+  try {
+    const { registrationIds } = req.body;
+    console.log("=== REJECT ALL REGISTRATIONS ===");
+    console.log("Registration IDs:", registrationIds);
+
+    if (!registrationIds || !Array.isArray(registrationIds) || registrationIds.length === 0) {
+      return res.status(400).json({ message: 'No registration IDs provided' });
+    }
+
+    const results = [];
+    const errors = [];
+
+    for (const id of registrationIds) {
+      try {
+        const registration = await Registration.findById(id);
+        if (!registration) {
+          errors.push({ id, message: 'Registration not found' });
+          continue;
+        }
+
+        // Verify teacher owns the event
+        const event = await Event.findById(registration.event);
+        if (!event) {
+          errors.push({ id, message: 'Event not found' });
+          continue;
+        }
+
+        if (event.teacher.toString() !== req.user._id.toString()) {
+          errors.push({ id, message: 'Not authorized' });
+          continue;
+        }
+
+        if (registration.status === 'rejected') {
+          results.push(registration);
+          continue;
+        }
+
+        // Update status
+        registration.status = 'rejected';
+        await registration.save();
+
+        // Send notification
+        await createNotification(
+          registration.student,
+          'Registration Rejected',
+          `Your registration for "${event.title}" has been rejected.`,
+          'rejection',
+          registration._id
+        );
+
+        results.push(registration);
+
+      } catch (err) {
+        console.error(`Error rejecting registration ${id}:`, err);
+        errors.push({ id, message: err.message });
+      }
+    }
+
+    console.log(`Rejected ${results.length} registrations, ${errors.length} failed`);
+    res.json({
+      message: `Rejected ${results.length} registrations`,
+      results,
+      errors
+    });
+
+  } catch (error) {
+    console.error('Reject All Error:', error);
     res.status(500).json({ message: error.message || 'Server error' });
   }
 };

@@ -1,4 +1,5 @@
 import User from '../models/User.js';
+import Notification from '../models/Notification.js';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
@@ -112,6 +113,14 @@ export const registerUser = async (req, res) => {
     });
 
     console.log('✅ User created successfully:', user._id);
+
+    // Create Welcome Notification
+    await Notification.create({
+      user: user._id,
+      title: 'Welcome to EventSphere! 🎉',
+      message: 'Thanks for joining! Explore events and start your journey.',
+      type: 'general'
+    });
 
     // Return success response
     res.status(201).json({

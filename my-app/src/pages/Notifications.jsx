@@ -111,11 +111,36 @@ const Notifications = ({ theme, user, registrations = [], notificationsList = []
           /* --- STUDENT VIEW (General Notifications) --- */
           notificationsList.length > 0 ? (
             notificationsList.map((notif) => (
-              <div key={notif._id || notif.id} style={styles.item}>
-                <div style={styles.iconBox('#4f46e5', notif.read ? '#f1f5f9' : '#e0e7ff')}>
+              <div
+                key={notif._id || notif.id}
+                style={styles.item}
+                onClick={() => {
+                  // Mark as read (optional, handled by API usually)
+                  // Redirect based on type
+                  if (notif.type === 'publish' && notif.relatedId) {
+                    navigate(`/events/${notif.relatedId}`);
+                  } else if (['registration', 'approval', 'registration_sent', 'rejection'].includes(notif.type)) {
+                    navigate('/my-events');
+                  } else {
+                    // Default redirect
+                    navigate('/events');
+                  }
+                }}
+              >
+                <div style={
+                  styles.iconBox(
+                    notif.type === 'rejection' ? '#dc2626' :
+                      notif.type === 'approval' ? '#16a34a' :
+                        notif.type === 'registration_sent' ? '#ea580c' :
+                          '#4f46e5',
+                    notif.read ? '#f1f5f9' : '#e0e7ff'
+                  )
+                }>
                   {notif.type === 'registration' ? <ClipboardList size={20} /> :
                     notif.type === 'approval' ? <CheckCircle size={20} /> :
-                      <Bell size={20} />}
+                      notif.type === 'rejection' ? <XCircle size={20} /> :
+                        notif.type === 'registration_sent' ? <ClipboardList size={20} /> : // Or Clock?
+                          <Bell size={20} />}
                 </div>
                 <div style={styles.info}>
                   <div style={styles.title}>{notif.title}</div>

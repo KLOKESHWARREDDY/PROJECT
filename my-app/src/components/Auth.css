@@ -1,5 +1,6 @@
 /* src/components/Auth.css */
 
+/* Main container for the authentication page */
 .auth-container {
   min-height: 100vh;
   display: flex;
@@ -10,6 +11,7 @@
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
+/* Authentication card that contains the form */
 .auth-card {
   background: white;
   width: 100%;
@@ -22,12 +24,14 @@
 }
 
 /* Logo Section */
+/* Container for the logo element */
 .logo-container {
   display: flex;
   justify-content: center;
   margin-bottom: 15px;
 }
 
+/* Circular logo with background color */
 .auth-logo {
   width: 60px;
   height: 60px;
@@ -41,11 +45,13 @@
   font-weight: bold;
 }
 
+/* Header section with title and description */
 .auth-header {
   text-align: center;
   margin-bottom: 25px;
 }
 
+/* Main heading for the authentication card */
 .auth-header h2 {
   color: #111827;
   margin: 0 0 5px 0;

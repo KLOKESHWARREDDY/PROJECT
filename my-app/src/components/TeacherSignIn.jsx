@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { Eye, EyeOff, ArrowLeft, LogIn, AlertCircle } from 'lucide-react';
-import axios from 'axios';
+import { Eye, EyeOff, ArrowLeft, ArrowRight, AlertCircle, CheckCircle } from 'lucide-react'; // Importing icons from lucide-react
+import { authAPI } from '../api'; // Importing authentication API functions
 
 const TeacherSignIn = ({ onLogin }) => {
   const navigate = useNavigate();
