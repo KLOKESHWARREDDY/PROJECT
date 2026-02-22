@@ -1,14 +1,60 @@
 import ChatMessage from '../models/ChatMessage.js';
+import { GoogleGenAI } from '@google/genai';
 
-// CHAT CONTROLLER - Handles chatbot conversations
-// This controller manages chat history and AI bot responses
+// Lazy initialization of Gemini to ensure environment variables are loaded by server.js first
+let geminiInstance = null;
+const getGemini = () => {
+    if (!geminiInstance) {
+        geminiInstance = new GoogleGenAI({
+            apiKey: process.env.GEMINI_API_KEY,
+        });
+    }
+    return geminiInstance;
+};
+
+const SYSTEM_PROMPT = `
+You are the official AI Assistant for EventSphere, a smart college event management platform. 
+Your role is to practically, step-by-step help students and teachers navigate the platform. 
+
+CRITICAL BEHAVIOR RULES:
+1. Scope strictness: Do not answer questions outside the scope of college events, the EventSphere platform, or academics. Politely decline any off-topic queries immediately.
+2. Tone: Maintain a helpful, enthusiastic, professional, and clear tone. Always complete your sentences and provide thorough, step-by-step "1, 2, 3" guidance.
+3. Format: Always format event schedules, instructions, or feature lists using clean markdown bullet points or numbered lists. Use bold text for UI buttons like **"Login"**.
+4. Escalation: If a user asks a question about ticket refunds, technical issues you cannot resolve, or anything else requiring human intervention, provide the contact email: eventsupport@college.edu.
+
+PLATFORM FEATURES & WORKFLOWS (Your Knowledge Base):
+
+1. ACCOUNTS & ROLES
+- The platform has two roles: "Teacher" (organizers) and "Student" (attendees). 
+- To sign up, they must use a valid @gmail.com account.
+- If they forget their password, point them to the "Forgot Password" link on the login page via email to get a reset link.
+
+2. EVENT MANAGEMENT (TEACHERS ONLY)
+- Event Creation: 1) Go to the Dashboard, 2) Click **"Create Event"**, 3) Fill in the event details (title, dates, category, location, image), and 4) Click **"Publish Event"** or **"Save Draft"**. 
+- Important: Only published events are visible to students.
+- Registration Approvals: Teachers can review students who register for their events. From the Dashboard, they click into the event, view the registration pane, and click **"Approve"** or **"Reject"**. 
+- They can also use "Approve All" to mass accept students.
+
+3. REGISTERING FOR EVENTS (STUDENTS ONLY)
+- Finding Events: 1) Browse the **"Events"** page or use the Search Bar, 2) Click on an event card to read the description and view the location.
+- Registering: 3) Click the **"Register"** button on the event's detail page.
+- Registration Statuses:
+  - **Pending**: The event organizer must review the registration.
+  - **Approved**: Confirmed! A ticket is generated.
+  - **Rejected**: Registration denied by the organizer.
+
+4. TICKETS & ATTENDANCE (STUDENTS)
+- Downloading Tickets: Once 'Approved', go to **"My Events"**, click **"View Ticket"**, and you can download or print the QR code ticket. This QR code will be scanned by teachers at the venue.
+
+5. SETTINGS & PROFILE
+- Updating Profile: Go to **"Profile"** > **"Edit Profile"** in the navigation menu to change bio, name, or upload a photo.
+- Changing Password: Under **"Settings"** > **"Change Password"**.
+- Notifications: Users receive alerts for new events, registration approvals, and rejections via the bell icon on the top right.
+
+Remember: You have access to the user's role and name in this system prompt context. Rely on their role to give accurate advice (e.g., politely inform a student they cannot create events, or inform a teacher they do not need to register for their own events). You do not have direct DB access to realtime events, so always advise users to check the "Events" page.
+`;
 
 // GET CHAT HISTORY - Returns all messages for current user
-// Step 1: Get user ID from authentication middleware
-// Step 2: Query MongoDB for messages matching user ID
-// Step 3: Sort by timestamp (oldest first for chat flow)
-// Step 4: Return messages array
-// Request: GET /api/chat/history (requires authentication)
 export const getChatHistory = async (req, res) => {
     try {
         const userId = req.user._id;
@@ -24,7 +70,7 @@ export const getChatHistory = async (req, res) => {
 export const sendMessage = async (req, res) => {
     try {
         const userId = req.user._id;
-        const userRole = req.user.role || 'student'; // Default to student if role missing
+        const userRole = req.user.role || 'student';
         const { message } = req.body;
 
         if (!message) {
@@ -38,126 +84,68 @@ export const sendMessage = async (req, res) => {
             isBot: false
         });
 
-        // Generate bot response using advanced logic
-        console.log(`[ChatDebug] Received message: "${message}" from role: ${userRole}`);
-        const botResponseText = determineBotResponse(message, userRole, req.user.name);
-        console.log(`[ChatDebug] Determined response: "${botResponseText.substring(0, 50)}..."`);
+        // Retrieve last 10 messages for conversation context
+        const messageHistoryRecords = await ChatMessage.find({ user: userId })
+            .sort({ timestamp: -1 })
+            .limit(10);
 
-        // Save bot response
-        const botMsg = await ChatMessage.create({
-            user: userId,
-            message: botResponseText,
-            isBot: true
+        // Reverse them so they are chronological
+        messageHistoryRecords.reverse();
+
+        // Format history for Gemini API
+        // Exclude the user message we just saved to avoid duplicates
+        const formattedHistory = messageHistoryRecords
+            .filter(msg => msg._id.toString() !== userMsg._id.toString())
+            .map(msg => ({
+                role: msg.isBot ? 'model' : 'user',
+                parts: [{ text: msg.message }]
+            }));
+
+        // Append the current user message at the very end
+        formattedHistory.push({
+            role: 'user',
+            parts: [{ text: message }]
         });
 
-        res.json({ userMessage: userMsg, botMessage: botMsg });
+        const systemInstruction = `${SYSTEM_PROMPT}\n\nThe user you are talking to has the role: ${userRole}. Their name is ${req.user.name || 'Student'}.`;
+
+        try {
+            // Call Gemini API
+            const ai = getGemini();
+            const response = await ai.models.generateContent({
+                model: 'gemini-2.5-flash',
+                contents: formattedHistory,
+                config: {
+                    systemInstruction: systemInstruction,
+                    temperature: 0.7,
+                    maxOutputTokens: 2048,
+                }
+            });
+
+            const botResponseText = response.text;
+
+            // Save bot response
+            const botMsg = await ChatMessage.create({
+                user: userId,
+                message: botResponseText,
+                isBot: true
+            });
+
+            res.json({ userMessage: userMsg, botMessage: botMsg });
+        } catch (geminiError) {
+            console.error('Gemini API Error:', geminiError);
+
+            // Fallback bot response in case Gemini is down or API key is invalid
+            const fallbackBotMsg = await ChatMessage.create({
+                user: userId,
+                message: "I'm currently experiencing technical difficulties connecting to my brain. Please try again later or contact eventsupport@college.edu if you need immediate assistance.",
+                isBot: true
+            });
+
+            return res.json({ userMessage: userMsg, botMessage: fallbackBotMsg });
+        }
     } catch (error) {
         console.error('Send Message Error:', error);
         res.status(500).json({ message: 'Server error' });
     }
-};
-
-// HELPER: Determine Bot Response based on intent and user role
-const determineBotResponse = (message, role, userName) => {
-    const lowerMsg = message.toLowerCase();
-    const firstName = userName ? userName.split(' ')[0] : 'there';
-
-    // --- IDENTITY & GREETINGS ---
-    if (lowerMsg.match(/\b(hi|hello|hey|greetings|morning|afternoon|evening)\b/)) {
-        return `Hello ${firstName}. I am the EventSphere Assistant. How can I help you today?`;
-    }
-    if (lowerMsg.includes('who are you') || lowerMsg.includes('what are you')) {
-        return "I am the EventSphere Assistant. I can help you with events, registrations, tickets, and account settings.";
-    }
-
-    // --- FEATURE EXPLANATIONS ---
-
-    // 1. Create Event (Teacher Only)
-    if (lowerMsg.includes('create event') || lowerMsg.includes('host event') || lowerMsg.includes('make event')) {
-        if (role === 'teacher') {
-            return `To create an event:
-            \n1. Go to your Dashboard.
-            \n2. Click "Create Event".
-            \n3. Fill in details like title, date, time, location, and upload an image.
-            \n4. Click "Publish Event" to make it live.`;
-        } else {
-            return `Event creation is for Teachers only.
-            \n• As a Student, you can browse and register for events.
-            \n• If you need to host events, you must log in with a Teacher account.`;
-        }
-    }
-
-    // 2. Register for Event (Student Only)
-    if (lowerMsg.includes('register') || lowerMsg.includes('join event') || lowerMsg.includes('attend')) {
-        if (role === 'student') {
-            return `To register for an event:
-            \n1. Browse events on the "Events" page.
-            \n2. Click on an event to see details.
-            \n3. Click "Register".
-            \n4. Check "My Events" to see your status.`;
-        } else {
-            return "Teachers cannot register for events as participants. You can manage events you created from your Dashboard.";
-        }
-    }
-
-    // 3. Registration Status (Pending/Approved/Rejected)
-    if (lowerMsg.includes('status') || lowerMsg.includes('pending') || lowerMsg.includes('approved') || lowerMsg.includes('rejected')) {
-        return `About registration statuses:
-        \n• **Pending**: The event organizer handles this. Please wait for them to review.
-        \n• **Approved**: You are confirmed! You can view your ticket.
-        \n• **Rejected**: The organizer declined your registration. You cannot attend this event.`;
-    }
-
-    // 4. Tickets
-    if (lowerMsg.includes('ticket') || lowerMsg.includes('download')) {
-        return `To get your ticket:
-        \n1. Go to "My Events".
-        \n2. Find an "Approved" event.
-        \n3. Click "View Ticket" to see the QR code and details.
-        \n4. You can print this page or show it at the venue.`;
-    }
-
-    // 5. Profile & Password
-    if (lowerMsg.includes('profile') || lowerMsg.includes('photo') || lowerMsg.includes('picture')) {
-        return `To update your profile:
-        \n1. Go to "Profile" in the menu.
-        \n2. Click "Edit Profile".
-        \n3. You can change your name, bio, and upload a new profile picture.`;
-    }
-    if (lowerMsg.includes('change password') || lowerMsg.includes('reset password')) {
-        return `To change your password:
-        \n1. Go to "Settings".
-        \n2. Select "Change Password".
-        \n3. Enter your current password and the new one.
-        \nFor forgotten passwords, log out and use "Forgot Password" on the login screen.`;
-    }
-
-    // 6. Notifications
-    if (lowerMsg.includes('notification') || lowerMsg.includes('alert')) {
-        return `Check your "Notifications" tab for updates on:
-        \n• Registration approvals/rejections.
-        \n• New events from teachers you follow.
-        \n• Reminders for upcoming events.`;
-    }
-
-    // --- PROBLEM SOLVING ---
-
-    // 1. Technical Errors
-    if (lowerMsg.includes('error') || lowerMsg.includes('not working') || lowerMsg.includes('bug')) {
-        return `I'm sorry you're facing an issue.
-        \n1. Try refreshing the page.
-        \n2. Log out and log back in.
-        \n3. If it persists, please contact support with details.`;
-    }
-
-    // 2. Cancel Registration
-    if (lowerMsg.includes('cancel')) {
-        return `To cancel a registration:
-        \n1. Go to "My Events".
-        \n2. Click "Cancel" on the event card.
-        \nNote: If you are already approved, please contact the organizer if needed.`;
-    }
-
-    // --- FALLBACK ---
-    return "I can help with questions about Events, Registrations, Tickets, Profile, and Settings. What would you like to know?";
 };

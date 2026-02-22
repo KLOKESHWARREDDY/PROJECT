@@ -2,9 +2,9 @@ import User from '../models/User.js';
 import Notification from '../models/Notification.js';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
-import crypto from 'crypto';
 import nodemailer from 'nodemailer';
 import { OAuth2Client } from 'google-auth-library';
+import { sendWelcomeEmail, sendPasswordResetEmail } from '../config/mail.js';
 
 /**
  * Authentication Controller
@@ -89,8 +89,8 @@ export const registerUser = async (req, res) => {
     const userExists = await User.findOne({ email: email.toLowerCase() });
 
     if (userExists) {
-      console.log('⚠️ User already exists:', email);
-      return res.status(400).json({ message: 'User already exists with this email' });
+      console.log('⚠️ Registration blocked: Email already exists:', email);
+      return res.status(409).json({ message: 'Email already registered' });
     }
 
     console.log('✅ Creating new user...');
@@ -120,6 +120,11 @@ export const registerUser = async (req, res) => {
       title: 'Welcome to EventSphere! 🎉',
       message: 'Thanks for joining! Explore events and start your journey.',
       type: 'general'
+    });
+
+    // Send welcome email asynchronously
+    sendWelcomeEmail(user.email).catch(err => {
+      console.error(`⚠️ Non-fatal error: Welcome email failed to send to ${user.email}`);
     });
 
     // Return success response
@@ -429,9 +434,8 @@ export const updateUserProfile = async (req, res) => {
 };
 
 // Forgot Password
-// Generates password reset token and sends reset email
+// Generates JWT password reset token and sends reset email
 // Request body: { email }
-// Returns generic message to prevent email enumeration
 export const forgotPassword = async (req, res) => {
   try {
     const { email } = req.body;
@@ -443,67 +447,45 @@ export const forgotPassword = async (req, res) => {
     const user = await User.findOne({ email });
 
     if (!user) {
-      // Don't reveal if user exists
-      return res.status(200).json({
-        message: 'If an account with that email exists, a password reset link has been sent.'
-      });
+      return res.status(404).json({ message: 'User not found' });
     }
 
-    // Generate reset token
-    const resetToken = user.getResetPasswordToken();
+    // Generate secure JWT reset token (expires in 10 minutes)
+    const resetToken = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '10m' });
+
+    // Save token to database
+    user.resetPasswordToken = resetToken;
     await user.save();
 
-    // Create reset URL
+    // Create reset link
     const resetUrl = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/reset-password/${resetToken}`;
 
-    // Send email
-    try {
-      const transporter = nodemailer.createTransport({
-        service: 'gmail',
-        auth: {
-          user: process.env.EMAIL_USER,
-          pass: process.env.EMAIL_PASS,
-        },
-      });
+    // Send email with reset link
+    await sendPasswordResetEmail(user.email, resetUrl);
 
-      const mailOptions = {
-        from: `"EventSphere" <${process.env.EMAIL_USER}>`,
-        to: user.email,
-        subject: 'Password Reset Request',
-        html: `
-          <h2>Password Reset Request</h2>
-          <p>Hi ${user.name},</p>
-          <p>You requested a password reset. Click the link below to reset your password:</p>
-          <a href="${resetUrl}" style="display: inline-block; background: #6366f1; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px;">Reset Password</a>
-          <p>This link expires in 10 minutes.</p>
-          <p>If you didn't request this, please ignore this email.</p>
-        `,
-      };
-
-      await transporter.sendMail(mailOptions);
-      console.log('✅ Password reset email sent to:', user.email);
-
-      res.status(200).json({
-        message: 'If an account with that email exists, a password reset link has been sent.'
-      });
-    } catch (error) {
-      console.error('Email send error:', error);
-      user.resetPasswordToken = undefined;
-      user.resetPasswordExpire = undefined;
-      await user.save();
-      return res.status(500).json({ message: 'Email could not be sent' });
-    }
+    res.status(200).json({
+      message: 'Password reset link sent to email'
+    });
   } catch (error) {
     console.error('Forgot Password Error:', error);
+
+    // If something goes wrong, clear the token
+    if (req.body.email) {
+      const user = await User.findOne({ email: req.body.email });
+      if (user) {
+        user.resetPasswordToken = undefined;
+        await user.save();
+      }
+    }
+
     res.status(500).json({ message: error.message || 'Server error' });
   }
 };
 
 // Reset Password
-// Updates password using valid reset token
+// Updates password using valid JWT reset token
 // Params: { token: reset_token }
 // Request body: { password }
-// Token expires after 10 minutes
 export const resetPassword = async (req, res) => {
   try {
     const { token } = req.params;
@@ -517,33 +499,37 @@ export const resetPassword = async (req, res) => {
       return res.status(400).json({ message: 'Password must be at least 6 characters' });
     }
 
-    // Hash token and find user
-    const resetPasswordToken = crypto
-      .createHash('sha256')
-      .update(token)
-      .digest('hex');
+    try {
+      // Verify JWT token
+      const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-    const user = await User.findOne({
-      resetPasswordToken,
-      resetPasswordExpire: { $gt: Date.now() }
-    });
+      // Find user and ensure token matches DB
+      const user = await User.findById(decoded.id);
 
-    if (!user) {
+      // Verify token hasn't been used/cleared
+      if (!user || user.resetPasswordToken !== token) {
+        return res.status(400).json({ message: 'Invalid or expired reset token' });
+      }
+
+      // Hash new password using bcrypt
+      const salt = await bcrypt.genSalt(10);
+      user.password = await bcrypt.hash(password, salt);
+
+      // Clear reset token
+      user.resetPasswordToken = undefined;
+      await user.save();
+
+      console.log('✅ Password reset successful for:', user.email);
+
+      res.status(200).json({
+        message: 'Password reset successful! You can now login with your new password.'
+      });
+
+    } catch (jwtError) {
+      // Catches JWT expiration and invalid signature errors
+      console.error('JWT Verification Error:', jwtError.message);
       return res.status(400).json({ message: 'Invalid or expired reset token' });
     }
-
-    // Hash new password
-    const salt = await bcrypt.genSalt(10);
-    user.password = await bcrypt.hash(password, salt);
-    user.resetPasswordToken = undefined;
-    user.resetPasswordExpire = undefined;
-    await user.save();
-
-    console.log('✅ Password reset successful for:', user.email);
-
-    res.status(200).json({
-      message: 'Password reset successful! You can now login with your new password.'
-    });
   } catch (error) {
     console.error('Reset Password Error:', error);
     res.status(500).json({ message: error.message || 'Server error' });

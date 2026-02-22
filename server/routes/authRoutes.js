@@ -12,7 +12,7 @@ const router = express.Router();
 router.post("/test-register", (req, res) => {
   console.log('[TEST] Raw req.body:', req.body);
   console.log('[TEST] Content-Type:', req.headers['content-type']);
-  res.json({ 
+  res.json({
     message: 'Test endpoint working',
     receivedBody: req.body,
     contentType: req.headers['content-type']

@@ -11,7 +11,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 // Load environment variables (since .env is inside server folder)
-dotenv.config();
+dotenv.config({ path: path.join(__dirname, '.env') });
 
 // Debug check (remove after everything works)
 console.log(`[${new Date().toISOString()}] Loaded MONGO_URI (standard):`, process.env.MONGO_URI ? "HIDDEN" : "MISSING");
