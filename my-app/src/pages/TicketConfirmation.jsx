@@ -147,7 +147,7 @@ const TicketConfirmation = ({ allEvents, theme, onCancel }) => {
   const eventLocation = ticket?.event?.location || 'Location not available';
   const studentName = ticket?.student?.name || 'Student';
   const studentEmail = ticket?.student?.email || 'Email not available';
-  const ticketCode = ticket?.ticketCode || 'N/A';
+  const ticketCode = ticket?.ticketCode || ticket?.ticketId || 'N/A';
 
   const styles = {
     // Page Background
@@ -309,11 +309,11 @@ const TicketConfirmation = ({ allEvents, theme, onCancel }) => {
         {/* Bottom: QR Code */}
         <div style={styles.ticketBottom}>
           <div style={{ background: '#fff', padding: '10px', display: 'inline-block', borderRadius: '12px', border: '1px solid #f1f5f9' }}>
-            {ticket?.qrCode ? (
-              <QRCodeSVG value={ticket.qrCode} size={140} fgColor="#1e293b" />
-            ) : (
-              <QRCodeSVG value={`TICKET-${ticketCode}`} size={140} fgColor="#1e293b" />
-            )}
+            <QRCodeSVG
+              value={`${window.location.origin}/ticket/${ticket?._id}`}
+              size={200}
+              fgColor="#1e293b"
+            />
           </div>
           <div style={styles.scanText}>TICKET CODE: {ticketCode}</div>
         </div>

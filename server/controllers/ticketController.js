@@ -1,5 +1,6 @@
 import Ticket from '../models/Ticket.js';
 import PDFDocument from 'pdfkit';
+import QRCode from 'qrcode';
 
 // TICKET CONTROLLER - Handles ticket operations
 // This controller manages getting tickets, verifying tickets, and generating PDFs
@@ -44,8 +45,8 @@ export const getTicketById = async (req, res) => {
     }
 
     // Only the ticket owner or event creator can view
-    if (ticket.student._id.toString() !== req.user._id.toString() && 
-        req.user.role !== 'teacher') {
+    if (ticket.student._id.toString() !== req.user._id.toString() &&
+      req.user.role !== 'teacher') {
       return res.status(403).json({ message: 'Not authorized to view this ticket' });
     }
 
@@ -73,15 +74,15 @@ export const verifyTicket = async (req, res) => {
       .populate('event', 'title date location');
 
     if (!ticket) {
-      return res.status(404).json({ 
-        valid: false, 
-        message: 'Ticket not found' 
+      return res.status(404).json({
+        valid: false,
+        message: 'Ticket not found'
       });
     }
 
     if (ticket.status === 'used') {
-      return res.status(400).json({ 
-        valid: false, 
+      return res.status(400).json({
+        valid: false,
         message: 'Ticket has already been used',
         ticket: {
           ticketCode: ticket.ticketCode,
@@ -93,8 +94,8 @@ export const verifyTicket = async (req, res) => {
     }
 
     if (ticket.status === 'cancelled') {
-      return res.status(400).json({ 
-        valid: false, 
+      return res.status(400).json({
+        valid: false,
         message: 'Ticket has been cancelled',
         ticket: {
           ticketCode: ticket.ticketCode,
@@ -185,8 +186,8 @@ export const downloadTicketPDF = async (req, res) => {
     }
 
     // Authorization check
-    if (ticket.student._id.toString() !== req.user._id.toString() && 
-        req.user.role !== 'teacher') {
+    if (ticket.student._id.toString() !== req.user._id.toString() &&
+      req.user.role !== 'teacher') {
       return res.status(403).json({ message: 'Not authorized to download this ticket' });
     }
 
@@ -203,26 +204,26 @@ export const downloadTicketPDF = async (req, res) => {
     // PDF Design
     // Header
     doc.fontSize(25).font('Helvetica-Bold').fillColor('#4F46E5')
-       .text('EventSphere', { align: 'center' });
+      .text('EventSphere', { align: 'center' });
     doc.moveDown();
 
     doc.fontSize(14).font('Helvetica').fillColor('#333')
-       .text('EVENT TICKET', { align: 'center' });
+      .text('EVENT TICKET', { align: 'center' });
     doc.moveDown(2);
 
     // Event Name
     doc.fontSize(18).font('Helvetica-Bold').fillColor('#1F2937')
-       .text(ticket.event.title, { align: 'center' });
+      .text(ticket.event.title, { align: 'center' });
     doc.moveDown();
 
     // Divider line
     doc.strokeColor('#E5E7EB').lineWidth(2)
-       .moveTo(50, doc.y).lineTo(400, doc.y).stroke();
+      .moveTo(50, doc.y).lineTo(400, doc.y).stroke();
     doc.moveDown();
 
     // Ticket Details
     doc.fontSize(12).font('Helvetica').fillColor('#4B5563');
-    
+
     const formatDate = (date) => new Date(date).toLocaleDateString('en-US', {
       weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
     });
@@ -240,32 +241,49 @@ export const downloadTicketPDF = async (req, res) => {
 
     // Ticket Code Box
     doc.rectangle(50, doc.y, 350, 40)
-       .fill('#F3F4F6');
+      .fill('#F3F4F6');
     doc.fillColor('#1F2937').fontSize(14).font('Helvetica-Bold')
-       .text(`Ticket Code: ${ticket.ticketCode}`, 60, doc.y - 30, { align: 'center' });
+      .text(`Ticket Code: ${ticket.ticketCode}`, 60, doc.y - 30, { align: 'center' });
     doc.moveDown(2);
 
-    // QR Code (base64 to image)
-    if (ticket.qrCode) {
-      // Extract base64 data from data URL
-      const base64Data = ticket.qrCode.replace(/^data:image\/png;base64,/, '');
+    // QR Code (base64 to image) dynamically generated with text
+    // Replace raw text with a URL
+    const qrDataText = `http://localhost:3000/ticket/${ticket._id}`;
+
+    try {
+      const newQrCodeDataURL = await QRCode.toDataURL(qrDataText, { width: 400 });
+      const base64Data = newQrCodeDataURL.replace(/^data:image\/png;base64,/, '');
       const imageBuffer = Buffer.from(base64Data, 'base64');
-      
+
       doc.text('Scan at event entrance:', { align: 'center' });
       doc.moveDown(0.5);
       doc.image(imageBuffer, {
         fit: [150, 150],
         align: 'center'
       });
+    } catch (qrErr) {
+      console.error('Error generating new QR code for PDF:', qrErr);
+      // Fallback to original DB QR code if dynamic generation fails
+      if (ticket.qrCode) {
+        try {
+          const fallbackBase64 = ticket.qrCode.replace(/^data:image\/png;base64,/, '');
+          const fallbackBuffer = Buffer.from(fallbackBase64, 'base64');
+          doc.text('Scan at event entrance:', { align: 'center' });
+          doc.moveDown(0.5);
+          doc.image(fallbackBuffer, { fit: [150, 150], align: 'center' });
+        } catch (e) {
+          console.error('Fallback QR code failed too:', e);
+        }
+      }
     }
 
     doc.moveDown();
-    
+
     // Footer
     doc.fontSize(10).fillColor('#9CA3AF')
-       .text(`Ticket ID: ${ticket._id}`, { align: 'center' })
-       .text(`Issued: ${new Date(ticket.issuedAt).toLocaleDateString()}`, { align: 'center' })
-       .text('Thank you for using EventSphere!', { align: 'center' });
+      .text(`Ticket ID: ${ticket._id}`, { align: 'center' })
+      .text(`Issued: ${new Date(ticket.issuedAt).toLocaleDateString()}`, { align: 'center' })
+      .text('Thank you for using EventSphere!', { align: 'center' });
 
     // Finalize PDF
     doc.end();

@@ -45,6 +45,9 @@ const registrationSchema = new mongoose.Schema({
     enum: ['pending', 'approved', 'rejected', 'cancelled'],
     default: 'pending',
   },
+  ticketId: {
+    type: String,
+  },
   createdAt: {
     type: Date,
     default: Date.now,

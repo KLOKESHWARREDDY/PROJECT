@@ -399,10 +399,18 @@ export const getRegistrationById = async (req, res) => {
     const registration = await Registration.findById(id)
       .populate('student', 'name email')
       .populate('event', 'title date location')
-      .populate('teacher', 'name');
+      .populate('teacher', 'name')
+      .lean();
 
     if (!registration) {
       return res.status(404).json({ message: 'Registration not found' });
+    }
+
+    // Append ticket data if it exists (handles older records without ticketId in schema)
+    const ticket = await Ticket.findOne({ registration: id });
+    if (ticket) {
+      registration.ticketCode = ticket.ticketCode;
+      registration.qrCode = ticket.qrCode;
     }
 
     res.json(registration);
