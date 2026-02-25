@@ -2,8 +2,11 @@ import Registration from '../models/Registration.js';
 import Event from '../models/Event.js';
 import Ticket from '../models/Ticket.js';
 import Notification from '../models/Notification.js';
+import User from '../models/User.js';
 import mongoose from 'mongoose';
 import QRCode from 'qrcode';
+import { generateTicketPDF } from '../services/ticketService.js';
+import { sendTicketConfirmationEmail } from '../services/emailService.js';
 
 // REGISTRATION CONTROLLER - Handles student event registrations
 // This controller manages registration creation, approval, rejection, and cancellation
@@ -205,88 +208,158 @@ export const getEventRegistrations = async (req, res) => {
 };
 
 // APPROVE REGISTRATION - Teacher approves a student's registration
-// Step 1: Extract registration ID from request parameters
-// Step 2: Find registration in database
-// Step 3: Verify teacher owns the event
-// Step 4: Update registration status to 'approved'
-// Step 5: Generate unique ticket code
-// Step 6: Generate QR code for the ticket
-// Step 7: Create ticket in database
-// Step 8: Send notification to student
-// Step 9: Return success with registration and ticket code
-// Request: PUT /api/registrations/:id/approve
+// Flow:
+//  1. Verify registration exists and teacher owns the event
+//  2. Update registration status → 'approved'
+//  3. Generate unique ticket code + QR code data URL
+//  4. Persist Ticket document (including qrCode, issuedAt, emailSent=false)
+//  5. Generate PDF in memory via ticketService
+//  6. Send confirmation email + PDF attachment via emailService (non-blocking)
+//  7. Mark ticket.emailSent = true on success
+//  8. Notify student via in-app notification
+// Request: PUT /api/registrations/approve/:id  (teacher only)
 export const approveRegistration = async (req, res) => {
   try {
     const { id } = req.params;
-    console.log("=== APPROVE REGISTRATION ===");
-    console.log("Registration ID:", id);
+    console.log('=== APPROVE REGISTRATION ===');
+    console.log('Registration ID:', id);
 
+    // ── 1. Fetch registration ─────────────────────────────────────────────
     const registration = await Registration.findById(id);
     if (!registration) {
       return res.status(404).json({ message: 'Registration not found' });
     }
 
-    // Verify teacher owns the event
+    // ── 2. Verify teacher owns the event ──────────────────────────────────
     const event = await Event.findById(registration.event);
     if (!event) {
       return res.status(404).json({ message: 'Event not found' });
     }
-
     if (event.teacher.toString() !== req.user._id.toString()) {
-      return res.status(403).json({ message: 'Not authorized' });
+      return res.status(403).json({ message: 'Not authorized to approve this registration' });
     }
 
-    // Update status
+    // Guard: skip if already approved (idempotent)
+    if (registration.status === 'approved') {
+      return res.status(200).json({
+        message: 'Registration already approved',
+        registration,
+      });
+    }
+
+    // ── 3. Fetch full student details ─────────────────────────────────────
+    const student = await User.findById(registration.student).select(
+      'name email college regNo department'
+    );
+    if (!student) {
+      return res.status(404).json({ message: 'Student not found' });
+    }
+
+    // ── 4. Update registration status ─────────────────────────────────────
     registration.status = 'approved';
     await registration.save();
 
-    // Generate ticket
-    const ticketCode = 'TKT-' + Date.now().toString(36).toUpperCase() +
+    // ── 5. Generate unique ticket code ────────────────────────────────────
+    const ticketCode =
+      'TKT-' +
+      Date.now().toString(36).toUpperCase() +
       Math.random().toString(36).substring(2, 8).toUpperCase();
 
-    const qrData = JSON.stringify({
-      ticketCode: ticketCode,
-      eventId: registration.event,
-      studentId: registration.student
+    // ── 6. Generate QR code data URL ──────────────────────────────────────
+    const qrPayload = JSON.stringify({
+      ticketCode,
+      eventId: registration.event.toString(),
+      studentId: registration.student.toString(),
     });
+    const qrCodeDataURL = await QRCode.toDataURL(qrPayload, { width: 200 });
 
-    const qrCodeDataURL = await QRCode.toDataURL(qrData, { width: 200 });
-
-    // Create ticket
+    // ── 7. Persist Ticket document ────────────────────────────────────────
     const ticket = await Ticket.create({
       student: registration.student,
       event: registration.event,
       registration: registration._id,
-      ticketCode: ticketCode,
+      ticketCode,
       qrCode: qrCodeDataURL,
+      issuedAt: new Date(),
+      emailSent: false,
     });
 
-    // Update registration with ticket
+    // Store ticketId reference on registration
     registration.ticketId = ticket.ticketCode;
     await registration.save();
 
+    // Populate for response
     await registration.populate('student', 'name email');
-    await registration.populate('event', 'title date location');
+    await registration.populate('event', 'title date location category');
 
-    console.log("Registration approved successfully");
+    // ── 8. Respond immediately so the teacher isn't waiting ───────────────
+    res.json({
+      message: 'Registration approved! Confirmation email is being sent.',
+      registration,
+      ticket: { ticketCode: ticket.ticketCode },
+    });
 
-    // Send notification to student
+    // ── 9. Generate PDF & send email (non-blocking) ───────────────────────
+    // Running after res.json() so email delivery time doesn't affect API latency.
+    (async () => {
+      try {
+        console.log(`[approveRegistration] Generating PDF for ticket ${ticketCode}…`);
+
+        const pdfBuffer = await generateTicketPDF({
+          ticketCode,
+          event: {
+            _id: event._id,
+            title: event.title,
+            date: event.date,
+            location: event.location,
+            category: event.category,
+          },
+          student: {
+            _id: student._id,
+            name: student.name,
+            email: student.email,
+            regNo: student.regNo,
+            department: student.department,
+            college: student.college,
+          },
+        });
+
+        console.log(`[approveRegistration] PDF generated (${pdfBuffer.length} bytes). Sending email…`);
+
+        await sendTicketConfirmationEmail({
+          to: student.email,
+          student,
+          event,
+          ticketCode,
+          pdfBuffer,
+        });
+
+        // Mark email as sent in DB
+        await Ticket.findByIdAndUpdate(ticket._id, { emailSent: true });
+        console.log(`✅ [approveRegistration] Email sent and ticket updated for ${student.email}`);
+      } catch (emailErr) {
+        // Log but never crash — approval already succeeded
+        console.error(
+          `❌ [approveRegistration] Failed to send ticket email for ${ticketCode}:`,
+          emailErr.message
+        );
+      }
+    })();
+
+    // ── 10. In-app notification ────────────────────────────────────────────
     await createNotification(
       registration.student._id,
-      'Registration Approved',
-      `Your registration for "${registration.event.title}" has been approved!`,
+      'Registration Approved 🎉',
+      `Your registration for "${event.title}" has been approved! Check your email for the ticket.`,
       'approval',
       registration._id
     );
 
-    res.json({
-      message: 'Registration approved!',
-      registration,
-      ticket: { ticketCode: ticket.ticketCode }
-    });
+    console.log('Registration approved successfully:', id);
+
   } catch (error) {
-    console.error('Approve Error:', error);
-    res.status(500).json({ message: error.message || 'Server error' });
+    console.error('Approve Registration Error:', error);
+    res.status(500).json({ message: error.message || 'Server error approving registration' });
   }
 };
 
@@ -486,38 +559,68 @@ export const approveAllRegistrations = async (req, res) => {
         registration.status = 'approved';
         await registration.save();
 
-        // Generate ticket
-        const ticketCode = 'TKT-' + Date.now().toString(36).toUpperCase() +
+        // Generate unique ticket code
+        const ticketCode =
+          'TKT-' +
+          Date.now().toString(36).toUpperCase() +
           Math.random().toString(36).substring(2, 8).toUpperCase();
 
-        const qrData = JSON.stringify({
-          ticketCode: ticketCode,
-          eventId: registration.event,
-          studentId: registration.student
+        const qrPayload = JSON.stringify({
+          ticketCode,
+          eventId: registration.event.toString(),
+          studentId: registration.student.toString(),
         });
+        const qrCodeDataURL = await QRCode.toDataURL(qrPayload, { width: 200 });
 
-        const qrCodeDataURL = await QRCode.toDataURL(qrData, { width: 200 });
-
-        // Create ticket
+        // Persist ticket document
         const ticket = await Ticket.create({
           student: registration.student,
           event: registration.event,
           registration: registration._id,
-          ticketCode: ticketCode,
+          ticketCode,
           qrCode: qrCodeDataURL,
+          issuedAt: new Date(),
+          emailSent: false,
         });
 
-        // Update registration with ticket
         registration.ticketId = ticket.ticketCode;
         await registration.save();
 
-        // Send notification
-        // We do this async to not block the loop too much, but for now await is safer
-        // To optimize, we could fire and forget notifications or use a queue
+        // Fire-and-forget: generate PDF + send email (does NOT block the loop)
+        const studentDoc = await User.findById(registration.student)
+          .select('name email college regNo department');
+
+        if (studentDoc) {
+          (async () => {
+            try {
+              const pdfBuffer = await generateTicketPDF({
+                ticketCode,
+                event: {
+                  _id: event._id, title: event.title,
+                  date: event.date, location: event.location, category: event.category,
+                },
+                student: {
+                  _id: studentDoc._id, name: studentDoc.name, email: studentDoc.email,
+                  regNo: studentDoc.regNo, department: studentDoc.department,
+                },
+              });
+              await sendTicketConfirmationEmail({
+                to: studentDoc.email, student: studentDoc,
+                event, ticketCode, pdfBuffer,
+              });
+              await Ticket.findByIdAndUpdate(ticket._id, { emailSent: true });
+              console.log(`✅ Bulk approval email sent: ${ticketCode} → ${studentDoc.email}`);
+            } catch (emailErr) {
+              console.error(`❌ Bulk email failed for ticket ${ticketCode}:`, emailErr.message);
+            }
+          })();
+        }
+
+        // In-app notification
         await createNotification(
           registration.student,
-          'Registration Approved',
-          `Your registration for "${event.title}" has been approved!`,
+          'Registration Approved 🎉',
+          `Your registration for "${event.title}" has been approved! Check your email for the ticket.`,
           'approval',
           registration._id
         );

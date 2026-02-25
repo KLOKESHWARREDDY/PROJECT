@@ -99,7 +99,7 @@ const AppContent = ({
 
   return (
     <div className="app-layout" style={{ display: 'flex', minHeight: '100vh', width: '100%' }}>
-      {!isMobile && <Sidebar key={user?._id || user?.profileImage || 'sidebar'} user={user} theme={theme} onLogout={handleLogout} />}
+      {!isMobile && <Sidebar key={user?._id || user?.id || 'sidebar'} user={user} theme={theme} onLogout={handleLogout} />}
       <div className="main-content" style={{
         flex: 1, marginLeft: isMobile ? '0px' : '60px', width: isMobile ? '100%' : 'calc(100% - 60px)',
         backgroundColor: isDark ? '#0f172a' : '#f8fafc', minHeight: '100vh', paddingBottom: '80px', transition: 'margin-left 0.3s ease'

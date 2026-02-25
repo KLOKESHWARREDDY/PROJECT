@@ -44,10 +44,25 @@ const ticketSchema = new mongoose.Schema({
     required: true,
     unique: true,
   },
+  // Base64 data URL of the QR code image (stored for quick display / re-download)
+  qrCode: {
+    type: String,
+    default: '',
+  },
   status: {
     type: String,
     enum: ['valid', 'used', 'cancelled'],
     default: 'valid',
+  },
+  // When the ticket was issued (separate from createdAt for clarity)
+  issuedAt: {
+    type: Date,
+    default: Date.now,
+  },
+  // Tracks whether the confirmation email was sent successfully
+  emailSent: {
+    type: Boolean,
+    default: false,
   },
   createdAt: {
     type: Date,

@@ -23,7 +23,7 @@ const MyEvents = ({ theme, events, onCancel }) => {
     emptyState: {
       display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
       padding: '60px 20px', textAlign: 'center',
-      backgroundColor: isDark ? '#1e293b' : '#f8fafc',
+      backgroundColor: isDark ? '#1e293b' : '#EFF6FF',
       borderRadius: '20px', border: isDark ? '1px dashed #334155' : '2px dashed #e2e8f0'
     },
     browseBtn: {
@@ -36,10 +36,10 @@ const MyEvents = ({ theme, events, onCancel }) => {
 
     // Ticket List
     list: { display: 'flex', flexDirection: 'column', gap: '20px' },
-    
+
     // Ticket Card (Horizontal Layout)
     ticketCard: {
-      backgroundColor: isDark ? '#1e293b' : '#fff',
+      backgroundColor: isDark ? '#1e293b' : '#ffffff',
       borderRadius: '16px',
       padding: '24px',
       border: isDark ? '1px solid #334155' : '1px solid #e2e8f0',
@@ -60,7 +60,7 @@ const MyEvents = ({ theme, events, onCancel }) => {
     ticketTitle: { fontSize: '20px', fontWeight: 'bold', marginBottom: '12px' },
     metaRow: { display: 'flex', gap: '20px', flexWrap: 'wrap', color: '#64748b', fontSize: '14px' },
     metaItem: { display: 'flex', alignItems: 'center', gap: '6px' },
-    
+
     // Status Badge
     badge: (status) => ({
       display: 'inline-block',
@@ -94,7 +94,7 @@ const MyEvents = ({ theme, events, onCancel }) => {
       flex: 1,
       padding: '10px 20px',
       borderRadius: '8px',
-      backgroundColor: '#fff',
+      backgroundColor: '#ffffff',
       color: '#ef4444',
       border: '1px solid #fee2e2',
       fontWeight: '600',
@@ -104,7 +104,7 @@ const MyEvents = ({ theme, events, onCancel }) => {
   };
 
   return (
-    <div style={styles.container}>
+    <div className={`page-wrapper${isDark ? ' dark' : ''}`}>
       <div style={styles.header}>
         <h1 style={styles.title}>My Tickets</h1>
         <p style={styles.subtitle}>Manage your upcoming events and registrations.</p>
@@ -128,7 +128,7 @@ const MyEvents = ({ theme, events, onCancel }) => {
                   {event.status === 'approved' ? 'Confirmed' : 'Pending Approval'}
                 </span>
                 <h3 style={styles.ticketTitle}>{event.title}</h3>
-                
+
                 <div style={styles.metaRow}>
                   <div style={styles.metaItem}><Calendar size={16} /> {event.date}</div>
                   <div style={styles.metaItem}><MapPin size={16} /> {event.location}</div>
@@ -138,15 +138,15 @@ const MyEvents = ({ theme, events, onCancel }) => {
 
               <div style={styles.actions}>
                 {event.status === 'approved' && (
-                  <button 
-                    style={styles.viewBtn} 
+                  <button
+                    style={styles.viewBtn}
                     onClick={() => navigate(`/ticket/${event.registrationId}`)}
                   >
                     View Ticket
                   </button>
                 )}
-                <button 
-                  style={styles.cancelBtn} 
+                <button
+                  style={styles.cancelBtn}
                   onClick={() => onCancel(event.registrationId)}
                 >
                   Cancel

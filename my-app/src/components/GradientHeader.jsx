@@ -7,7 +7,7 @@ const GradientHeader = ({ title, subtitle, showBack = false, rightElement }) => 
 
   const styles = {
     header: {
-      background: 'linear-gradient(135deg, #3b82f6 0%, #6366f1 100%)', // Blue -> Purple
+      background: 'linear-gradient(135deg, #3b82f6 0%, #2563EB 100%)', // Blue -> Purple
       padding: '24px 24px 32px 24px',
       color: '#fff',
       borderBottomLeftRadius: '30px',

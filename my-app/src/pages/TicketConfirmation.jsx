@@ -86,7 +86,7 @@ const TicketConfirmation = ({ allEvents, theme, onCancel }) => {
           onClick={() => navigate(-1)}
           style={{
             padding: '10px 20px',
-            backgroundColor: '#4f46e5',
+            backgroundColor: '#2563EB',
             color: '#fff',
             border: 'none',
             borderRadius: '8px',
@@ -172,7 +172,7 @@ const TicketConfirmation = ({ allEvents, theme, onCancel }) => {
 
     // 2. TOP PART (Gradient Header)
     ticketTop: {
-      background: 'linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%)', // Premium Gradient
+      background: 'linear-gradient(135deg, #2563EB 0%, #2563EB 100%)', // Premium Gradient
       padding: '30px',
       borderTopLeftRadius: '24px',
       borderTopRightRadius: '24px',
@@ -195,7 +195,7 @@ const TicketConfirmation = ({ allEvents, theme, onCancel }) => {
 
     // 3. MIDDLE PART (White Details)
     ticketBody: {
-      backgroundColor: '#fff',
+      backgroundColor: '#ffffff',
       padding: '30px',
       position: 'relative',
       display: 'flex',
@@ -210,7 +210,7 @@ const TicketConfirmation = ({ allEvents, theme, onCancel }) => {
     tearLine: {
       position: 'relative',
       height: '1px',
-      backgroundColor: '#fff',
+      backgroundColor: '#ffffff',
       backgroundImage: 'linear-gradient(to right, #ccc 50%, rgba(255,255,255,0) 0%)',
       backgroundPosition: 'bottom',
       backgroundSize: '15px 1px',
@@ -227,7 +227,7 @@ const TicketConfirmation = ({ allEvents, theme, onCancel }) => {
 
     // 5. BOTTOM PART (QR Code)
     ticketBottom: {
-      backgroundColor: '#fff',
+      backgroundColor: '#ffffff',
       padding: '30px',
       borderBottomLeftRadius: '24px',
       borderBottomRightRadius: '24px',
@@ -244,14 +244,14 @@ const TicketConfirmation = ({ allEvents, theme, onCancel }) => {
       display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px'
     },
     downloadBtn: { backgroundColor: '#1e293b', color: '#fff' },
-    shareBtn: { backgroundColor: '#fff', color: '#1e293b', border: '1px solid #e2e8f0' }
+    shareBtn: { backgroundColor: '#ffffff', color: '#1e293b', border: '1px solid #e2e8f0' }
   };
 
   return (
     <div style={styles.container}>
       {/* Header Navigation */}
       <div style={{ width: '100%', maxWidth: '380px', marginBottom: '20px', display: 'flex', alignItems: 'center' }}>
-        <div style={{ cursor: 'pointer', padding: '10px', background: '#fff', borderRadius: '12px' }} onClick={() => navigate(-1)}>
+        <div style={{ cursor: 'pointer', padding: '10px', backgroundColor: '#ffffff', borderRadius: '12px' }} onClick={() => navigate(-1)}>
           <ArrowLeft size={20} color="#1e293b" />
         </div>
         <span style={{ marginLeft: '15px', fontWeight: '700', fontSize: '18px', color: isDark ? '#fff' : '#1e293b' }}>Ticket Details</span>
@@ -275,14 +275,14 @@ const TicketConfirmation = ({ allEvents, theme, onCancel }) => {
 
           {/* Student Info */}
           <div style={styles.row}>
-            <User size={20} color="#6366f1" />
+            <User size={20} color="#2563EB" />
             <div>
               <div style={styles.label}>Student Name</div>
               <div style={styles.value}>{studentName}</div>
             </div>
           </div>
           <div style={styles.row}>
-            <Mail size={20} color="#6366f1" />
+            <Mail size={20} color="#2563EB" />
             <div>
               <div style={styles.label}>Email</div>
               <div style={styles.value}>{studentEmail}</div>
@@ -291,14 +291,14 @@ const TicketConfirmation = ({ allEvents, theme, onCancel }) => {
 
           {/* Event Details */}
           <div style={styles.row}>
-            <Calendar size={20} color="#6366f1" />
+            <Calendar size={20} color="#2563EB" />
             <div>
               <div style={styles.label}>Date</div>
               <div style={styles.value}>{eventDate}</div>
             </div>
           </div>
           <div style={styles.row}>
-            <MapPin size={20} color="#6366f1" />
+            <MapPin size={20} color="#2563EB" />
             <div>
               <div style={styles.label}>Location</div>
               <div style={styles.value}>{eventLocation}</div>
@@ -308,7 +308,7 @@ const TicketConfirmation = ({ allEvents, theme, onCancel }) => {
 
         {/* Bottom: QR Code */}
         <div style={styles.ticketBottom}>
-          <div style={{ background: '#fff', padding: '10px', display: 'inline-block', borderRadius: '12px', border: '1px solid #f1f5f9' }}>
+          <div style={{ backgroundColor: '#ffffff', padding: '10px', display: 'inline-block', borderRadius: '12px', border: '1px solid #f1f5f9' }}>
             <QRCodeSVG
               value={`${window.location.origin}/ticket/${ticket?._id}`}
               size={200}

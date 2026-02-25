@@ -27,7 +27,7 @@ const BottomNav = ({ theme, user }) => {
   const styles = {
     container: {
       position: 'fixed', bottom: 0, left: 0, width: '100%', height: '70px',
-      backgroundColor: isDark ? '#1e293b' : '#fff',
+      backgroundColor: isDark ? '#1e293b' : '#ffffff',
       borderTop: isDark ? '1px solid #334155' : '1px solid #e2e8f0',
       display: 'flex', justifyContent: 'space-around', alignItems: 'center',
       zIndex: 1000, boxShadow: '0 -4px 20px rgba(0,0,0,0.05)',
@@ -35,7 +35,7 @@ const BottomNav = ({ theme, user }) => {
     },
     navItem: (isActive) => ({
       display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-      gap: '4px', color: isActive ? '#6366f1' : (isDark ? '#94a3b8' : '#64748b'),
+      gap: '4px', color: isActive ? '#2563EB' : (isDark ? '#94a3b8' : '#64748b'),
       cursor: 'pointer', width: '60px', transition: 'all 0.2s ease'
     }),
     label: (isActive) => ({

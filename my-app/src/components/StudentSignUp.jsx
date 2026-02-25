@@ -1,468 +1,241 @@
-import React, { useState, useEffect } from 'react'; // Importing necessary React hooks and components
-import { useNavigate, Link } from 'react-router-dom'; // Importing navigation and link components from React Router
+import React, { useState } from 'react';
+import { useNavigate, Link } from 'react-router-dom';
 import { Eye, EyeOff, ArrowLeft, ArrowRight, AlertCircle, CheckCircle } from 'lucide-react';
 import { authAPI } from '../api';
+import './Auth.css';
 
+const DEPTS = ['CSE', 'ECE', 'MECH', 'CIVIL', 'EEE', 'IT', 'AI & DS', 'MBA', 'MCA'];
 
-/**
- * StudentSignUp Component
- * A multi-step registration form component for students and teachers
- * Features responsive design, form validation, and step-by-step navigation
- */
 const StudentSignUp = ({ onLogin }) => {
   const navigate = useNavigate();
-  const [step, setStep] = useState(1); // Current step in the registration process
-  // This state tracks if Student or Teacher is selected
+  const [step, setStep] = useState(1);
   const [isStudent, setIsStudent] = useState(true);
-  const [showPass, setShowPass] = useState(false); // Toggle password visibility
-  const [agreeTerms, setAgreeTerms] = useState(false); // Terms acceptance state
-  const [errors, setErrors] = useState({}); // Form validation errors
-
-  // RESPONSIVE CHECK
-  const [isMobile, setIsMobile] = useState(window.innerWidth < 900); // Mobile detection state
-
-  useEffect(() => {
-    const handleResize = () => setIsMobile(window.innerWidth < 900);
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
+  const [showPass, setShowPass] = useState(false);
+  const [agreeTerms, setAgreeTerms] = useState(false);
+  const [errors, setErrors] = useState({});
+  const [submitting, setSubmitting] = useState(false);
 
   const [formData, setFormData] = useState({
-    fullName: '',
-    email: '',
-    collegeName: '',
-    rollNo: '',
-    department: '',
-    password: '',
-    confirmPassword: ''
+    fullName: '', email: '', collegeName: '', rollNo: '', department: '', password: '', confirmPassword: ''
   });
 
-  /**
-   * Styles object containing all CSS-in-JS styles for the component
-   * Organized by sections for better maintainability
-   */
-  const styles = {
-    // Basic Layout
-    pageContainer: {
-      height: '100vh',
-      width: '100vw',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      fontFamily: "'Inter', sans-serif",
-      backgroundColor: '#f3f4f6',
-      overflow: 'hidden'
-    },
-    mainWrapper: {
-      display: 'flex',
-      width: isMobile ? '90vw' : '75vw',
-      height: isMobile ? 'auto' : '85vh',
-      minHeight: isMobile ? 'auto' : '650px',
-      maxHeight: '95vh',
-      backgroundColor: '#fff',
-      borderRadius: isMobile ? '4vw' : '2vw',
-      overflow: 'hidden',
-      boxShadow: '0 2vh 6vh -1vh rgba(0, 0, 0, 0.15)',
-      flexDirection: 'row'
-    },
-
-    // Left Panel (Hidden on Mobile)
-    leftPanel: {
-      flex: 1,
-      background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)',
-      display: isMobile ? 'none' : 'flex',
-      flexDirection: 'column',
-      alignItems: 'center',
-      justifyContent: 'center',
-      color: '#fff',
-      padding: '4vw',
-      textAlign: 'center'
-    },
-    glassCard: {
-      backgroundColor: 'rgba(255, 255, 255, 0.1)',
-      backdropFilter: 'blur(10px)',
-      borderRadius: '1.5vw',
-      padding: '1.5vw',
-      border: '1px solid rgba(255, 255, 255, 0.2)',
-      marginTop: '2vh',
-      maxWidth: '22vw'
-    },
-    heroImage: {
-      width: '100%',
-      borderRadius: '1vw',
-      objectFit: 'cover'
-    },
-
-    // Right Panel
-    rightPanel: {
-      flex: 1.2,
-      padding: isMobile ? '6vw' : '3vw 5vw',
-      display: 'flex',
-      flexDirection: 'column',
-      justifyContent: 'center',
-      backgroundColor: '#fff',
-      position: 'relative'
-    },
-    header: {
-      textAlign: 'center',
-      marginBottom: '3vh'
-    },
-    stepIndicator: {
-      fontSize: isMobile ? '3vw' : '0.8vw',
-      color: '#6366f1',
-      fontWeight: '600',
-      textTransform: 'uppercase',
-      letterSpacing: '1px'
-    },
-    title: {
-      fontSize: isMobile ? '6vw' : '2.2vw',
-      fontWeight: '800',
-      color: '#1f2937',
-      marginTop: '0.5vh',
-      marginBottom: '1vh'
-    },
-
-    // Form Elements
-    inputGroup: {
-      display: 'flex',
-      flexDirection: 'column',
-      gap: '0.8vh',
-      marginBottom: '2vh'
-    },
-    label: {
-      fontSize: isMobile ? '3.5vw' : '0.9vw',
-      fontWeight: '700',
-      color: '#374151',
-      marginLeft: '0.2vw'
-    },
-    input: (hasError) => ({
-      width: '100%',
-      padding: isMobile ? '1.5vh 3vw' : '1.2vh 1vw',
-      borderRadius: isMobile ? '2vw' : '0.8vw',
-      border: hasError ? '2px solid #ef4444' : '2px solid #e5e7eb',
-      backgroundColor: '#fff',
-      fontSize: isMobile ? '4vw' : '1vw',
-      outline: 'none',
-      color: '#111827',
-      transition: 'border-color 0.2s',
-      boxSizing: 'border-box'
-    }),
-
-    // Split Row (Roll No & Dept)
-    splitRow: {
-      display: 'flex',
-      gap: isMobile ? '3vw' : '1.5vw',
-      marginBottom: '2vh'
-    },
-    splitCol: {
-      flex: 1,
-      display: 'flex',
-      flexDirection: 'column',
-      gap: '0.8vh'
-    },
-
-    errorText: {
-      fontSize: isMobile ? '3vw' : '0.8vw',
-      color: '#ef4444',
-      display: 'flex',
-      alignItems: 'center',
-      gap: '0.5vw',
-      marginTop: '0.2vh'
-    },
-
-    actionBtn: {
-      width: '100%',
-      padding: isMobile ? '2vh' : '1.5vh',
-      borderRadius: isMobile ? '2vw' : '0.8vw',
-      border: 'none',
-      background: '#6366f1',
-      color: '#fff',
-      fontSize: isMobile ? '4vw' : '1.1vw',
-      fontWeight: 'bold',
-      cursor: 'pointer',
-      marginTop: '1vh',
-      boxShadow: '0 0.5vh 1.5vh rgba(99, 102, 241, 0.3)',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      gap: '0.5vw',
-      transition: 'transform 0.1s'
-    },
-    backBtn: {
-      background: 'none',
-      border: 'none',
-      color: '#6b7280',
-      fontSize: isMobile ? '3.5vw' : '1vw',
-      fontWeight: '600',
-      cursor: 'pointer',
-      display: 'flex',
-      alignItems: 'center',
-      gap: '0.5vw',
-      marginBottom: '2vh',
-      alignSelf: 'flex-start'
-    },
-    toggleContainer: {
-      display: 'flex',
-      backgroundColor: '#f3f4f6',
-      borderRadius: isMobile ? '2vw' : '0.8vw',
-      padding: '0.5vh',
-      marginBottom: '3vh'
-    },
-    toggleBtn: (active) => ({
-      flex: 1,
-      padding: isMobile ? '1.5vh' : '1vh',
-      borderRadius: isMobile ? '1.5vw' : '0.6vw',
-      border: 'none',
-      fontSize: isMobile ? '3.5vw' : '0.9vw',
-      fontWeight: '600',
-      cursor: 'pointer',
-      backgroundColor: active ? '#6366f1' : 'transparent',
-      color: active ? '#fff' : '#6b7280',
-      transition: 'all 0.2s'
-    }),
-
-    linkText: {
-      textAlign: 'center',
-      marginTop: '3vh',
-      fontSize: isMobile ? '3.5vw' : '1vw',
-      color: '#6b7280',
-      paddingBottom: '1vh'
-    }
-  };
-
-  /**
-   * Handles form input changes and clears associated errors
-   * @param {Event} e - The input change event
-   */
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
     if (errors[e.target.name]) setErrors({ ...errors, [e.target.name]: null });
   };
 
-  /**
-   * Validates Step 1 (Personal Information)
-   * @returns {boolean} - True if validation passes
-   */
   const validateStep1 = () => {
-    let newErrors = {};
-    if (!formData.fullName.trim()) newErrors.fullName = "Full name is required";
-    if (!formData.email.trim()) newErrors.email = "Email is required";
-    else if (!/\S+@\S+\.\S+/.test(formData.email)) newErrors.email = "Invalid email format";
-    else if (!formData.email.endsWith("@gmail.com")) newErrors.email = "Only Gmail accounts are allowed";
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+    const errs = {};
+    if (!formData.fullName.trim()) errs.fullName = 'Full name is required';
+    if (!formData.email.trim()) errs.email = 'Email is required';
+    else if (!/\S+@\S+\.\S+/.test(formData.email)) errs.email = 'Invalid email format';
+    else if (!formData.email.endsWith('@gmail.com')) errs.email = 'Only Gmail accounts are allowed';
+    setErrors(errs);
+    return Object.keys(errs).length === 0;
   };
 
-  /**
-   * Validates Step 2 (Academic Information)
-   * @returns {boolean} - True if validation passes
-   */
   const validateStep2 = () => {
-    let newErrors = {};
-    if (!formData.collegeName.trim()) newErrors.collegeName = "College name is required";
-    if (!formData.rollNo.trim()) newErrors.rollNo = isStudent ? "Roll number is required" : "Employee ID is required";
-    if (!formData.department || formData.department === "Select") newErrors.department = "Please select a department";
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+    const errs = {};
+    if (!formData.collegeName.trim()) errs.collegeName = 'College name is required';
+    if (!formData.rollNo.trim()) errs.rollNo = isStudent ? 'Roll number is required' : 'Employee ID is required';
+    if (!formData.department || formData.department === 'Select') errs.department = 'Please select a department';
+    setErrors(errs);
+    return Object.keys(errs).length === 0;
   };
 
-  /**
-   * Validates Step 3 (Security Information)
-   * @returns {boolean} - True if validation passes
-   */
   const validateStep3 = () => {
-    let newErrors = {};
-    if (!formData.password) newErrors.password = "Password is required";
-    else if (formData.password.length < 6) newErrors.password = "Password must be at least 6 chars";
-    if (formData.password !== formData.confirmPassword) newErrors.confirmPassword = "Passwords do not match";
-
-    if (!agreeTerms) newErrors.agreeTerms = "Please accept the Terms & Privacy Policy";
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+    const errs = {};
+    if (!formData.password) errs.password = 'Password is required';
+    else if (formData.password.length < 6) errs.password = 'Password must be at least 6 characters';
+    if (formData.password !== formData.confirmPassword) errs.confirmPassword = 'Passwords do not match';
+    if (!agreeTerms) errs.agreeTerms = 'Please accept the Terms & Privacy Policy';
+    setErrors(errs);
+    return Object.keys(errs).length === 0;
   };
 
-  /**
-   * Handles navigation to the next step
-   */
   const handleNext = () => {
-    if (step === 1) { if (validateStep1()) setStep(2); }
-    else if (step === 2) { if (validateStep2()) setStep(3); }
+    if (step === 1 && validateStep1()) setStep(2);
+    else if (step === 2 && validateStep2()) setStep(3);
   };
 
-  /**
-   * Handles navigation to the previous step
-   */
-  const handleBack = () => { if (step > 1) setStep(step - 1); };
-
-  // ✅ LOGIC UPDATE: Save to Local Storage and Login
   const handleSubmit = async () => {
-    if (validateStep3()) {
-      try {
-        const response = await authAPI.register({
-          name: formData.fullName,
-          email: formData.email,
-          password: formData.password,
-          role: isStudent ? "student" : "teacher",
-          college: formData.collegeName,
-          department: formData.department,
-          regNo: formData.rollNo
-        });
-
-        const userData = response.data;
-
-        // Save logged in user with token
-        localStorage.setItem("user", JSON.stringify(userData));
-        localStorage.setItem("isAuthenticated", "true");
-        localStorage.setItem("token", userData.token || "");
-
-        onLogin(userData);
-        navigate("/");
-
-      } catch (error) {
-        setErrors({
-          email: error.response?.data?.message || "Registration failed"
-        });
-        setStep(1);
-      }
+    if (!validateStep3()) return;
+    setSubmitting(true);
+    try {
+      const res = await authAPI.register({
+        name: formData.fullName,
+        email: formData.email,
+        password: formData.password,
+        role: isStudent ? 'student' : 'teacher',
+        college: formData.collegeName,
+        department: formData.department,
+        regNo: formData.rollNo,
+      });
+      const userData = res.data;
+      localStorage.setItem('user', JSON.stringify(userData));
+      localStorage.setItem('isAuthenticated', 'true');
+      localStorage.setItem('token', userData.token || '');
+      onLogin(userData);
+      navigate('/');
+    } catch (err) {
+      setErrors({ email: err.response?.data?.message || 'Registration failed' });
+      setStep(1);
+    } finally {
+      setSubmitting(false);
     }
   };
 
-
-  // STEP 1: PERSONAL INFO
-  /**
-   * Renders the first step of a form component
-   * This step includes fields for full name and email address
-   * @returns {JSX.Element} The JSX for the first step of the form
-   */
-  const renderStep1 = () => (
-    <>
-      <div style={styles.inputGroup}>
-        <label style={styles.label}>Full Name</label> {/* Input label for full name field */}
-        <input style={styles.input(errors.fullName)} placeholder="e.g. John Doe" name="fullName" value={formData.fullName} onChange={handleChange} autoFocus />
-        {errors.fullName && <div style={styles.errorText}><AlertCircle size={isMobile ? 12 : 14} /> {errors.fullName}</div>}
-      </div>
-      <div style={styles.inputGroup}>
-        <label style={styles.label}>Email Address</label>
-        <input style={styles.input(errors.email)} placeholder="you@example.com" name="email" type="email" value={formData.email} onChange={handleChange} />
-        {errors.email && <div style={styles.errorText}><AlertCircle size={isMobile ? 12 : 14} /> {errors.email}</div>}
-      </div>
-      <button style={styles.actionBtn} onClick={handleNext}>Continue <ArrowRight size={isMobile ? 16 : 18} /></button>
-    </>
+  /* Step Progress */
+  const StepDots = () => (
+    <div style={{ display: 'flex', justifyContent: 'center', gap: 6, marginBottom: 20 }}>
+      {[1, 2, 3].map(n => (
+        <div key={n} style={{
+          width: n === step ? 20 : 8, height: 8, borderRadius: 4,
+          background: n <= step ? '#4f46e5' : '#e2e8f0',
+          transition: 'all 0.3s',
+        }} />
+      ))}
+    </div>
   );
 
-  // STEP 2: ACADEMIC INFO
-  /**
-   * Renders the step 2 component with toggle buttons for selecting user role
-   * @returns {JSX.Element} The toggle container with Student/Teacher selection buttons
-   */
-  const renderStep2 = () => (
-    <>
-      <div style={styles.toggleContainer}>
-        <button style={styles.toggleBtn(isStudent)} onClick={() => setIsStudent(true)}>Student</button>
-        <button style={styles.toggleBtn(!isStudent)} onClick={() => setIsStudent(false)}>Teacher</button>
-      </div>
-
-      <div style={styles.inputGroup}>
-        <label style={styles.label}>College Name</label>
-        <input style={styles.input(errors.collegeName)} placeholder="Engineering Tech Institute" name="collegeName" value={formData.collegeName} onChange={handleChange} />
-        {errors.collegeName && <div style={styles.errorText}><AlertCircle size={isMobile ? 12 : 14} /> {errors.collegeName}</div>}
-      </div>
-
-      <div style={styles.splitRow}>
-        <div style={styles.splitCol}>
-          <label style={styles.label}>{isStudent ? "Roll No" : "Emp ID"}</label>
-          <input style={styles.input(errors.rollNo)} placeholder={isStudent ? "ID-2024" : "EMP-01"} name="rollNo" value={formData.rollNo} onChange={handleChange} />
-          {errors.rollNo && <div style={styles.errorText}><AlertCircle size={isMobile ? 12 : 14} /> {errors.rollNo}</div>}
-        </div>
-
-        <div style={styles.splitCol}>
-          <label style={styles.label}>Dept</label>
-          <select style={styles.input(errors.department)} name="department" value={formData.department} onChange={handleChange}>
-            <option>Select</option>
-            <option>CSE</option><option>ECE</option><option>MECH</option><option>CIVIL</option>
-            <option>EEE</option><option>IT</option><option>AI & DS</option><option>MBA</option><option>MCA</option>
-          </select>
-          {errors.department && <div style={styles.errorText}><AlertCircle size={isMobile ? 12 : 14} /> {errors.department}</div>}
-        </div>
-      </div>
-
-      <button style={styles.actionBtn} onClick={handleNext}>Continue <ArrowRight size={isMobile ? 16 : 18} /></button>
-    </>
-  );
-
-  // STEP 3: SECURITY
-  const renderStep3 = () => (
-    <>
-      <div style={styles.inputGroup}>
-        <label style={styles.label}>Password</label>
-        <div style={{ position: 'relative' }}>
-          <input style={styles.input(errors.password)} placeholder="••••••" name="password" type={showPass ? "text" : "password"} value={formData.password} onChange={handleChange} />
-          <div style={{ position: 'absolute', right: isMobile ? '3vw' : '1vw', top: isMobile ? '1.5vh' : '1.2vh', cursor: 'pointer', color: '#9ca3af' }} onClick={() => setShowPass(!showPass)}>
-            {showPass ? <EyeOff size={isMobile ? 20 : 20} /> : <Eye size={isMobile ? 20 : 20} />}
-          </div>
-        </div>
-        {errors.password && <div style={styles.errorText}><AlertCircle size={isMobile ? 12 : 14} /> {errors.password}</div>}
-      </div>
-      <div style={styles.inputGroup}>
-        <label style={styles.label}>Confirm Password</label>
-        <input style={styles.input(errors.confirmPassword)} placeholder="••••••" name="confirmPassword" type="password" value={formData.confirmPassword} onChange={handleChange} />
-        {errors.confirmPassword && <div style={styles.errorText}><AlertCircle size={isMobile ? 12 : 14} /> {errors.confirmPassword}</div>}
-      </div>
-      <div style={{ display: 'flex', gap: isMobile ? '2vw' : '0.5vw', alignItems: 'center', marginTop: '1vh', marginBottom: '2vh' }}>
-        <input
-          type="checkbox"
-          checked={agreeTerms}
-          onChange={(e) => {
-            setAgreeTerms(e.target.checked);
-            if (e.target.checked && errors.agreeTerms) setErrors({ ...errors, agreeTerms: null });
-          }}
-          style={{ width: isMobile ? '4vw' : '1.2vw', height: isMobile ? '4vw' : '1.2vw', accentColor: '#6366f1' }}
-        />
-        <span style={{ fontSize: isMobile ? '3vw' : '0.85vw', color: '#6b7280' }}>I agree to Terms & Privacy Policy</span>
-      </div>
-      {errors.agreeTerms && <div style={{ ...styles.errorText, marginTop: '-1.5vh', marginBottom: '1.5vh' }}><AlertCircle size={isMobile ? 12 : 14} /> {errors.agreeTerms}</div>}
-      <button style={{ ...styles.actionBtn, background: '#10b981' }} onClick={handleSubmit}>
-        Complete Registration <CheckCircle size={isMobile ? 16 : 18} />
-      </button>
-    </>
-  );
+  const stepTitles = ['Personal Info', 'Academic Details', 'Set Password'];
 
   return (
-    <div style={styles.pageContainer}>
-      <div style={styles.mainWrapper}>
+    <div className="auth-page">
+      <div className="auth-card">
 
-        {/* Left Panel */}
-        <div style={styles.leftPanel}>
-          <div style={{ fontSize: '3vw', marginBottom: '1vh' }}>🚀</div>
-          <h1 style={{ fontSize: '2.5vw', fontWeight: '800', marginBottom: '1vh' }}>Join Us!</h1>
-          <p style={{ fontSize: '1.1vw', opacity: 0.9, marginBottom: '3vh' }}>Create your account in 3 easy steps.</p>
-          <div style={styles.glassCard}>
-            <img src="https://images.unsplash.com/photo-1523240795612-9a054b0db644?w=400&q=80" alt="Students" style={styles.heroImage} />
+        {/* LEFT PANEL */}
+        <div className="auth-left">
+          <div className="auth-left-blob1" />
+          <div className="auth-left-blob2" />
+          <div className="auth-left-emoji">🚀</div>
+          <h2>Join EventSphere!</h2>
+          <p>Create your account in 3 easy steps and start exploring campus events.</p>
+          <div className="auth-left-img-wrap">
+            <img src="https://images.unsplash.com/photo-1523240795612-9a054b0db644?w=400&q=80" alt="Students" />
           </div>
         </div>
 
-        {/* Right Panel */}
-        <div style={styles.rightPanel}>
-          {step > 1 && (
-            <button style={styles.backBtn} onClick={handleBack}>
-              <ArrowLeft size={isMobile ? 16 : 14} /> Back
+        {/* RIGHT PANEL */}
+        <div className="auth-right">
+          {step > 1 ? (
+            <button className="auth-back-btn" onClick={() => setStep(step - 1)}>
+              <ArrowLeft size={15} /> Back
+            </button>
+          ) : (
+            <button className="auth-back-btn" onClick={() => navigate('/')}>
+              <ArrowLeft size={15} /> Home
             </button>
           )}
 
-          <div style={styles.header}>
-            <div style={styles.stepIndicator}>Step {step} of 3</div>
-            <h2 style={styles.title}>{step === 1 ? "Let's get started" : step === 2 ? "Academic Details" : "Set Password"}</h2>
+          <div className="auth-header">
+            <h2>{stepTitles[step - 1]}</h2>
+            <p>Step {step} of 3</p>
           </div>
+          <StepDots />
 
-          <div style={{ animation: 'fadeIn 0.3s ease-in-out' }}>
-            {step === 1 && renderStep1()}
-            {step === 2 && renderStep2()}
-            {step === 3 && renderStep3()}
-          </div>
+          {/* STEP 1 */}
+          {step === 1 && (
+            <div className="auth-form">
+              {errors.email && step === 1 && (
+                <div className="auth-error-box"><AlertCircle size={15} />{errors.email}</div>
+              )}
+              <div className="auth-field">
+                <label>Full Name</label>
+                <input className={`auth-input${errors.fullName ? ' error' : ''}`}
+                  name="fullName" placeholder="e.g. John Doe"
+                  value={formData.fullName} onChange={handleChange} autoFocus />
+                {errors.fullName && <div className="auth-error-text"><AlertCircle size={12} />{errors.fullName}</div>}
+              </div>
+              <div className="auth-field">
+                <label>Gmail Address</label>
+                <input className={`auth-input${errors.email ? ' error' : ''}`}
+                  name="email" type="email" placeholder="you@gmail.com"
+                  value={formData.email} onChange={handleChange} />
+                {errors.email && <div className="auth-error-text"><AlertCircle size={12} />{errors.email}</div>}
+              </div>
+              <button className="auth-submit-btn" onClick={handleNext}>
+                Continue <ArrowRight size={16} />
+              </button>
+            </div>
+          )}
 
-          <div style={styles.linkText}>
-            Already have an account? <Link to="/signin" style={{ color: '#6366f1', fontWeight: 'bold', textDecoration: 'none' }}>Login</Link>
+          {/* STEP 2 */}
+          {step === 2 && (
+            <div className="auth-form">
+              <div className="auth-toggle" style={{ marginBottom: 20 }}>
+                <button className={isStudent ? 'active' : ''} onClick={() => setIsStudent(true)}>Student</button>
+                <button className={!isStudent ? 'active' : ''} onClick={() => setIsStudent(false)}>Teacher</button>
+              </div>
+              <div className="auth-field">
+                <label>College Name</label>
+                <input className={`auth-input${errors.collegeName ? ' error' : ''}`}
+                  name="collegeName" placeholder="e.g. Engineering Tech Institute"
+                  value={formData.collegeName} onChange={handleChange} />
+                {errors.collegeName && <div className="auth-error-text"><AlertCircle size={12} />{errors.collegeName}</div>}
+              </div>
+              <div className="auth-row">
+                <div className="auth-field">
+                  <label>{isStudent ? 'Roll No' : 'Employee ID'}</label>
+                  <input className={`auth-input${errors.rollNo ? ' error' : ''}`}
+                    name="rollNo" placeholder={isStudent ? 'ID-2024' : 'EMP-001'}
+                    value={formData.rollNo} onChange={handleChange} />
+                  {errors.rollNo && <div className="auth-error-text"><AlertCircle size={12} />{errors.rollNo}</div>}
+                </div>
+                <div className="auth-field">
+                  <label>Department</label>
+                  <select className={`auth-select${errors.department ? ' error' : ''}`}
+                    name="department" value={formData.department} onChange={handleChange}>
+                    <option value="">Select</option>
+                    {DEPTS.map(d => <option key={d}>{d}</option>)}
+                  </select>
+                  {errors.department && <div className="auth-error-text"><AlertCircle size={12} />{errors.department}</div>}
+                </div>
+              </div>
+              <button className="auth-submit-btn" onClick={handleNext}>
+                Continue <ArrowRight size={16} />
+              </button>
+            </div>
+          )}
+
+          {/* STEP 3 */}
+          {step === 3 && (
+            <div className="auth-form">
+              <div className="auth-field">
+                <label>Password</label>
+                <div className="auth-input-wrap">
+                  <input className={`auth-input has-icon${errors.password ? ' error' : ''}`}
+                    name="password" type={showPass ? 'text' : 'password'} placeholder="Min 6 characters"
+                    value={formData.password} onChange={handleChange} />
+                  <button type="button" className="auth-eye-btn" onClick={() => setShowPass(!showPass)}>
+                    {showPass ? <EyeOff size={17} /> : <Eye size={17} />}
+                  </button>
+                </div>
+                {errors.password && <div className="auth-error-text"><AlertCircle size={12} />{errors.password}</div>}
+              </div>
+              <div className="auth-field">
+                <label>Confirm Password</label>
+                <input className={`auth-input${errors.confirmPassword ? ' error' : ''}`}
+                  name="confirmPassword" type="password" placeholder="Re-enter password"
+                  value={formData.confirmPassword} onChange={handleChange} />
+                {errors.confirmPassword && <div className="auth-error-text"><AlertCircle size={12} />{errors.confirmPassword}</div>}
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
+                <input type="checkbox" checked={agreeTerms}
+                  onChange={e => { setAgreeTerms(e.target.checked); if (e.target.checked) setErrors(p => ({ ...p, agreeTerms: null })); }}
+                  style={{ accentColor: '#4f46e5', width: 16, height: 16 }} />
+                <span style={{ fontSize: '0.82rem', color: '#64748b' }}>I agree to Terms &amp; Privacy Policy</span>
+              </div>
+              {errors.agreeTerms && <div className="auth-error-text" style={{ marginBottom: 12 }}><AlertCircle size={12} />{errors.agreeTerms}</div>}
+              <button className="auth-submit-btn" onClick={handleSubmit} disabled={submitting}
+                style={{ background: submitting ? '#94a3b8' : undefined }}>
+                {submitting ? 'Creating Account…' : <><CheckCircle size={17} /> Complete Registration</>}
+              </button>
+            </div>
+          )}
+
+          <div className="auth-bottom-link">
+            Already have an account? <Link to="/signin">Login</Link>
           </div>
         </div>
 

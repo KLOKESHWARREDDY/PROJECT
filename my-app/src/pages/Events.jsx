@@ -88,7 +88,7 @@ const Events = ({ allEvents, theme, searchTerm, setSearchTerm }) => {
       minWidth: isMobile ? '60vw' : '25vw',
       display: 'flex',
       alignItems: 'center',
-      backgroundColor: isDark ? '#1e293b' : '#fff',
+      backgroundColor: isDark ? '#1e293b' : '#ffffff',
       border: isDark ? '1px solid #334155' : '1px solid #e2e8f0',
       borderRadius: isMobile ? '2vw' : '1vw',
       padding: isMobile ? '1.5vh 3vw' : '1vh 1.5vw',
@@ -129,7 +129,7 @@ const Events = ({ allEvents, theme, searchTerm, setSearchTerm }) => {
       flexWrap: 'wrap',
       marginBottom: '4vh',
       padding: isMobile ? '3vw' : '1.5vw',
-      backgroundColor: isDark ? '#1e293b' : '#f8fafc',
+      backgroundColor: isDark ? '#1e293b' : '#EFF6FF',
       borderRadius: isMobile ? '3vw' : '1vw',
       border: isDark ? '1px solid #334155' : '1px solid #e2e8f0',
       animation: 'fadeIn 0.2s ease-in-out'
@@ -157,7 +157,7 @@ const Events = ({ allEvents, theme, searchTerm, setSearchTerm }) => {
       gap: isMobile ? '4vh' : '2vw'
     },
     card: {
-      backgroundColor: isDark ? '#1e293b' : '#fff',
+      backgroundColor: isDark ? '#1e293b' : '#ffffff',
       borderRadius: isMobile ? '4vw' : '1.5vw',
       overflow: 'hidden',
       border: isDark ? '1px solid #334155' : '1px solid #e2e8f0',

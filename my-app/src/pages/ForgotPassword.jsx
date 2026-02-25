@@ -38,11 +38,11 @@ const ForgotPassword = () => {
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
-      backgroundColor: isDark ? '#0f172a' : '#f8fafc',
+      backgroundColor: isDark ? '#0f172a' : '#EFF6FF',
       padding: '20px'
     },
     card: {
-      backgroundColor: isDark ? '#1e293b' : '#ffffff',
+      backgroundColor: isDark ? '#1e293b' : '#EFF6FF',
       borderRadius: '16px',
       padding: '40px',
       width: '100%',
@@ -78,7 +78,7 @@ const ForgotPassword = () => {
       padding: '14px',
       borderRadius: '10px',
       border: 'none',
-      backgroundColor: '#4f46e5',
+      backgroundColor: '#2563EB',
       color: '#fff',
       fontSize: '16px',
       fontWeight: '600',
@@ -102,7 +102,7 @@ const ForgotPassword = () => {
       display: 'block',
       textAlign: 'center',
       marginTop: '20px',
-      color: '#4f46e5',
+      color: '#2563EB',
       textDecoration: 'none',
       fontSize: '14px'
     }

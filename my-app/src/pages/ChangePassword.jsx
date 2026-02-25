@@ -63,7 +63,7 @@ const ChangePassword = ({ theme }) => {
       display: 'flex', 
       flexDirection: 'column', 
       gap: isMobile ? '3vh' : '2.5vh',
-      backgroundColor: isDark ? '#1e293b' : '#fff',
+      backgroundColor: isDark ? '#1e293b' : '#ffffff',
       padding: isMobile ? '5vw' : '2.5vw',
       borderRadius: isMobile ? '3vw' : '1.5vw',
       border: isDark ? '1px solid #334155' : '1px solid #e2e8f0',
@@ -91,7 +91,7 @@ const ChangePassword = ({ theme }) => {
       paddingRight: '3rem', // Space for eye icon
       borderRadius: isMobile ? '2vw' : '0.8vw', 
       border: isDark ? '1px solid #475569' : '2px solid #e2e8f0', 
-      backgroundColor: isDark ? '#0f172a' : '#f8fafc', 
+      backgroundColor: isDark ? '#0f172a' : '#EFF6FF', 
       color: isDark ? '#fff' : '#1e293b', 
       outline: 'none', 
       fontSize: isMobile ? '4vw' : '1.1vw',

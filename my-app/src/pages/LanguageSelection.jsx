@@ -16,7 +16,7 @@ const LanguageSelection = ({ currentLanguage, setLanguage, theme }) => {
 
   return (
     <div className="settings-container" style={{ 
-      backgroundColor: isDark ? '#0f172a' : '#f8fafc',
+      backgroundColor: isDark ? '#0f172a' : '#EFF6FF',
       minHeight: '100vh',
       padding: '20px'
     }}>
@@ -35,10 +35,10 @@ const LanguageSelection = ({ currentLanguage, setLanguage, theme }) => {
             onClick={() => setLanguage(lang.code)}
             style={{
               backgroundColor: currentLanguage === lang.code 
-                ? (isDark ? '#1e293b' : '#e0e7ff') 
+                ? (isDark ? '#1e293b' : '#EFF6FF') 
                 : (isDark ? '#1e293b' : '#fff'),
               border: currentLanguage === lang.code 
-                ? '2px solid #6366f1' 
+                ? '2px solid #2563EB' 
                 : '2px solid transparent',
               cursor: 'pointer',
               transition: 'all 0.2s ease'
@@ -54,7 +54,7 @@ const LanguageSelection = ({ currentLanguage, setLanguage, theme }) => {
             {currentLanguage === lang.code && (
               <span style={{ 
                 marginLeft: 'auto', 
-                color: '#6366f1',
+                color: '#2563EB',
                 fontSize: '20px'
               }}>
                 ✓

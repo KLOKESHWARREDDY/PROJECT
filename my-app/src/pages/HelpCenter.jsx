@@ -27,7 +27,7 @@ const HelpCenter = ({ theme, openChat }) => {
   const styles = {
     container: {
       padding: '40px',
-      backgroundColor: isDark ? '#0f172a' : '#f8fafc',
+      backgroundColor: isDark ? '#0f172a' : '#EFF6FF',
       minHeight: '100%',
       fontFamily: "'Inter', sans-serif",
       maxWidth: '1000px',
@@ -63,7 +63,7 @@ const HelpCenter = ({ theme, openChat }) => {
       gap: '15px'
     },
     faqItem: {
-      backgroundColor: isDark ? '#1e293b' : '#fff',
+      backgroundColor: isDark ? '#1e293b' : '#ffffff',
       borderRadius: '12px',
       border: isDark ? '1px solid #334155' : '1px solid #e2e8f0',
       overflow: 'hidden',
@@ -92,7 +92,7 @@ const HelpCenter = ({ theme, openChat }) => {
       marginTop: '40px'
     },
     contactCard: {
-      backgroundColor: isDark ? '#1e293b' : '#fff',
+      backgroundColor: isDark ? '#1e293b' : '#ffffff',
       padding: '25px',
       borderRadius: '16px',
       border: isDark ? '1px solid #334155' : '1px solid #e2e8f0',
@@ -126,7 +126,7 @@ const HelpCenter = ({ theme, openChat }) => {
                 onClick={() => setOpenIndex(openIndex === index ? null : index)}
               >
                 {faq.question}
-                {openIndex === index ? <ChevronUp size={20} color="#6366f1" /> : <ChevronDown size={20} color="#94a3b8" />}
+                {openIndex === index ? <ChevronUp size={20} color="#2563EB" /> : <ChevronDown size={20} color="#94a3b8" />}
               </div>
               {openIndex === index && (
                 <div style={styles.answerBox}>
@@ -146,10 +146,10 @@ const HelpCenter = ({ theme, openChat }) => {
           onMouseLeave={(e) => e.currentTarget.style.transform = 'translateY(0)'}
           onClick={() => window.location.href = 'mailto:support@eventsphere.edu'}
         >
-          <div style={{ marginBottom: '15px', color: '#6366f1' }}><Mail size={32} /></div>
+          <div style={{ marginBottom: '15px', color: '#2563EB' }}><Mail size={32} /></div>
           <h3 style={{ marginBottom: '10px', color: isDark ? '#fff' : '#1e293b' }}>Email Support</h3>
           <p style={{ color: '#64748b', fontSize: '14px', marginBottom: '15px' }}>Get a response within 24 hours.</p>
-          <div style={{ fontWeight: 'bold', color: '#6366f1' }}>support@eventsphere.edu</div>
+          <div style={{ fontWeight: 'bold', color: '#2563EB' }}>support@eventsphere.edu</div>
         </div>
 
         <div

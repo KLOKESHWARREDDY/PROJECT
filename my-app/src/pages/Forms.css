@@ -1,0 +1,603 @@
+/* ── Forms.css — shared styles for form pages (CreateEvent, EditProfile) ── */
+
+.form-page {
+    min-height: 100vh;
+    background: #f8fafc;
+    font-family: 'Inter', sans-serif;
+    padding-bottom: 60px;
+}
+
+.page-wrapper.dark {
+    background: #0f172a;
+}
+
+/* === PAGE HEADER === */
+.form-page-header {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 24px 28px 0;
+}
+
+.form-back-btn {
+    width: 36px;
+    height: 36px;
+    border-radius: 11px;
+    background: #fff;
+    border: 1.5px solid #e2e8f0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: #64748b;
+    flex-shrink: 0;
+    transition: border-color 0.2s, color 0.2s;
+}
+
+.form-back-btn:hover {
+    border-color: #4f46e5;
+    color: #4f46e5;
+}
+
+.page-wrapper.dark .form-back-btn {
+    background: #1e293b;
+    border-color: #334155;
+    color: #94a3b8;
+}
+
+.form-page-title {
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: #0f172a;
+    letter-spacing: -0.4px;
+}
+
+.page-wrapper.dark .form-page-title {
+    color: #f1f5f9;
+}
+
+/* === MAIN CONTENT AREA === */
+.form-main {
+    padding: 24px 0;
+    max-width: 680px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+/* === CARD === */
+.form-card {
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 20px;
+    padding: 28px;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
+}
+
+.page-wrapper.dark .form-card {
+    background: #1e293b;
+    border-color: #334155;
+}
+
+/* === SECTION TITLE === */
+.form-section-title {
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: #94a3b8;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    margin-bottom: 18px;
+}
+
+/* === IMAGE UPLOAD ZONE === */
+.form-upload-zone {
+    border: 2px dashed #c7d2fe;
+    border-radius: 16px;
+    height: 200px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+    background: #fafbff;
+    transition: border-color 0.2s, background 0.2s;
+}
+
+.form-upload-zone:hover {
+    border-color: #4f46e5;
+    background: #f0f5ff;
+}
+
+.page-wrapper.dark .form-upload-zone {
+    background: #0f172a;
+    border-color: #334155;
+}
+
+.page-wrapper.dark .form-upload-zone:hover {
+    border-color: #4f46e5;
+}
+
+.form-upload-icon {
+    width: 52px;
+    height: 52px;
+    border-radius: 14px;
+    background: #eef2ff;
+    color: #4f46e5;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 12px;
+}
+
+.form-upload-zone span {
+    font-size: 0.875rem;
+    color: #64748b;
+    font-weight: 500;
+}
+
+.form-upload-zone small {
+    font-size: 0.75rem;
+    color: #94a3b8;
+    margin-top: 4px;
+}
+
+.form-upload-preview {
+    position: absolute;
+    inset: 0;
+    object-fit: cover;
+    width: 100%;
+    height: 100%;
+}
+
+.form-upload-remove {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    width: 28px;
+    height: 28px;
+    border-radius: 8px;
+    background: rgba(0, 0, 0, 0.5);
+    color: #fff;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s;
+}
+
+.form-upload-remove:hover {
+    background: rgba(239, 68, 68, 0.85);
+}
+
+/* === FIELD === */
+.form-field {
+    margin-bottom: 18px;
+}
+
+.form-field:last-child {
+    margin-bottom: 0;
+}
+
+.form-label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: #374151;
+    margin-bottom: 7px;
+}
+
+.page-wrapper.dark .form-label {
+    color: #94a3b8;
+}
+
+.form-required {
+    color: #ef4444;
+    font-size: 0.75rem;
+}
+
+.form-input,
+.form-textarea,
+.form-select {
+    width: 100%;
+    padding: 12px 14px;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 12px;
+    font-size: 0.9rem;
+    color: #0f172a;
+    background: #fff;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    font-family: 'Inter', sans-serif;
+    box-sizing: border-box;
+}
+
+.form-input::placeholder,
+.form-textarea::placeholder {
+    color: #94a3b8;
+}
+
+.form-input:focus,
+.form-textarea:focus,
+.form-select:focus {
+    border-color: #4f46e5;
+    box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+}
+
+.form-input:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+}
+
+.page-wrapper.dark .form-input,
+.page-wrapper.dark .form-textarea,
+.page-wrapper.dark .form-select {
+    background: #0f172a;
+    border-color: #334155;
+    color: #f1f5f9;
+}
+
+.form-textarea {
+    resize: vertical;
+    min-height: 110px;
+}
+
+.form-select {
+    appearance: none;
+    cursor: pointer;
+}
+
+/* === ROW === */
+.form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 0;
+}
+
+.form-row .form-field {
+    margin-bottom: 0;
+}
+
+/* === TIME GROUP === */
+.form-time-group {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.form-time-group .form-select {
+    flex: 1;
+}
+
+.form-time-sep {
+    font-size: 1rem;
+    font-weight: 700;
+    color: #64748b;
+    flex-shrink: 0;
+}
+
+/* === AVATAR SECTION (EditProfile) === */
+.form-avatar-section {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 28px;
+    text-align: center;
+}
+
+.form-avatar-wrap {
+    position: relative;
+    display: inline-block;
+    margin-bottom: 12px;
+}
+
+.form-avatar-img {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 3px solid #e0e7ff;
+    box-shadow: 0 4px 16px rgba(79, 70, 229, 0.15);
+}
+
+.form-avatar-cam {
+    position: absolute;
+    bottom: 2px;
+    right: 2px;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background: #4f46e5;
+    color: #fff;
+    border: 2px solid #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.form-avatar-cam:hover {
+    background: #4338ca;
+}
+
+.form-avatar-change {
+    font-size: 0.82rem;
+    color: #4f46e5;
+    font-weight: 600;
+    cursor: pointer;
+    transition: opacity 0.2s;
+}
+
+.form-avatar-change:hover {
+    opacity: 0.7;
+}
+
+/* === ERROR/SUCCESS MESSAGE === */
+.form-msg {
+    padding: 11px 16px;
+    border-radius: 12px;
+    font-size: 0.82rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 4px;
+}
+
+.form-msg-success {
+    background: #ecfdf5;
+    color: #065f46;
+    border: 1px solid #6ee7b7;
+}
+
+.form-msg-error {
+    background: #fef2f2;
+    color: #991b1b;
+    border: 1px solid #fca5a5;
+}
+
+/* === BUTTON ROW === */
+.form-btn-row {
+    display: flex;
+    gap: 12px;
+}
+
+.form-btn-row button {
+    flex: 1;
+}
+
+.form-cancel-row {
+    margin-top: 4px;
+}
+
+/* Common button base */
+.form-btn {
+    width: 100%;
+    padding: 13px;
+    border-radius: 12px;
+    border: none;
+    font-size: 0.9rem;
+    font-weight: 700;
+    cursor: pointer;
+    font-family: 'Inter', sans-serif;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: opacity 0.2s, transform 0.15s, box-shadow 0.2s;
+}
+
+.form-btn:hover {
+    opacity: 0.88;
+    transform: translateY(-1px);
+}
+
+.form-btn:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.form-btn-primary {
+    background: linear-gradient(135deg, #4f46e5, #7c3aed);
+    color: #fff;
+    box-shadow: 0 4px 16px rgba(79, 70, 229, 0.3);
+}
+
+.form-btn-success {
+    background: linear-gradient(135deg, #10b981, #059669);
+    color: #fff;
+    box-shadow: 0 4px 14px rgba(16, 185, 129, 0.3);
+}
+
+.form-btn-draft {
+    background: #f1f5f9;
+    color: #475569;
+    border: 1.5px solid #e2e8f0;
+}
+
+.page-wrapper.dark .form-btn-draft {
+    background: #334155;
+    color: #cbd5e1;
+    border-color: #475569;
+}
+
+.form-btn-danger {
+    background: transparent;
+    color: #64748b;
+    border: 1.5px solid #e2e8f0;
+}
+
+.page-wrapper.dark .form-btn-danger {
+    color: #94a3b8;
+    border-color: #334155;
+}
+
+/* === POPUP OVERLAY === */
+.form-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.55);
+    z-index: 999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    backdrop-filter: blur(2px);
+}
+
+.form-popup {
+    background: #fff;
+    border-radius: 20px;
+    padding: 32px;
+    width: 100%;
+    max-width: 400px;
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.18);
+    text-align: center;
+}
+
+.page-wrapper.dark .form-popup {
+    background: #1e293b;
+}
+
+.form-popup-success-icon {
+    color: #10b981;
+    margin-bottom: 12px;
+}
+
+.form-popup-error-icon {
+    color: #ef4444;
+    margin-bottom: 12px;
+}
+
+.form-popup h3 {
+    font-size: 1.1rem;
+    font-weight: 800;
+    color: #0f172a;
+    margin-bottom: 8px;
+}
+
+.page-wrapper.dark .form-popup h3 {
+    color: #f1f5f9;
+}
+
+.form-popup p {
+    font-size: 0.875rem;
+    color: #64748b;
+    margin-bottom: 20px;
+}
+
+/* Unsaved changes sheet (bottom sheet) */
+.form-sheet-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 999;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    backdrop-filter: blur(2px);
+}
+
+.form-sheet {
+    background: #fff;
+    width: 100%;
+    max-width: 520px;
+    border-top-left-radius: 24px;
+    border-top-right-radius: 24px;
+    padding: 28px;
+    box-shadow: 0 -8px 30px rgba(0, 0, 0, 0.15);
+}
+
+.page-wrapper.dark .form-sheet {
+    background: #1e293b;
+}
+
+.form-sheet-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 1rem;
+    font-weight: 700;
+    color: #0f172a;
+    margin-bottom: 20px;
+}
+
+.page-wrapper.dark .form-sheet-title {
+    color: #f1f5f9;
+}
+
+.form-sheet-option {
+    width: 100%;
+    padding: 14px 18px;
+    margin-bottom: 10px;
+    border-radius: 14px;
+    border: none;
+    cursor: pointer;
+    font-size: 0.9rem;
+    font-weight: 600;
+    font-family: 'Inter', sans-serif;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    transition: opacity 0.2s;
+}
+
+.form-sheet-option:hover {
+    opacity: 0.85;
+}
+
+.form-sheet-save {
+    background: #ecfdf5;
+    color: #065f46;
+}
+
+.form-sheet-discard {
+    background: #fef2f2;
+    color: #991b1b;
+}
+
+.form-sheet-cancel {
+    background: #f1f5f9;
+    color: #374151;
+}
+
+.page-wrapper.dark .form-sheet-cancel {
+    background: #334155;
+    color: #cbd5e1;
+}
+
+/* === RESPONSIVE === */
+@media (max-width: 640px) {
+    .form-main {
+        padding: 14px 16px;
+    }
+
+    .form-page-header {
+        padding: 16px 16px 0;
+    }
+
+    .form-card {
+        padding: 20px;
+    }
+
+    .form-row {
+        grid-template-columns: 1fr;
+        gap: 0;
+    }
+
+    .form-row .form-field {
+        margin-bottom: 18px;
+    }
+
+    .form-btn-row {
+        flex-direction: column;
+    }
+}

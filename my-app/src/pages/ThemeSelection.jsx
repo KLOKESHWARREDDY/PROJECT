@@ -14,7 +14,7 @@ const ThemeSelection = ({ currentTheme, setTheme }) => {
   };
 
   return (
-    <div style={{ padding: '16px', backgroundColor: tempTheme === 'dark' ? '#0f172a' : '#f8fafc', minHeight: '100vh', color: tempTheme === 'dark' ? '#fff' : '#1e293b' }}>
+    <div style={{ padding: '16px', backgroundColor: tempTheme === 'dark' ? '#0f172a' : '#EFF6FF', minHeight: '100vh', color: tempTheme === 'dark' ? '#fff' : '#1e293b' }}>
       <header style={{ display: 'flex', alignItems: 'center', marginBottom: '24px' }}>
         <ArrowLeft size={24} onClick={() => navigate(-1)} style={{ cursor: 'pointer' }} />
         <h2 style={{ marginLeft: '16px', fontSize: '18px', fontWeight: 'bold' }}>App Theme</h2>

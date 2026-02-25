@@ -1,77 +1,48 @@
-# ==============================================================================
-# Git Ignore Configuration
-# ==============================================================================
-# This file specifies intentionally untracked files that Git should ignore.
-# Purpose: Prevents sensitive data and build artifacts from being committed.
-# ==============================================================================
+# ── Node / npm ───────────────────────────────────────────
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
 
-# R History Files - R programming language session data
-# --------------------------------------------------------------------------------
-.Rhistory
-.Rapp.history
+# ── Build output ─────────────────────────────────────────
+build/
+dist/
 
-# R Session Data Files - R workspace files
-# --------------------------------------------------------------------------------
-.RData
-.RDataTmp
-
-# Environment Variables File
-# --------------------------------------------------------------------------------
-# IMPORTANT: Contains sensitive credentials - NEVER commit to version control
+# ── Environment files (NEVER commit these) ───────────────
 .env
+.env.local
+.env.*.local
+server/.env
 
-# R User-Specific Data
-# --------------------------------------------------------------------------------
-.Ruserdata
+# ── Logs ─────────────────────────────────────────────────
+*.log
+logs/
+server/crash.log
 
-# Example Code in Package Build Process
-# --------------------------------------------------------------------------------
-*-Ex.R
+# ── Uploaded / generated files ───────────────────────────
+server/uploads/*
+!server/uploads/.gitkeep
 
-# R Package Build Output Files
-# --------------------------------------------------------------------------------
-/*.tar.gz
+# ── OS files ─────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+desktop.ini
 
-# R CMD Check Output Directories
-# --------------------------------------------------------------------------------
-/*.Rcheck/
+# ── IDE / Editor ─────────────────────────────────────────
+.vscode/settings.json
+.idea/
+*.suo
+*.user
 
-# RStudio Project Files
-# --------------------------------------------------------------------------------
-.Rproj.user/
+# ── Test artifacts ───────────────────────────────────────
+coverage/
+.nyc_output/
 
-# Produced Vignettes (R documentation)
-# --------------------------------------------------------------------------------
-vignettes/*.html
-vignettes/*.pdf
-
-# OAuth2 Token File
-# --------------------------------------------------------------------------------
-# Created by httr package for OAuth authentication
-.httr-oauth
-
-# Knitr and R Markdown Cache Directories
-# --------------------------------------------------------------------------------
-*_cache/
-/cache/
-
-# Temporary Files from R Markdown
-# --------------------------------------------------------------------------------
-*.utf8.md
-*.knit.md
-
-# R Environment Variables File
-# --------------------------------------------------------------------------------
-.Renviron
-
-# Package Documentation Site
-# --------------------------------------------------------------------------------
-docs/
-
-# Translation Temporary Files
-# --------------------------------------------------------------------------------
-po/*~
-
-# RStudio Connect Folder
-# --------------------------------------------------------------------------------
-rsconnect/
+# ── Misc ─────────────────────────────────────────────────
+*.pem
+*.key
+server/test_image.jpg
+server/verify_endpoint.js
+server/test_upload.js
+server/debug_login.txt

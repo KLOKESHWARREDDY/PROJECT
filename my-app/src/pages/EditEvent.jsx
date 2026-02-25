@@ -299,7 +299,7 @@ function EditEvent({ events, onUpdate, theme }) {
       padding: isMobile ? '4vw' : '2vw',
       maxWidth: isMobile ? '100vw' : '50vw',
       margin: '0 auto',
-      backgroundColor: isDark ? '#0f172a' : '#f8fafc',
+      backgroundColor: isDark ? '#0f172a' : '#EFF6FF',
       minHeight: '100vh',
       fontFamily: "'Inter', sans-serif",
       color: isDark ? '#fff' : '#1e293b',
@@ -320,12 +320,12 @@ function EditEvent({ events, onUpdate, theme }) {
       borderRadius: '20px',
       fontSize: '12px',
       fontWeight: '600',
-      backgroundColor: eventStatus === 'published' ? '#dcfce7' : eventStatus === 'completed' ? '#e0e7ff' : '#fef3c7',
-      color: eventStatus === 'published' ? '#166534' : eventStatus === 'completed' ? '#4338ca' : '#92400e',
+      backgroundColor: eventStatus === 'published' ? '#dcfce7' : eventStatus === 'completed' ? '#EFF6FF' : '#fef3c7',
+      color: eventStatus === 'published' ? '#166534' : eventStatus === 'completed' ? '#1E3A8A' : '#92400e',
     },
 
     form: {
-      backgroundColor: isDark ? '#1e293b' : '#fff',
+      backgroundColor: isDark ? '#1e293b' : '#ffffff',
       padding: isMobile ? '5vw' : '2.5vw',
       borderRadius: isMobile ? '4vw' : '1.5vw',
       boxShadow: '0 4px 20px rgba(0,0,0,0.05)',
@@ -340,7 +340,7 @@ function EditEvent({ events, onUpdate, theme }) {
       alignItems: 'center', justifyContent: 'center',
       cursor: 'pointer', marginBottom: '3vh',
       position: 'relative', overflow: 'hidden',
-      backgroundColor: isDark ? '#0f172a' : '#f8fafc',
+      backgroundColor: isDark ? '#0f172a' : '#EFF6FF',
       transition: 'border-color 0.2s'
     },
     previewImg: { width: '100%', height: '100%', objectFit: 'cover' },
@@ -375,11 +375,11 @@ function EditEvent({ events, onUpdate, theme }) {
     submitBtn: {
       flex: 1,
       padding: isMobile ? '2vh' : '1.5vh',
-      backgroundColor: '#4f46e5', color: '#fff',
+      backgroundColor: '#2563EB', color: '#fff',
       border: 'none', borderRadius: isMobile ? '2vw' : '0.8vw',
       fontSize: isMobile ? '4vw' : '1.1vw', fontWeight: 'bold',
       cursor: 'pointer',
-      boxShadow: '0 4px 12px rgba(79, 70, 229, 0.3)',
+      boxShadow: '0 4px 12px rgba(37, 99, 235, 0.3)',
       display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5vw',
       minWidth: '120px'
     },
@@ -413,12 +413,12 @@ function EditEvent({ events, onUpdate, theme }) {
     completeBtn: {
       flex: 1,
       padding: isMobile ? '2vh' : '1.5vh',
-      backgroundColor: actionLoading ? '#94a3b8' : '#7c3aed',
+      backgroundColor: actionLoading ? '#94a3b8' : '#2563EB',
       color: '#fff',
       border: 'none', borderRadius: isMobile ? '2vw' : '0.8vw',
       fontSize: isMobile ? '4vw' : '1.1vw', fontWeight: 'bold',
       cursor: actionLoading ? 'not-allowed' : 'pointer',
-      boxShadow: '0 4px 12px rgba(124, 58, 237, 0.3)',
+      boxShadow: '0 4px 12px rgba(37, 99, 235, 0.3)',
       display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5vw',
       minWidth: '120px'
     },
@@ -440,7 +440,7 @@ function EditEvent({ events, onUpdate, theme }) {
       display: 'flex', alignItems: 'center', justifyContent: 'center'
     },
     popup: {
-      backgroundColor: '#fff', padding: '30px', borderRadius: '20px',
+      backgroundColor: '#ffffff', padding: '30px', borderRadius: '20px',
       textAlign: 'center', width: '80%', maxWidth: '300px',
       boxShadow: '0 10px 40px rgba(0,0,0,0.2)', animation: 'popIn 0.3s ease'
     },
@@ -455,7 +455,7 @@ function EditEvent({ events, onUpdate, theme }) {
       zIndex: 999, display: 'flex', alignItems: 'flex-end', justifyContent: 'center'
     },
     unsavedPopup: {
-      backgroundColor: isDark ? '#1e293b' : '#fff',
+      backgroundColor: isDark ? '#1e293b' : '#ffffff',
       width: '100%', maxWidth: '500px',
       borderTopLeftRadius: '20px', borderTopRightRadius: '20px',
       padding: '30px', animation: 'slideUp 0.3s ease-out',

@@ -7,7 +7,7 @@ const PrivacyPolicy = ({ theme }) => {
   const styles = {
     container: {
       padding: '40px',
-      backgroundColor: isDark ? '#0f172a' : '#f8fafc',
+      backgroundColor: isDark ? '#0f172a' : '#EFF6FF',
       minHeight: '100%',
       fontFamily: "'Inter', sans-serif",
       maxWidth: '1000px',
@@ -29,7 +29,7 @@ const PrivacyPolicy = ({ theme }) => {
       color: '#64748b'
     },
     section: {
-      backgroundColor: isDark ? '#1e293b' : '#fff',
+      backgroundColor: isDark ? '#1e293b' : '#ffffff',
       borderRadius: '16px',
       padding: '30px',
       marginBottom: '30px',
@@ -58,7 +58,7 @@ const PrivacyPolicy = ({ theme }) => {
       marginBottom: '8px'
     },
     contactBox: {
-      backgroundColor: '#e0e7ff',
+      backgroundColor: '#EFF6FF',
       padding: '20px',
       borderRadius: '12px',
       marginTop: '20px',
@@ -75,7 +75,7 @@ const PrivacyPolicy = ({ theme }) => {
       
       {/* HEADER */}
       <div style={styles.header}>
-        <div style={{ display: 'inline-flex', padding: '12px', borderRadius: '50%', backgroundColor: '#e0e7ff', color: '#4338ca', marginBottom: '20px' }}>
+        <div style={{ display: 'inline-flex', padding: '12px', borderRadius: '50%', backgroundColor: '#EFF6FF', color: '#1E3A8A', marginBottom: '20px' }}>
           <Shield size={40} />
         </div>
         <h1 style={styles.title}>Privacy Policy</h1>
@@ -85,7 +85,7 @@ const PrivacyPolicy = ({ theme }) => {
       {/* SECTION 1: Introduction */}
       <div style={styles.section}>
         <h2 style={styles.sectionTitle}>
-          <Eye size={22} color="#6366f1" /> 1. Introduction
+          <Eye size={22} color="#2563EB" /> 1. Introduction
         </h2>
         <p style={styles.text}>
           Welcome to <strong>EventSphere</strong>. We value your privacy and are committed to protecting your personal data. This privacy policy explains how we look after your personal data when you visit our website or use our application and tells you about your privacy rights.
@@ -95,7 +95,7 @@ const PrivacyPolicy = ({ theme }) => {
       {/* SECTION 2: Data We Collect */}
       <div style={styles.section}>
         <h2 style={styles.sectionTitle}>
-          <Database size={22} color="#6366f1" /> 2. Information We Collect
+          <Database size={22} color="#2563EB" /> 2. Information We Collect
         </h2>
         <p style={styles.text}>We may collect, use, store and transfer different kinds of personal data about you which we have grouped together follows:</p>
         <ul style={styles.list}>
@@ -109,7 +109,7 @@ const PrivacyPolicy = ({ theme }) => {
       {/* SECTION 3: How We Use Your Data */}
       <div style={styles.section}>
         <h2 style={styles.sectionTitle}>
-          <Lock size={22} color="#6366f1" /> 3. How We Use Your Data
+          <Lock size={22} color="#2563EB" /> 3. How We Use Your Data
         </h2>
         <p style={styles.text}>We will only use your personal data when the law allows us to. Most commonly, we will use your personal data in the following circumstances:</p>
         <ul style={styles.list}>
@@ -123,7 +123,7 @@ const PrivacyPolicy = ({ theme }) => {
       {/* SECTION 4: Contact Us */}
       <div style={styles.section}>
         <h2 style={styles.sectionTitle}>
-          <Mail size={22} color="#6366f1" /> 4. Contact Us
+          <Mail size={22} color="#2563EB" /> 4. Contact Us
         </h2>
         <p style={styles.text}>
           If you have any questions about this privacy policy or our privacy practices, please contact us at:

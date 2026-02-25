@@ -1,164 +1,104 @@
-import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Users, ClipboardList, XCircle, ChevronRight, Bell, CheckCircle } from 'lucide-react';
+import React from 'react';
+import { useNavigate } from 'react-router-dom';
+import { ArrowLeft, Users, ClipboardList, XCircle, CheckCircle, Bell, ChevronRight } from 'lucide-react';
+import './Pages.css';
 
 const Notifications = ({ theme, user, registrations = [], notificationsList = [] }) => {
   const navigate = useNavigate();
   const isDark = theme === 'dark';
   const isTeacher = user?.role === 'teacher';
 
-  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
-  useEffect(() => {
-    const handleResize = () => setIsMobile(window.innerWidth < 768);
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
-
-  // --- TEACHER STATS CALCULATION ---
   const pendingCount = registrations.filter(r => r.status === 'pending').length;
   const approvedCount = registrations.filter(r => r.status === 'approved').length;
   const rejectedCount = registrations.filter(r => r.status === 'rejected').length;
 
-  const styles = {
-    container: {
-      padding: isMobile ? '4vw' : '2vw',
-      maxWidth: isMobile ? '100vw' : '50vw',
-      margin: '0 auto',
-      backgroundColor: isDark ? '#0f172a' : '#f8fafc',
-      minHeight: '100vh',
-      fontFamily: "'Inter', sans-serif",
-      color: isDark ? '#fff' : '#1e293b'
-    },
-    header: { display: 'flex', alignItems: 'center', gap: '2vw', marginBottom: '4vh' },
-    backBtn: {
-      background: 'none', border: 'none', cursor: 'pointer',
-      color: isDark ? '#fff' : '#64748b', display: 'flex', alignItems: 'center'
-    },
-    pageTitle: { fontSize: isMobile ? '6vw' : '2vw', fontWeight: '800' },
+  const timeString = (ts) => {
+    if (!ts) return '';
+    try { return new Date(ts).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }); }
+    catch { return ts; }
+  };
 
-    list: { display: 'flex', flexDirection: 'column', gap: '2vh' },
+  const getNotifIconCls = (type) => {
+    if (type === 'approval') return 'page-notif-icon page-notif-icon-green';
+    if (type === 'rejection') return 'page-notif-icon page-notif-icon-red';
+    if (type === 'registration_sent') return 'page-notif-icon page-notif-icon-amber';
+    return 'page-notif-icon page-notif-icon-indigo';
+  };
 
-    // Card Style
-    item: {
-      display: 'flex', alignItems: 'center', gap: '3vw',
-      backgroundColor: isDark ? '#1e293b' : '#fff',
-      padding: isMobile ? '4vw' : '1.5vw',
-      borderRadius: isMobile ? '3vw' : '1vw',
-      cursor: 'pointer',
-      boxShadow: '0 2px 8px rgba(0,0,0,0.03)',
-      border: isDark ? '1px solid #334155' : '1px solid #e2e8f0',
-      transition: 'transform 0.2s'
-    },
-    iconBox: (color, bg) => ({
-      width: isMobile ? '12vw' : '3.5vw', height: isMobile ? '12vw' : '3.5vw',
-      borderRadius: '50%', backgroundColor: bg, color: color,
-      display: 'flex', alignItems: 'center', justifyContent: 'center'
-    }),
-    info: { flex: 1 },
-    title: { fontSize: isMobile ? '4vw' : '1.1vw', fontWeight: '600', marginBottom: '0.5vh' },
-    count: { fontSize: isMobile ? '3.5vw' : '0.9vw', color: '#64748b' },
-    time: { fontSize: isMobile ? '3vw' : '0.8vw', color: '#94a3b8', marginTop: '0.5vh' }
+  const getNotifIcon = (type) => {
+    if (type === 'approval') return <CheckCircle size={18} />;
+    if (type === 'rejection') return <XCircle size={18} />;
+    if (type === 'registration' || type === 'registration_sent') return <ClipboardList size={18} />;
+    return <Bell size={18} />;
+  };
+
+  const handleNotifClick = (notif) => {
+    if (notif.type === 'publish' && notif.relatedId) navigate(`/events/${notif.relatedId}`);
+    else if (['registration', 'approval', 'registration_sent', 'rejection'].includes(notif.type)) navigate('/my-events');
+    else navigate('/events');
   };
 
   return (
-    <div style={styles.container}>
-      <div style={styles.header}>
-        <button style={styles.backBtn} onClick={() => navigate(-1)}>
-          <ArrowLeft size={isMobile ? 24 : 24} />
+    <div className={`page-wrapper${isDark ? ' dark' : ''}`}>
+      <div className="page-header">
+        <button className="page-back-btn" onClick={() => navigate(-1)}>
+          <ArrowLeft size={18} />
         </button>
-        <h1 style={styles.pageTitle}>Notifications</h1>
+        <h1 className="page-title">Notifications</h1>
       </div>
 
-      <div style={styles.list}>
-
-        {/* --- TEACHER VIEW (Registration Stats) --- */}
-        {isTeacher ? (
-          <>
-            <div style={styles.item} onClick={() => navigate('/teacher-registrations')}>
-              <div style={styles.iconBox('#4f46e5', '#e0e7ff')}>
-                <Users size={isMobile ? 20 : 22} />
-              </div>
-              <div style={styles.info}>
-                <div style={styles.title}>New Registration</div>
-                <div style={styles.count}>{pendingCount} pending requests</div>
-              </div>
-              <ChevronRight size={20} color="#94a3b8" />
-            </div>
-
-            <div style={styles.item} onClick={() => navigate('/teacher-registrations')}>
-              <div style={styles.iconBox('#16a34a', '#dcfce7')}>
-                <ClipboardList size={isMobile ? 20 : 22} />
-              </div>
-              <div style={styles.info}>
-                <div style={styles.title}>Registered Members</div>
-                <div style={styles.count}>{approvedCount} active members</div>
-              </div>
-              <ChevronRight size={20} color="#94a3b8" />
-            </div>
-
-            <div style={styles.item} onClick={() => navigate('/teacher-registrations')}>
-              <div style={styles.iconBox('#dc2626', '#fee2e2')}>
-                <XCircle size={isMobile ? 20 : 22} />
-              </div>
-              <div style={styles.info}>
-                <div style={styles.title}>Registration Rejected</div>
-                <div style={styles.count}>{rejectedCount} rejected</div>
-              </div>
-              <ChevronRight size={20} color="#94a3b8" />
-            </div>
-          </>
-        ) : (
-          /* --- STUDENT VIEW (General Notifications) --- */
-          notificationsList.length > 0 ? (
-            notificationsList.map((notif) => (
-              <div
-                key={notif._id || notif.id}
-                style={styles.item}
-                onClick={() => {
-                  // Mark as read (optional, handled by API usually)
-                  // Redirect based on type
-                  if (notif.type === 'publish' && notif.relatedId) {
-                    navigate(`/events/${notif.relatedId}`);
-                  } else if (['registration', 'approval', 'registration_sent', 'rejection'].includes(notif.type)) {
-                    navigate('/my-events');
-                  } else {
-                    // Default redirect
-                    navigate('/events');
-                  }
-                }}
-              >
-                <div style={
-                  styles.iconBox(
-                    notif.type === 'rejection' ? '#dc2626' :
-                      notif.type === 'approval' ? '#16a34a' :
-                        notif.type === 'registration_sent' ? '#ea580c' :
-                          '#4f46e5',
-                    notif.read ? '#f1f5f9' : '#e0e7ff'
-                  )
-                }>
-                  {notif.type === 'registration' ? <ClipboardList size={20} /> :
-                    notif.type === 'approval' ? <CheckCircle size={20} /> :
-                      notif.type === 'rejection' ? <XCircle size={20} /> :
-                        notif.type === 'registration_sent' ? <ClipboardList size={20} /> : // Or Clock?
-                          <Bell size={20} />}
-                </div>
-                <div style={styles.info}>
-                  <div style={styles.title}>{notif.title}</div>
-                  <div style={styles.count}>{notif.message || notif.desc}</div>
-                  <div style={styles.time}>
-                    {notif.createdAt ? new Date(notif.createdAt).toLocaleString() : notif.time}
+      <div className="page-main">
+        <div className="page-card" style={{ borderRadius: 18, border: '1px solid #e2e8f0', background: isDark ? 'rgba(30,41,59,0.8)' : '#fff', boxShadow: '0 2px 12px rgba(0,0,0,0.04)' }}>
+          {isTeacher ? (
+            /* TEACHER — registration stats */
+            <div className="page-notif-list">
+              {[
+                { icon: <Users size={18} />, iconCls: 'page-notif-icon page-notif-icon-indigo', title: 'New Registrations', msg: `${pendingCount} pending request${pendingCount !== 1 ? 's' : ''}` },
+                { icon: <CheckCircle size={18} />, iconCls: 'page-notif-icon page-notif-icon-green', title: 'Approved Members', msg: `${approvedCount} active member${approvedCount !== 1 ? 's' : ''}` },
+                { icon: <XCircle size={18} />, iconCls: 'page-notif-icon page-notif-icon-red', title: 'Rejected Requests', msg: `${rejectedCount} rejected` },
+              ].map((item, i) => (
+                <div key={i} className="page-notif-item" onClick={() => navigate('/teacher-registrations')}>
+                  <div className={item.iconCls}>{item.icon}</div>
+                  <div className="page-notif-body">
+                    <div className="page-notif-title">{item.title}</div>
+                    <div className="page-notif-msg">{item.msg}</div>
                   </div>
+                  <ChevronRight size={16} color="#94a3b8" />
                 </div>
-                {!notif.read && <div style={{ width: 8, height: 8, borderRadius: '50%', backgroundColor: '#4f46e5' }}></div>}
-              </div>
-            ))
-          ) : (
-            <div style={{ textAlign: 'center', color: '#64748b', marginTop: '5vh' }}>
-              No new notifications
+              ))}
             </div>
-          )
-        )}
-
+          ) : notificationsList.length > 0 ? (
+            /* STUDENT — general notifications */
+            <div className="page-notif-list">
+              {notificationsList.map(notif => (
+                <div
+                  key={notif._id || notif.id}
+                  className={`page-notif-item${!notif.read ? ' unread' : ''}`}
+                  onClick={() => handleNotifClick(notif)}
+                >
+                  <div className="page-notif-dot-wrap">
+                    <div className={`page-notif-dot${notif.read ? ' read' : ''}`} />
+                  </div>
+                  <div className={getNotifIconCls(notif.type)}>
+                    {getNotifIcon(notif.type)}
+                  </div>
+                  <div className="page-notif-body">
+                    <div className="page-notif-title">{notif.title}</div>
+                    <div className="page-notif-msg">{notif.message || notif.desc}</div>
+                    <div className="page-notif-time">{timeString(notif.createdAt) || notif.time}</div>
+                  </div>
+                  <ChevronRight size={16} color="#94a3b8" />
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="page-empty">
+              <Bell size={40} strokeWidth={1.5} />
+              <p>No notifications yet</p>
+              <span>You're all caught up!</span>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

@@ -74,7 +74,7 @@ const TeacherEventDetails = ({ events, onDelete, theme }) => {
   const styles = {
     container: { 
       padding: isMobile ? '4vw' : '20px', 
-      backgroundColor: isDark ? '#0f172a' : '#f8fafc', 
+      backgroundColor: isDark ? '#0f172a' : '#EFF6FF', 
       minHeight: '100vh', 
       color: isDark ? '#fff' : '#1e293b',
       fontFamily: "'Inter', sans-serif"
@@ -84,7 +84,7 @@ const TeacherEventDetails = ({ events, onDelete, theme }) => {
     pageTitle: { fontSize: isMobile ? '6vw' : '24px', fontWeight: '800' },
     
     card: { 
-      backgroundColor: isDark ? '#1e293b' : '#fff', 
+      backgroundColor: isDark ? '#1e293b' : '#ffffff', 
       borderRadius: isMobile ? '4vw' : '15px', 
       overflow: 'hidden', 
       marginTop: '20px', 
@@ -103,8 +103,8 @@ const TeacherEventDetails = ({ events, onDelete, theme }) => {
       borderRadius: '20px',
       fontSize: '12px',
       fontWeight: '600',
-      backgroundColor: event?.status === 'published' ? '#dcfce7' : event?.status === 'draft' ? '#fef3c7' : event?.status === 'completed' ? '#e0e7ff' : '#f1f5f9',
-      color: event?.status === 'published' ? '#166534' : event?.status === 'draft' ? '#92400e' : event?.status === 'completed' ? '#4338ca' : '#475569',
+      backgroundColor: event?.status === 'published' ? '#dcfce7' : event?.status === 'draft' ? '#fef3c7' : event?.status === 'completed' ? '#EFF6FF' : '#f1f5f9',
+      color: event?.status === 'published' ? '#166534' : event?.status === 'draft' ? '#92400e' : event?.status === 'completed' ? '#1E3A8A' : '#475569',
     },
     
     metaRow: { display: 'flex', gap: isMobile ? '4vw' : '20px', margin: '15px 0', color: '#64748b', flexWrap: 'wrap' },
@@ -182,7 +182,7 @@ const TeacherEventDetails = ({ events, onDelete, theme }) => {
             {/* Edit Button - Show for Draft and Published */}
             {(eventStatus === 'draft' || eventStatus === 'published') && (
               <button 
-                style={styles.btn('#4f46e5', '#fff')} 
+                style={styles.btn('#2563EB', '#fff')} 
                 onClick={() => navigate(`/edit-event/${event._id || event.id}`)}
               >
                 <Edit3 size={isMobile ? 16 : 18}/> Edit Event
@@ -192,7 +192,7 @@ const TeacherEventDetails = ({ events, onDelete, theme }) => {
             {/* View Registrations - Show for Published and Completed */}
             {(eventStatus === 'published' || eventStatus === 'completed') && (
               <button 
-                style={styles.btn(isDark ? '#334155' : '#e0e7ff', isDark ? '#fff' : '#4338ca')} 
+                style={styles.btn(isDark ? '#334155' : '#EFF6FF', isDark ? '#fff' : '#1E3A8A')} 
                 onClick={() => navigate(`/event-registrations/${event._id || event.id}`)}
               >
                 <Users size={isMobile ? 16 : 18}/> View Registrations

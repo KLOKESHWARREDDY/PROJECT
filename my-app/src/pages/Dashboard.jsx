@@ -1,11 +1,59 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, Bell, Calendar, MapPin, Clock, ArrowRight, Sun, Moon } from 'lucide-react';
+import {
+  Search, Bell, Calendar, MapPin, Clock,
+  ArrowRight, Sun, Moon, TrendingUp,
+  CheckCircle, Users, Zap, ChevronRight
+} from 'lucide-react';
 import { authAPI, registrationAPI, eventAPI } from '../api';
+import './Dashboard.css';
 
+/* ─── Mini Calendar ─── */
+const MiniCalendar = ({ isDark }) => {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = now.getMonth();
+  const today = now.getDate();
+  const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+  const DAYS = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'];
+
+  const firstDay = new Date(year, month, 1).getDay();
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const cells = [];
+  for (let i = 0; i < firstDay; i++) cells.push(null);
+  for (let d = 1; d <= daysInMonth; d++) cells.push(d);
+  while (cells.length % 7 !== 0) cells.push(null);
+
+  return (
+    <div className="db-calendar">
+      <div className="db-cal-month">{MONTHS[month]} {year}</div>
+      <div className="db-cal-grid">
+        {DAYS.map(d => <div key={d} className="db-cal-dayname">{d}</div>)}
+        {cells.map((d, i) => (
+          <div
+            key={i}
+            className={`db-cal-day${!d ? ' db-cal-day-empty' : ''}${d === today ? ' db-cal-day-today' : ''}`}
+          >
+            {d || ''}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+/* ─── Status Badge ─── */
+const StatusBadge = ({ status }) => {
+  const cls = { pending: 'db-badge-pending', approved: 'db-badge-approved', rejected: 'db-badge-rejected' };
+  const label = status ? status.charAt(0).toUpperCase() + status.slice(1) : 'Pending';
+  return <span className={cls[status] || 'db-badge-pending'}>{label}</span>;
+};
+
+/* ─── Dashboard ─── */
 const Dashboard = ({ user, events, theme, unreadCount, onReadNotifications, toggleTheme }) => {
   const navigate = useNavigate();
   const isDark = theme === 'dark';
+
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   const [currentUser, setCurrentUser] = useState(user);
   const [imageError, setImageError] = useState(false);
@@ -13,116 +61,71 @@ const Dashboard = ({ user, events, theme, unreadCount, onReadNotifications, togg
   const [loadingRegs, setLoadingRegs] = useState(true);
   const [studentEvents, setStudentEvents] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [recentRegs, setRecentRegs] = useState([]);
+  const [searchTerm, setSearchTerm] = useState('');
 
-  // Sync user from props when it changes (e.g., after login)
+  /* resize */
   useEffect(() => {
-    if (user && user.name && user.name !== 'Guest') {
-      setCurrentUser(user);
-      setLoading(false);
+    const onResize = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
+  }, []);
+
+  /* user sync */
+  useEffect(() => {
+    if (user?.name && user.name !== 'Guest') {
+      setCurrentUser(user); setLoading(false);
     } else {
-      // Try to restore from localStorage
-      const savedUser = localStorage.getItem('user');
-      if (savedUser) {
+      const saved = localStorage.getItem('user');
+      if (saved) {
         try {
-          const parsed = JSON.parse(savedUser);
-          if (parsed && parsed.name && parsed.name !== 'Guest') {
-            setCurrentUser(parsed);
-            setLoading(false);
-            return;
-          }
-        } catch (e) {
-          console.error('Error parsing saved user:', e);
-        }
+          const p = JSON.parse(saved);
+          if (p?.name && p.name !== 'Guest') { setCurrentUser(p); setLoading(false); return; }
+        } catch { }
       }
       setLoading(false);
     }
   }, [user]);
 
+  /* fresh profile */
   useEffect(() => {
-    const handleResize = () => setIsMobile(window.innerWidth < 768);
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
-
-  // ✅ FETCH FRESH USER DATA ON MOUNT (only if user exists)
-  useEffect(() => {
-    // Skip if no user yet
-    if (!user || !user.name || user.name === 'Guest') {
-      return;
-    }
-
-    const fetchLatestUserData = async () => {
+    if (!user?.name || user.name === 'Guest') return;
+    (async () => {
       try {
-        const savedUser = localStorage.getItem('user');
         const token = localStorage.getItem('token');
         if (!token) return;
-
-        const response = await authAPI.getProfile();
-
-        // Merge new data with existing token
-        const updatedUser = {
-          ...JSON.parse(savedUser),
-          ...response.data,
-          token: token // Always preserve token
-        };
-
-        setCurrentUser(updatedUser);
-        localStorage.setItem('user', JSON.stringify(updatedUser));
-      } catch (error) {
-        console.log('Could not fetch latest user data:', error.message);
-      }
-    };
-
-    fetchLatestUserData();
+        const res = await authAPI.getProfile();
+        const updated = { ...JSON.parse(localStorage.getItem('user') || '{}'), ...res.data, token };
+        setCurrentUser(updated);
+        localStorage.setItem('user', JSON.stringify(updated));
+      } catch { }
+    })();
   }, [user]);
 
-  // ✅ FETCH REAL REGISTRATION COUNT
+  /* registrations */
   useEffect(() => {
-    const fetchRegistrations = async () => {
+    (async () => {
       try {
         const token = localStorage.getItem('token');
-        if (!token) {
-          setRealRegCount(0);
-          setLoadingRegs(false);
-          return;
-        }
-
-        const response = await registrationAPI.getMyRegistrations();
-
-        const registrations = response.data || [];
-        setRealRegCount(registrations.length);
-      } catch (error) {
-        console.log('Error fetching registrations:', error.message);
-        setRealRegCount(0);
-      } finally {
-        setLoadingRegs(false);
-      }
-    };
-
-    fetchRegistrations();
+        if (!token) { setRealRegCount(0); setLoadingRegs(false); return; }
+        const res = await registrationAPI.getMyRegistrations();
+        const regs = res.data || [];
+        setRealRegCount(regs.length);
+        setRecentRegs(regs.slice(0, 6));
+      } catch { setRealRegCount(0); } finally { setLoadingRegs(false); }
+    })();
   }, []);
 
-  // ✅ FETCH ACTIVE EVENTS FOR STUDENTS
+  /* events */
   useEffect(() => {
-    const fetchEvents = async () => {
+    (async () => {
       try {
-        const token = localStorage.getItem('token');
-        console.log("Student token:", token);
-
-        const response = await eventAPI.getAll();
-        console.log("Student events response:", response.data);
-
-        setStudentEvents(response.data);
-      } catch (error) {
-        console.log('Error fetching events:', error.message);
-        setStudentEvents([]);
-      }
-    };
-
-    fetchEvents();
+        const res = await eventAPI.getAll();
+        setStudentEvents(res.data || []);
+      } catch { setStudentEvents([]); }
+    })();
   }, []);
 
-  // ✅ GET FULL IMAGE URL
   const getImageUrl = (url) => {
     if (!url) return 'https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png';
     if (url.startsWith('http')) return url;
@@ -130,303 +133,273 @@ const Dashboard = ({ user, events, theme, unreadCount, onReadNotifications, togg
     return url;
   };
 
-  // ✅ HANDLE IMAGE ERROR
-  const handleImageError = () => {
-    setImageError(true);
+  const formatDate = (dateStr) => {
+    if (!dateStr) return '—';
+    try { return new Date(dateStr).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }); }
+    catch { return dateStr; }
   };
 
-  const styles = {
-    container: {
-      padding: isMobile ? '16px' : '30px',
-      backgroundColor: isDark ? '#0f172a' : '#f8fafc',
-      minHeight: '100vh',
-      fontFamily: "'Inter', sans-serif",
-      maxWidth: isMobile ? '100vw' : '95vw',
-      margin: '0 auto'
-    },
-    header: {
-      display: 'flex',
-      justifyContent: 'space-between',
-      alignItems: 'center',
-      marginBottom: '30px',
-      flexWrap: 'wrap',
-      gap: isMobile ? '12px' : '30px'
-    },
-    profileSection: {
-      display: 'flex',
-      alignItems: 'center',
-      gap: isMobile ? '12px' : '15px',
-      cursor: 'pointer'
-    },
-    avatar: {
-      width: isMobile ? '48px' : '60px',
-      height: isMobile ? '48px' : '60px',
-      borderRadius: '50%',
-      objectFit: 'cover',
-      border: '2px solid #6366f1',
-      backgroundColor: '#f3f4f6'
-    },
-    welcomeText: { display: 'flex', flexDirection: 'column' },
-    hello: {
-      fontSize: isMobile ? '14px' : '16px',
-      color: '#64748b',
-      fontWeight: '500'
-    },
-    name: {
-      fontSize: isMobile ? '18px' : '22px',
-      fontWeight: '800',
-      color: isDark ? '#fff' : '#1e293b'
-    },
-    rightHeader: { display: 'flex', alignItems: 'center', gap: isMobile ? '12px' : '15px' },
-    searchContainer: {
-      display: 'flex',
-      alignItems: 'center',
-      backgroundColor: isDark ? '#1e293b' : '#ffffff',
-      borderRadius: '50px',
-      padding: isMobile ? '12px 16px' : '10px 24px',
-      boxShadow: '0 4px 15px rgba(0,0,0,0.05)',
-      width: isMobile ? '40vw' : '25vw',
-      border: isDark ? '1px solid #334155' : '1px solid #e2e8f0',
-      display: isMobile ? 'none' : 'flex'
-    },
-    searchIcon: { color: '#94a3b8', marginRight: '10px', width: '20px' },
-    input: {
-      border: 'none', outline: 'none', background: 'transparent',
-      fontSize: '14px', color: isDark ? '#fff' : '#334155', flex: 1, fontWeight: '500'
-    },
-    iconBtn: {
-      width: isMobile ? '40px' : '50px',
-      height: isMobile ? '40px' : '50px',
-      borderRadius: '50%',
-      backgroundColor: isDark ? '#1e293b' : '#fff',
-      border: isDark ? '1px solid #334155' : '1px solid #e2e8f0',
-      color: isDark ? '#fff' : '#6366f1',
-      display: 'flex', alignItems: 'center', justifyContent: 'center',
-      cursor: 'pointer', position: 'relative',
-      boxShadow: '0 4px 15px rgba(0,0,0,0.05)', transition: 'transform 0.2s'
-    },
-    badge: {
-      position: 'absolute', top: '0', right: '0',
-      width: '12px', height: '12px',
-      backgroundColor: '#ef4444', borderRadius: '50%', border: '2px solid #fff'
-    },
-    heroBanner: {
-      display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-      backgroundColor: isDark ? '#312e81' : '#e0e7ff',
-      borderRadius: isMobile ? '20px' : '25px',
-      padding: isMobile ? '20px' : '45px',
-      marginBottom: '40px', position: 'relative', overflow: 'hidden',
-      boxShadow: '0 10px 30px rgba(0,0,0,0.05)',
-      height: isMobile ? 'auto' : '180px',
-      minHeight: isMobile ? '180px' : 'auto'
-    },
-    heroContent: { maxWidth: isMobile ? '100%' : '500px', zIndex: 2 },
-    heroTitle: {
-      fontSize: isMobile ? '24px' : '36px',
-      fontWeight: '800', marginBottom: '12px',
-      color: isDark ? '#fff' : '#1e1b4b', lineHeight: '1.2'
-    },
-    heroText: {
-      fontSize: isMobile ? '14px' : '18px',
-      marginBottom: '20px', color: isDark ? '#c7d2fe' : '#4338ca', lineHeight: '1.6'
-    },
-    heroBtn: {
-      backgroundColor: '#1e1b4b', color: '#fff', border: 'none',
-      padding: isMobile ? '12px 24px' : '12px 30px',
-      borderRadius: isMobile ? '12px' : '14px',
-      fontWeight: 'bold', fontSize: isMobile ? '14px' : '16px',
-      cursor: 'pointer', boxShadow: '0 4px 12px rgba(30, 27, 75, 0.3)'
-    },
-    heroImage: {
-      height: '160px', objectFit: 'contain',
-      display: isMobile ? 'none' : 'block'
-    },
-    statsRow: {
-      display: 'flex', gap: isMobile ? '12px' : '30px', marginBottom: '40px', flexWrap: 'wrap'
-    },
-    statCard: {
-      flex: 1, minWidth: isMobile ? '150px' : '200px',
-      backgroundColor: isDark ? '#1e293b' : '#fff',
-      padding: isMobile ? '16px' : '24px',
-      borderRadius: isMobile ? '16px' : '20px',
-      border: isDark ? '1px solid #334155' : '1px solid #e2e8f0',
-      display: 'flex', alignItems: 'center', gap: isMobile ? '12px' : '20px',
-      boxShadow: '0 4px 6px rgba(0,0,0,0.02)'
-    },
-    statIconBox: (bg, color) => ({
-      width: isMobile ? '40px' : '60px',
-      height: isMobile ? '40px' : '60px',
-      borderRadius: isMobile ? '12px' : '16px',
-      backgroundColor: bg, color: color, display: 'flex', alignItems: 'center', justifyContent: 'center'
-    }),
-    statNumber: {
-      fontSize: isMobile ? '20px' : '28px',
-      fontWeight: 'bold',
-      color: isDark ? '#fff' : '#1e293b'
-    },
-    statLabel: {
-      color: isDark ? '#cbd5e1' : '#64748b',
-      fontSize: isMobile ? '12px' : '14px'
-    },
-    sectionHeader: {
-      display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px'
-    },
-    sectionTitle: {
-      fontSize: isMobile ? '20px' : '24px',
-      fontWeight: 'bold', color: isDark ? '#fff' : '#1e293b'
-    },
-    seeAll: {
-      fontSize: isMobile ? '14px' : '16px',
-      color: '#4f46e5', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px', fontWeight: '600'
-    },
-    grid: {
-      display: 'grid',
-      gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fill, minmax(280px, 1fr))',
-      gap: isMobile ? '16px' : '30px'
-    },
-    eventCard: {
-      backgroundColor: isDark ? '#1e293b' : '#fff',
-      borderRadius: isMobile ? '16px' : '20px',
-      overflow: 'hidden',
-      border: isDark ? '1px solid #334155' : '1px solid #e2e8f0',
-      transition: 'all 0.2s', cursor: 'pointer', display: 'flex', flexDirection: 'column',
-      boxShadow: '0 2px 10px rgba(0,0,0,0.03)'
-    },
-    cardImage: {
-      width: '100%',
-      height: isMobile ? '140px' : '180px',
-      objectFit: 'cover'
-    },
-    cardBody: {
-      padding: isMobile ? '16px' : '20px',
-      flex: 1, display: 'flex', flexDirection: 'column'
-    },
-    cardTitle: {
-      fontSize: isMobile ? '16px' : '18px',
-      fontWeight: 'bold', marginBottom: '8px', color: isDark ? '#fff' : '#1e293b'
-    },
-    cardMeta: {
-      fontSize: isMobile ? '12px' : '14px',
-      color: '#64748b', marginBottom: '6px', display: 'flex', alignItems: 'center', gap: '8px'
-    }
-  };
+  const upcomingEvents = studentEvents.filter(e => new Date(e.date) >= new Date()).slice(0, 4);
 
-  const imageUrl = getImageUrl(currentUser?.profileImage);
+  const filteredEvents = studentEvents
+    .filter(e => e.title?.toLowerCase().includes(searchTerm.toLowerCase()))
+    .slice(0, 3);
 
-  // Show loading while user data is being restored
   if (loading) {
     return (
-      <div style={{
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center',
-        minHeight: '100vh',
-        backgroundColor: isDark ? '#0f172a' : '#f8fafc'
-      }}>
-        <div style={{
-          width: 40,
-          height: 40,
-          border: '4px solid #e2e8f0',
-          borderTop: '4px solid #6366f1',
-          borderRadius: '50%',
-          animation: 'spin 1s linear infinite'
-        }} />
+      <div className="db-loading">
+        <div className="db-spinner" />
       </div>
     );
   }
 
+  const imageUrl = getImageUrl(currentUser?.profileImage);
+  const firstName = currentUser?.name ? currentUser.name.split(' ')[0] : 'Student';
+
   return (
-    <div style={styles.container}>
-      <div style={styles.header}>
-        <div style={styles.profileSection} onClick={() => navigate('/profile')}>
-          <img
-            src={imageError ? 'https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png' : imageUrl}
-            alt="Profile"
-            style={styles.avatar}
-            onError={handleImageError}
-          />
-          <div style={styles.welcomeText}>
-            <span style={styles.hello}>Welcome back,</span>
-            <span style={styles.name}>{currentUser?.name ? currentUser.name.split(' ')[0] : 'User'}</span>
-          </div>
+    <div className={`page-wrapper${isDark ? ' dark' : ''}`}>
+
+      {/* ── STICKY HEADER ── */}
+      <header className="db-header">
+        <div className="db-header-greeting">
+          <div className="db-header-hi">Welcome back,</div>
+          <div className="db-header-name">{firstName}</div>
         </div>
 
-        <div style={styles.rightHeader}>
-          {!isMobile && (
-            <div style={styles.searchContainer}>
-              <Search style={styles.searchIcon} />
-              <input style={styles.input} placeholder="Search events..." />
-            </div>
-          )}
+        {!isMobile && (
+          <div className="db-search-wrap">
+            <Search size={15} className="db-search-icon" />
+            <input
+              className="db-search-input"
+              placeholder="Search events…"
+              value={searchTerm}
+              onChange={e => setSearchTerm(e.target.value)}
+            />
+          </div>
+        )}
 
+        <div className="db-header-actions">
           {isMobile && (
-            <div style={styles.iconBtn} onClick={() => navigate('/events')}>
-              <Search size={20} />
-            </div>
+            <button className="db-icon-btn" onClick={() => navigate('/events')}>
+              <Search size={16} />
+            </button>
           )}
+          <button className="db-icon-btn" onClick={toggleTheme} title="Toggle Theme">
+            {isDark ? <Sun size={16} color="#fbbf24" /> : <Moon size={16} />}
+          </button>
+          <button
+            className="db-icon-btn"
+            onClick={() => { onReadNotifications?.(); navigate('/notifications'); }}
+          >
+            <Bell size={16} />
+            {unreadCount > 0 && <span className="db-badge" />}
+          </button>
+          <button className="db-avatar-btn" onClick={() => navigate('/profile')}>
+            <img
+              src={imageError ? 'https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png' : imageUrl}
+              alt="Profile"
+              onError={() => setImageError(true)}
+            />
+          </button>
+        </div>
+      </header>
 
-          <div style={styles.iconBtn} onClick={toggleTheme} title="Toggle Theme">
-            {isDark ? <Sun size={isMobile ? 24 : 20} color="#fbbf24" /> : <Moon size={isMobile ? 24 : 20} />}
+      {/* ── MAIN CONTENT ── */}
+      <main className="db-main">
+
+        {/* Hero banner */}
+        <div className="db-hero">
+          <div className="db-hero-circle1" />
+          <div className="db-hero-circle2" />
+          <div className="db-hero-eyebrow">
+            <Zap size={12} fill="currentColor" /> Student Dashboard
           </div>
+          <h2>Discover your next<br />big opportunity 🚀</h2>
+          <p>Explore seminars, hackathons, and skill-building sessions tailored for your growth.</p>
+          <button className="db-hero-btn" onClick={() => navigate('/events')}>
+            Explore Events <ArrowRight size={14} />
+          </button>
+        </div>
 
-          <div style={styles.iconBtn} onClick={() => { onReadNotifications(); navigate('/notifications'); }}>
-            <Bell size={isMobile ? 24 : 20} />
-            {unreadCount > 0 && <div style={styles.badge}></div>}
-          </div>
-        </div>
-      </div>
-
-      <div style={styles.heroBanner}>
-        <div style={styles.heroContent}>
-          <h1 style={styles.heroTitle}>Discover New Skills!</h1>
-          <p style={styles.heroText}>Join workshops, seminars, and events to boost your career.</p>
-          <button style={styles.heroBtn} onClick={() => navigate('/events')}>Explore Events</button>
-        </div>
-        <img src="https://img.freepik.com/free-vector/happy-student-with-graduation-cap-diploma_23-2147954930.jpg?w=740" alt="Student" style={styles.heroImage} />
-      </div>
-
-      <div style={styles.statsRow}>
-        <div style={styles.statCard}>
-          <div style={styles.statIconBox('#e0e7ff', '#4338ca')}><Calendar size={24} /></div>
-          <div>
-            <div style={styles.statNumber}>{studentEvents.length}</div>
-            <div style={styles.statLabel}>Total Events</div>
-          </div>
-        </div>
-        <div style={styles.statCard}>
-          <div style={styles.statIconBox('#dcfce7', '#15803d')}><Clock size={24} /></div>
-          <div>
-            <div style={styles.statNumber}>{loadingRegs ? '...' : realRegCount}</div>
-            <div style={styles.statLabel}>Registered</div>
-          </div>
-        </div>
-      </div>
-
-      <div>
-        <div style={styles.sectionHeader}>
-          <div style={styles.sectionTitle}>Upcoming Events</div>
-          <div style={styles.seeAll} onClick={() => navigate('/events')}>View all <ArrowRight size={16} /></div>
-        </div>
-        <div style={styles.grid}>
-          {studentEvents.slice(0, 3).map(event => (
-            <div key={event._id} style={styles.eventCard} onClick={() => {
-              console.log("Clicked Event ID:", event.id || event._id);
-              navigate(`/events/${event.id || event._id}`);
-            }}>
-              <img src={event.image} alt={event.title} style={styles.cardImage} />
-              <div style={styles.cardBody}>
-                <h3 style={styles.cardTitle}>{event.title}</h3>
-                <div style={styles.cardMeta}><Calendar size={16} /> {event.date.split('·')[0]}</div>
-                <div style={styles.cardMeta}><MapPin size={16} /> {event.location}</div>
-                <div style={{ marginTop: 'auto', paddingTop: '12px' }}>
-                  <span style={{ backgroundColor: '#f1f5f9', padding: '6px 12px', borderRadius: '8px', fontSize: '12px', fontWeight: '600', color: '#475569' }}>{event.category}</span>
-                </div>
+        {/* ── GLASSMORPHISM STAT CARDS ── */}
+        <div className="db-stats-row">
+          {[
+            { label: 'Total Events', value: studentEvents.length, icon: <Calendar size={18} />, cls: 'db-stat-icon-indigo' },
+            { label: 'Registered', value: loadingRegs ? '—' : realRegCount, icon: <CheckCircle size={18} />, cls: 'db-stat-icon-emerald' },
+            { label: 'Upcoming', value: upcomingEvents.length, icon: <TrendingUp size={18} />, cls: 'db-stat-icon-violet' },
+          ].map((s, i) => (
+            <div className="db-stat-card" key={i}>
+              <div className={`db-stat-icon ${s.cls}`}>{s.icon}</div>
+              <div>
+                <div className="db-stat-value">{s.value}</div>
+                <div className="db-stat-label">{s.label}</div>
               </div>
             </div>
           ))}
         </div>
-      </div>
+
+        {/* ── CALENDAR + UPCOMING EVENTS ── */}
+        <div className="db-widget-row">
+
+          {/* Mini Calendar */}
+          <div className="db-card">
+            <div className="db-card-header">
+              <div className="db-card-title">
+                <Calendar size={15} className="db-card-title-icon" /> Calendar
+              </div>
+            </div>
+            <MiniCalendar isDark={isDark} />
+          </div>
+
+          {/* Upcoming Events */}
+          <div className="db-card">
+            <div className="db-card-header">
+              <div className="db-card-title">
+                <Clock size={15} className="db-card-title-icon" /> Upcoming Events
+              </div>
+              <button className="db-card-link" onClick={() => navigate('/events')}>
+                View all <ChevronRight size={12} />
+              </button>
+            </div>
+
+            {upcomingEvents.length > 0 ? (
+              <div className="db-upcoming-list">
+                {upcomingEvents.map((ev, i) => (
+                  <div
+                    key={ev._id || i}
+                    className="db-upcoming-item"
+                    onClick={() => navigate(`/events/${ev._id || ev.id}`)}
+                  >
+                    <div className="db-upcoming-day-badge">
+                      {ev.date ? new Date(ev.date).getDate() : '?'}
+                    </div>
+                    <div className="db-upcoming-info">
+                      <div className="db-upcoming-title">{ev.title}</div>
+                      <div className="db-upcoming-meta">
+                        <MapPin size={11} />
+                        {ev.location || 'TBD'}
+                      </div>
+                    </div>
+                    <div className="db-upcoming-date">{formatDate(ev.date)}</div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="db-empty">
+                <Calendar size={34} strokeWidth={1.5} />
+                <p>No upcoming events</p>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* ── RECENT REGISTRATIONS TABLE ── */}
+        <div className="db-card">
+          <div className="db-card-header">
+            <div className="db-card-title">
+              <Users size={15} className="db-card-title-icon" /> Recent Registrations
+            </div>
+            <button className="db-card-link" onClick={() => navigate('/my-events')}>
+              View all <ChevronRight size={12} />
+            </button>
+          </div>
+
+          {recentRegs.length > 0 ? (
+            <div className="db-reg-table-wrap">
+              <table className="db-table">
+                <thead>
+                  <tr>
+                    <th>Event</th>
+                    <th>Date</th>
+                    <th>Location</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {recentRegs.map((reg, i) => (
+                    <tr key={reg._id || i} onClick={() => navigate('/my-events')}>
+                      <td>
+                        <div className="db-table-event-cell">
+                          {reg.event?.image && (
+                            <img src={reg.event.image} alt="" className="db-table-event-img" />
+                          )}
+                          <span className="db-table-event-name">{reg.event?.title || 'Event'}</span>
+                        </div>
+                      </td>
+                      <td>{formatDate(reg.event?.date)}</td>
+                      <td>{reg.event?.location || '—'}</td>
+                      <td><StatusBadge status={reg.status} /></td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <div className="db-empty">
+              <CheckCircle size={36} strokeWidth={1.5} />
+              <p>No registrations yet</p>
+              <span>Register for events to see them here</span>
+              <button className="db-empty-btn" onClick={() => navigate('/events')}>Browse Events</button>
+            </div>
+          )}
+        </div>
+
+        {/* ── EVENT CARDS GRID ── */}
+        <div>
+          <div className="db-events-header">
+            <h3 className="db-events-title">
+              {searchTerm ? `Results for "${searchTerm}"` : 'All Events'}
+            </h3>
+            <button className="db-card-link" onClick={() => navigate('/events')}>
+              See all <ArrowRight size={13} />
+            </button>
+          </div>
+
+          {filteredEvents.length > 0 ? (
+            <div className="db-events-grid">
+              {filteredEvents.map(ev => (
+                <div
+                  key={ev._id}
+                  className="db-event-card"
+                  onClick={() => navigate(`/events/${ev._id || ev.id}`)}
+                >
+                  <div className="db-event-img-wrap">
+                    <img
+                      src={ev.image || 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=800&q=80'}
+                      alt={ev.title}
+                      className="db-event-img"
+                    />
+                    <div className="db-event-img-overlay" />
+                    {ev.category && (
+                      <span className="db-event-category">{ev.category}</span>
+                    )}
+                  </div>
+                  <div className="db-event-body">
+                    <div className="db-event-title">{ev.title}</div>
+                    <div className="db-event-meta">
+                      <Calendar size={12} /> {formatDate(ev.date)}
+                    </div>
+                    <div className="db-event-meta">
+                      <MapPin size={12} /> {ev.location || 'TBD'}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="db-card">
+              <div className="db-empty">
+                <Calendar size={40} strokeWidth={1.5} />
+                <p>No events found</p>
+                {searchTerm && <span>Try a different search term</span>}
+              </div>
+            </div>
+          )}
+        </div>
+
+      </main>
     </div>
   );
 };
+
 export default Dashboard;

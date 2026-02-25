@@ -247,8 +247,7 @@ export const downloadTicketPDF = async (req, res) => {
     doc.moveDown(2);
 
     // QR Code (base64 to image) dynamically generated with text
-    // Replace raw text with a URL
-    const qrDataText = `http://localhost:3000/ticket/${ticket._id}`;
+    const qrDataText = `🎟️ TICKET DETAILS 🎟️\n\nTicket Code: ${ticket.ticketCode}\nEvent: ${ticket.event.title}\nDate: ${formatDate(ticket.event.date)}\nLocation: ${ticket.event.location}\n\n👤 ATTENDEE INFO\nName: ${ticket.student.name}\nEmail: ${ticket.student.email}`;
 
     try {
       const newQrCodeDataURL = await QRCode.toDataURL(qrDataText, { width: 400 });

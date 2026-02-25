@@ -4,9 +4,11 @@
 .desktop-sidebar {
   display: none !important;
 }
+
 .mobile-bottom-nav {
   display: flex !important;
 }
+
 .app-layout {
   display: flex;
 }
@@ -31,27 +33,34 @@ body.dark-mode .mobile-wrapper {
   .desktop-sidebar {
     display: flex !important;
   }
+
   .mobile-bottom-nav {
     display: none !important;
   }
+
   .app-layout {
     display: flex;
     flex-direction: row;
     min-height: 100vh;
-    background-color: #f8fafc; /* Desktop BG */
+    background-color: #ffffff;
+    /* Desktop BG */
   }
+
   .main-content {
     flex: 1;
     max-width: 100%;
-    margin: 0 0 0 260px; /* Account for sidebar width */
-    width: calc(100% - 260px);
+    margin: 0 0 0 60px;
+    /* Collapsed sidebar = 60px */
+    width: calc(100% - 60px);
     padding: 0;
   }
+
   .mobile-wrapper {
     max-width: 100%;
     box-shadow: none;
     background-color: transparent;
   }
+
   body.dark-mode .mobile-wrapper {
     background-color: transparent;
   }

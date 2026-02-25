@@ -12,7 +12,7 @@ const Settings = ({ theme, user }) => {
     title: { fontSize: '24px', fontWeight: 'bold' },
     
     sectionTitle: { fontSize: '13px', fontWeight: 'bold', color: '#94a3b8', textTransform: 'uppercase', marginBottom: '10px', marginLeft: '10px' },
-    card: { backgroundColor: isDark ? '#1e293b' : '#fff', borderRadius: '16px', overflow: 'hidden', border: isDark ? '1px solid #334155' : '1px solid #e2e8f0', marginBottom: '30px' },
+    card: { backgroundColor: isDark ? '#1e293b' : '#ffffff', borderRadius: '16px', overflow: 'hidden', border: isDark ? '1px solid #334155' : '1px solid #e2e8f0', marginBottom: '30px' },
     row: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 20px', borderBottom: isDark ? '1px solid #334155' : '1px solid #f1f5f9', cursor: 'pointer' },
     left: { display: 'flex', alignItems: 'center', gap: '15px', fontWeight: '500' }
   };
