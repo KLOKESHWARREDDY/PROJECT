@@ -1,5 +1,5 @@
 import express from "express";
-import { registerUser, loginUser, googleAuth, getUserProfile, updateUserProfile, forgotPassword, resetPassword, changePassword } from '../controllers/authController.js';
+import { registerUser, loginUser, googleAuth, getUserProfile, updateUserProfile, forgotPassword, resetPassword, changePassword, refreshTokenHandler, logoutHandler } from '../controllers/authController.js';
 import { protect } from '../middleware/authMiddleware.js';
 
 const router = express.Router();
@@ -44,6 +44,14 @@ router.put('/reset-password/:token', resetPassword);
 
 // PUT /api/auth/change-password - Change password while logged in
 router.put('/change-password', protect, changePassword);
+
+// SCRUM-57: Refresh token rotation
+// POST /api/auth/refresh - Get new access token using refresh token cookie
+router.post('/refresh', refreshTokenHandler);
+
+// SCRUM-57: Logout - clears refresh token cookie + DB
+// POST /api/auth/logout
+router.post('/logout', logoutHandler);
 
 // TEST ROUTE - Verify routes are working
 router.get("/test", (req, res) => {

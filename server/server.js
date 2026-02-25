@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
+import cookieParser from 'cookie-parser'; // SCRUM-57: parse httpOnly refresh token cookie
 import path from 'path';
 import { fileURLToPath } from 'url';
 import dotenv from 'dotenv';
@@ -28,6 +29,7 @@ const PORT = process.env.PORT || 5000;
 app.use(helmet({
   crossOriginResourcePolicy: { policy: "cross-origin" },
 })); // Security headers
+app.use(cookieParser()); // SCRUM-57: read httpOnly refresh token cookie
 app.use(cors({
   origin: [
     'http://localhost:3000',

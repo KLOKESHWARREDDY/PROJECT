@@ -63,7 +63,16 @@ const userSchema = new mongoose.Schema({
   },
   resetPasswordToken: {
     type: String,
-  }
+  },
+  // SCRUM-57: Refresh token rotation
+  refreshToken: {
+    type: String,   // stored as bcrypt hash
+    default: null,
+  },
+  refreshTokenExpiry: {
+    type: Date,
+    default: null,
+  },
 });
 
 export default mongoose.model('User', userSchema);

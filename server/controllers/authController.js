@@ -2,6 +2,7 @@ import User from '../models/User.js';
 import Notification from '../models/Notification.js';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
+import crypto from 'crypto';
 import nodemailer from 'nodemailer';
 import { OAuth2Client } from 'google-auth-library';
 import { sendWelcomeEmail, sendPasswordResetEmail } from '../config/mail.js';
@@ -32,11 +33,33 @@ import { sendWelcomeEmail, sendPasswordResetEmail } from '../config/mail.js';
  * =============================================================================
  */
 
-// Generate JWT token for authenticated user
-// Creates a token valid for 30 days
+// SCRUM-57: Short-lived access token (15 minutes)
 const generateToken = (id) => {
-  return jwt.sign({ id }, process.env.JWT_SECRET || 'eventsphere_secret_key_2024', { expiresIn: '30d' });
+  return jwt.sign({ id }, process.env.JWT_SECRET || 'eventsphere_secret_key_2024', { expiresIn: '15m' });
 };
+
+// SCRUM-57: Generate opaque refresh token (random 64-byte hex)
+const generateRefreshToken = () => crypto.randomBytes(64).toString('hex');
+
+// SCRUM-57: Cookie helper — httpOnly, sameSite=strict, 7 days
+const setRefreshCookie = (res, token) => {
+  res.cookie('refreshToken', token, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'strict',
+    maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+    path: '/',
+  });
+};
+
+// SCRUM-57: Save hashed refresh token to DB
+const saveRefreshToken = async (user, rawToken) => {
+  const hashed = await bcrypt.hash(rawToken, 10);
+  user.refreshToken = hashed;
+  user.refreshTokenExpiry = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+  await user.save();
+};
+
 
 // Register new user account
 // Validates required fields, checks for existing user, hashes password
@@ -127,6 +150,12 @@ export const registerUser = async (req, res) => {
       console.error(`⚠️ Non-fatal error: Welcome email failed to send to ${user.email}`);
     });
 
+    // Generate tokens (SCRUM-57)
+    const accessToken = generateToken(user._id);
+    const refreshToken = generateRefreshToken();
+    await saveRefreshToken(user, refreshToken);
+    setRefreshCookie(res, refreshToken);
+
     // Return success response
     res.status(201).json({
       _id: user._id.toString(),
@@ -136,7 +165,7 @@ export const registerUser = async (req, res) => {
       college: user.college,
       regNo: user.regNo,
       department: user.department,
-      token: generateToken(user._id),
+      token: accessToken,
     });
 
   } catch (error) {
@@ -237,6 +266,12 @@ export const loginUser = async (req, res) => {
 
     console.log('✅ Login successful for:', user.email);
 
+    // Generate tokens (SCRUM-57)
+    const accessToken = generateToken(user._id);
+    const refreshToken = generateRefreshToken();
+    await saveRefreshToken(user, refreshToken);
+    setRefreshCookie(res, refreshToken);
+
     // Return success response
     res.json({
       _id: user._id.toString(),
@@ -246,7 +281,7 @@ export const loginUser = async (req, res) => {
       college: user.college,
       regNo: user.regNo,
       department: user.department,
-      token: generateToken(user._id),
+      token: accessToken,
     });
 
   } catch (error) {
@@ -586,3 +621,91 @@ export const changePassword = async (req, res) => {
     res.status(500).json({ message: error.message || "Server error" });
   }
 };
+
+// =============================================================================
+// SCRUM-57: Refresh Token Handler
+// POST /api/auth/refresh
+// Reads refresh token from httpOnly cookie, validates it, rotates it,
+// and returns a new short-lived access token.
+// =============================================================================
+export const refreshTokenHandler = async (req, res) => {
+  const rawToken = req.cookies?.refreshToken;
+
+  if (!rawToken) {
+    return res.status(401).json({ message: 'No refresh token provided.' });
+  }
+
+  try {
+    // Find users whose refresh token could match (check all with non-null token)
+    // We look up by rawToken — we need to find the user first.
+    // To avoid full table scan, we store a fast-lookup prefix (first 16 chars) or
+    // rely on bcrypt. For small scale, find recently-active users is fine.
+    const users = await User.find({
+      refreshToken: { $ne: null },
+      refreshTokenExpiry: { $gt: new Date() },
+    }).select('+refreshToken +refreshTokenExpiry');
+
+    let matchedUser = null;
+    for (const u of users) {
+      const isMatch = await bcrypt.compare(rawToken, u.refreshToken);
+      if (isMatch) { matchedUser = u; break; }
+    }
+
+    if (!matchedUser) {
+      res.clearCookie('refreshToken', { path: '/' });
+      return res.status(403).json({ message: 'Refresh token invalid or expired.' });
+    }
+
+    // Rotate: generate new refresh token and save
+    const newRefreshToken = generateRefreshToken();
+    await saveRefreshToken(matchedUser, newRefreshToken);
+    setRefreshCookie(res, newRefreshToken);
+
+    // Issue new access token
+    const accessToken = generateToken(matchedUser._id);
+
+    return res.json({
+      token: accessToken,
+      user: {
+        _id: matchedUser._id,
+        name: matchedUser.name,
+        email: matchedUser.email,
+        role: matchedUser.role,
+        college: matchedUser.college,
+        regNo: matchedUser.regNo,
+        department: matchedUser.department,
+        profileImage: matchedUser.profileImage,
+      },
+    });
+  } catch (err) {
+    console.error('Refresh token error:', err);
+    return res.status(500).json({ message: 'Server error during token refresh.' });
+  }
+};
+
+// =============================================================================
+// SCRUM-57: Logout Handler
+// POST /api/auth/logout
+// Clears refresh token from DB and removes the httpOnly cookie.
+// =============================================================================
+export const logoutHandler = async (req, res) => {
+  const rawToken = req.cookies?.refreshToken;
+
+  if (rawToken) {
+    // Clear DB token for the matching user
+    const users = await User.find({ refreshToken: { $ne: null } });
+    for (const u of users) {
+      const isMatch = await bcrypt.compare(rawToken, u.refreshToken);
+      if (isMatch) {
+        u.refreshToken = null;
+        u.refreshTokenExpiry = null;
+        await u.save();
+        break;
+      }
+    }
+  }
+
+  res.clearCookie('refreshToken', { path: '/' });
+  return res.json({ message: 'Logged out successfully.' });
+};
+
