@@ -1,0 +1,522 @@
+/* ── TeacherEventDetails.css — Premium SaaS Design System ─────────────── */
+
+.ted-page {
+    animation: fadeIn 0.5s ease-out forwards;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.ted-nav-header {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 24px;
+    width: 100%;
+    /* removed by global cleanup script: max-width: 1000px; */
+    box-sizing: border-box;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.ted-icon-btn {
+    background: rgba(255, 255, 255, 0.8);
+    border: 1px solid rgba(226, 232, 240, 0.8);
+    cursor: pointer;
+    color: #1E3A8A;
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(8px);
+    transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+}
+
+.ted-page.dark .ted-icon-btn {
+    background: rgba(30, 41, 59, 0.8);
+    border-color: #334155;
+    color: #f1f5f9;
+}
+
+.ted-icon-btn:hover {
+    transform: translateY(-2px);
+    background: #FFFFFF;
+    box-shadow: 0 10px 25px -5px rgba(37, 99, 235, 0.15);
+    color: #2563EB;
+    border-color: transparent;
+}
+
+.ted-page.dark .ted-icon-btn:hover {
+    background: #1e293b;
+    color: #38bdf8;
+}
+
+.ted-page-title {
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: #1E3A8A;
+    margin: 0;
+}
+
+.ted-page.dark .ted-page-title {
+    color: #f1f5f9;
+}
+
+/* ── Content Card ── */
+.ted-card {
+    background: #FFFFFF;
+    border-radius: 24px;
+    overflow: hidden;
+    box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.5);
+    width: 100%;
+    /* removed by global cleanup script: max-width: 1000px; */
+    box-sizing: border-box;
+    /* removed by global cleanup script: margin: 0 auto; */
+}
+
+.ted-page.dark .ted-card {
+    background: #1e293b;
+    border-color: #334155;
+    box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.3);
+}
+
+.ted-image-wrap {
+    position: relative;
+    height: 300px;
+    width: 100%;
+}
+
+@media (min-width: 768px) {
+    .ted-image-wrap {
+        height: 320px;
+    }
+}
+
+.ted-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.ted-image-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to top, rgba(255, 255, 255, 1) 0%, transparent 20%);
+}
+
+.ted-page.dark .ted-image-overlay {
+    background: linear-gradient(to top, rgba(30, 41, 59, 1) 0%, transparent 20%);
+}
+
+.ted-content {
+    padding: 32px;
+}
+
+@media (min-width: 768px) {
+    .ted-content {
+        padding: 32px;
+    }
+}
+
+.ted-title-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 24px;
+    margin-bottom: 32px;
+}
+
+.ted-title {
+    font-size: clamp(2rem, 4vw, 2.5rem);
+    font-weight: 900;
+    color: #1E3A8A;
+    margin: 0;
+    line-height: 1.2;
+    letter-spacing: -0.02em;
+}
+
+.ted-page.dark .ted-title {
+    color: #f1f5f9;
+}
+
+.ted-status-badge {
+    padding: 8px 16px;
+    border-radius: 999px;
+    font-size: 0.85rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    white-space: nowrap;
+}
+
+.ted-status-badge.published {
+    background: rgba(16, 185, 129, 0.1);
+    color: #10b981;
+    border: 1px solid rgba(16, 185, 129, 0.2);
+}
+
+.ted-status-badge.draft {
+    background: rgba(245, 158, 11, 0.1);
+    color: #d97706;
+    border: 1px solid rgba(245, 158, 11, 0.2);
+}
+
+.ted-status-badge.completed {
+    background: #f1f5f9;
+    color: #475569;
+    border: 1px solid #e2e8f0;
+}
+
+.ted-page.dark .ted-status-badge.completed {
+    background: #334155;
+    color: #94a3b8;
+    border-color: #475569;
+}
+
+/* ── Meta Grid ── */
+.ted-meta-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 24px;
+    margin-bottom: 32px;
+    padding-bottom: 32px;
+    border-bottom: 1px solid rgba(226, 232, 240, 0.8);
+}
+
+.ted-page.dark .ted-meta-grid {
+    border-bottom-color: rgba(255, 255, 255, 0.05);
+}
+
+.ted-meta-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+}
+
+.ted-meta-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    background: #f8fafc;
+    color: #2563EB;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.ted-page.dark .ted-meta-icon {
+    background: #0f172a;
+}
+
+.ted-meta-text {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.ted-meta-label {
+    font-size: 0.85rem;
+    color: #64748B;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.ted-page.dark .ted-meta-label {
+    color: #94a3b8;
+}
+
+.ted-meta-value {
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: #1E3A8A;
+}
+
+.ted-page.dark .ted-meta-value {
+    color: #f1f5f9;
+}
+
+/* ── Description ── */
+.ted-desc-section {
+    margin-bottom: 40px;
+}
+
+.ted-desc-title {
+    font-size: 1.25rem;
+    font-weight: 800;
+    color: #1E3A8A;
+    margin-bottom: 16px;
+}
+
+.ted-page.dark .ted-desc-title {
+    color: #f1f5f9;
+}
+
+.ted-desc-text {
+    line-height: 1.8;
+    color: #475569;
+    font-size: 1.05rem;
+}
+
+.ted-page.dark .ted-desc-text {
+    color: #cbd5e1;
+}
+
+/* ── Buttons ── */
+.ted-btn-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+}
+
+@media (max-width: 768px) {
+    .ted-btn-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.full-width {
+    grid-column: 1 / -1;
+}
+
+.ted-btn {
+    padding: 16px;
+    border-radius: 16px;
+    border: none;
+    font-size: 1rem;
+    font-weight: 800;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.ted-btn:hover {
+    transform: translateY(-2px);
+}
+
+.ted-btn.primary {
+    background: linear-gradient(135deg, #2563EB, #7C3AED);
+    color: #fff;
+    box-shadow: 0 10px 25px rgba(37, 99, 235, 0.2);
+}
+
+.ted-btn.primary:hover {
+    box-shadow: 0 15px 30px rgba(37, 99, 235, 0.3);
+}
+
+.ted-btn.secondary {
+    background: rgba(37, 99, 235, 0.1);
+    color: #2563EB;
+}
+
+.ted-page.dark .ted-btn.secondary {
+    background: #334155;
+    color: #f1f5f9;
+}
+
+.ted-btn.secondary:hover {
+    background: #2563EB;
+    color: #fff;
+}
+
+.ted-page.dark .ted-btn.secondary:hover {
+    background: #475569;
+}
+
+.ted-btn.danger {
+    background: transparent;
+    color: #ef4444;
+    border: 2px dashed rgba(239, 68, 68, 0.4);
+}
+
+.ted-btn.danger:hover {
+    background: rgba(239, 68, 68, 0.1);
+    border-style: solid;
+}
+
+/* ── Popup ── */
+.ted-popup-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.8);
+    backdrop-filter: blur(8px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    animation: popupFade 0.2s ease-out;
+}
+
+@keyframes popupFade {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+.ted-popup {
+    background: #FFFFFF;
+    border-radius: 24px;
+    padding: 40px 32px;
+    width: 90%;
+    width: 100%;
+    /* removed by global cleanup script: max-width: 100vw; */
+    box-sizing: border-box;
+    text-align: center;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+    animation: popupSlide 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.ted-page.dark .ted-popup {
+    background: #1e293b;
+    border: 1px solid #334155;
+}
+
+@keyframes popupSlide {
+    from {
+        opacity: 0;
+        transform: translateY(20px) scale(0.95);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+.ted-popup-icon {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    background: rgba(239, 68, 68, 0.1);
+    color: #ef4444;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 24px;
+}
+
+.ted-popup h3 {
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: #0f172a;
+    margin-bottom: 12px;
+}
+
+.ted-page.dark .ted-popup h3 {
+    color: #f1f5f9;
+}
+
+.ted-popup p {
+    color: #64748b;
+    margin-bottom: 32px;
+    line-height: 1.5;
+}
+
+.ted-popup-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+}
+
+.ted-popup-cancel {
+    padding: 14px;
+    border-radius: 12px;
+    border: none;
+    background: #f1f5f9;
+    color: #475569;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.ted-page.dark .ted-popup-cancel {
+    background: #334155;
+    color: #cbd5e1;
+}
+
+.ted-popup-cancel:hover {
+    background: #e2e8f0;
+}
+
+.ted-popup-delete {
+    padding: 14px;
+    border-radius: 12px;
+    border: none;
+    background: #ef4444;
+    color: #fff;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 0.2s;
+    box-shadow: 0 4px 10px rgba(239, 68, 68, 0.2);
+}
+
+.ted-popup-delete:hover {
+    background: #dc2626;
+}
+
+/* ── Loading / Empty ── */
+.ted-loading,
+.ted-empty {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    min-height: 60vh;
+}
+
+.ted-spinner {
+    width: 48px;
+    height: 48px;
+    border: 4px solid rgba(37, 99, 235, 0.1);
+    border-left-color: #2563EB;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.ted-empty h2 {
+    font-size: 2rem;
+    font-weight: 800;
+    color: #1E3A8A;
+    margin-bottom: 24px;
+}
+
+.ted-page.dark .ted-empty h2 {
+    color: #f1f5f9;
+}
+
+.ted-back-home-btn {
+    background: #FFFFFF;
+    color: #2563EB;
+    padding: 12px 24px;
+    border-radius: 999px;
+    border: 1px solid rgba(226, 232, 240, 0.8);
+    font-weight: 700;
+    cursor: pointer;
+}

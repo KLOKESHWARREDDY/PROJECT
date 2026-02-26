@@ -157,7 +157,7 @@ const Dashboard = ({ user, events, theme, unreadCount, onReadNotifications, togg
   const firstName = currentUser?.name ? currentUser.name.split(' ')[0] : 'Student';
 
   return (
-    <div className={`page-wrapper${isDark ? ' dark' : ''}`}>
+    <div className={`db-root${isDark ? ' db-dark' : ''}`}>
 
       {/* ── STICKY HEADER ── */}
       <header className="db-header">

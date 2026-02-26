@@ -200,7 +200,7 @@ export const updateEvent = async (req, res) => {
           reg.student,
           'Event Updated',
           `The event "${event.title}" has been updated. Check the details for changes.`,
-          'general',
+          'event_update',
           id
         );
       }
@@ -329,7 +329,7 @@ export const publishEvent = async (req, res) => {
       user: student._id,
       title: 'New Event Published! 📢',
       message: `New event "${event.title}" is now live! Check it out.`,
-      type: 'publish',
+      type: 'new_event',
       relatedId: id
     }));
 

@@ -1,103 +1,129 @@
-/* ── Profile.module.css — AeroGlass & Indigo Design System ── */
+/* ── Profile.module.css — Premium SaaS Design System ── */
 
-/* === CSS VARIABLES === */
-.root {
-    --bg-main: #F4F7FE;
-    --bg-card: rgba(255, 255, 255, 0.82);
-    --primary: #4318FF;
-    --text-main: #2B3674;
-    --text-muted: #A3AED0;
-    --shadow-glass: 0px 18px 40px rgba(112, 144, 176, 0.12);
-    --shadow-hover: 0px 25px 50px rgba(67, 24, 255, 0.15);
+.profileContainer {
+    --primary: #2563EB;
+    --primary-gradient: linear-gradient(135deg, #2563EB, #7C3AED);
+    --accent: #9333EA;
+    --text-main: #1E3A8A;
+    --text-muted: #64748B;
+    --bg-card: #FFFFFF;
+    --shadow-sm: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+    --shadow-glass: 0 20px 40px -15px rgba(0, 0, 0, 0.05);
+    --shadow-hover: 0 25px 50px -12px rgba(37, 99, 235, 0.25);
     --radius-xl: 24px;
+    --radius-lg: 16px;
+    --radius-md: 12px;
+
+    animation: componentFadeInUp 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+    padding-top: 20px;
 }
 
-/* === PAGE ROOT === */
-.root {
-    min-height: calc(100vh - 80px);
-    /* parent main-content handles full viewport height */
-    background: var(--bg-main);
-    font-family: 'Inter', sans-serif;
-    padding: 32px 28px 60px;
-    box-sizing: border-box;
-    position: relative;
-    /* establishes own stacking context below the sidebar */
-    z-index: 0;
-    /* sidebar is z-index:1000 — this stays safely below it */
+@keyframes componentFadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
-/* === HEADER === */
 .header {
-    margin-bottom: 32px;
-    padding-top: 32px;
+    margin-bottom: 48px;
+    position: relative;
 }
 
 .pageTitle {
-    font-size: clamp(1.6rem, 3vw, 2.2rem);
+    font-size: clamp(2rem, 4vw, 2.75rem);
     font-weight: 800;
-    color: var(--text-main);
-    letter-spacing: -0.5px;
-    margin-bottom: 6px;
+    letter-spacing: -0.03em;
+    margin-bottom: 8px;
+    background: var(--primary-gradient);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    display: inline-block;
 }
 
 .pageSubtitle {
-    font-size: 0.9rem;
+    font-size: 1.1rem;
     font-weight: 500;
     color: var(--text-muted);
 }
 
-/* === MAIN 2-COLUMN GRID === */
 .grid {
     display: grid;
-    grid-template-columns: 340px 1fr;
-    gap: 28px;
+    grid-template-columns: 360px 1fr;
+    gap: 32px;
     align-items: start;
 }
 
 /* ── PROFILE CARD (Left) ──────────────────────────────── */
 .profileCard {
-    background: #ffffff;
+    background: var(--bg-card);
     border-radius: var(--radius-xl);
     box-shadow: var(--shadow-glass);
-    padding: 40px 32px;
+    padding: 48px 32px;
     display: flex;
     flex-direction: column;
     align-items: center;
     text-align: center;
     position: relative;
     overflow: hidden;
-    transition: all 0.3s ease;
+    transition: transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.4s ease;
+    border: 1px solid rgba(255, 255, 255, 0.5);
+    backdrop-filter: blur(10px);
 }
 
-/* Decorative accent blob */
-.profileCard::before {
-    content: '';
+.profileCard:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-hover);
+}
+
+.profileCardBg {
     position: absolute;
-    top: -60px;
-    right: -60px;
-    width: 180px;
-    height: 180px;
+    top: -100px;
+    left: -100px;
+    width: 300px;
+    height: 300px;
+    background: radial-gradient(circle, rgba(124, 58, 237, 0.08) 0%, transparent 70%);
     border-radius: 50%;
-    background: radial-gradient(circle, rgba(67, 24, 255, 0.08) 0%, transparent 70%);
     pointer-events: none;
+    z-index: 0;
+}
+
+.profileCardContent {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
 }
 
 /* === AVATAR === */
 .avatarWrap {
     position: relative;
-    margin-bottom: 20px;
+    margin-bottom: 24px;
 }
 
 .avatarRing {
-    width: 144px;
-    height: 144px;
+    width: 160px;
+    height: 160px;
     border-radius: 50%;
-    padding: 4px;
-    background: linear-gradient(135deg, #4318FF, #9f7aea);
-    box-shadow: 0 0 0 6px rgba(67, 24, 255, 0.1), 0 0 32px rgba(67, 24, 255, 0.25);
+    padding: 5px;
+    background: var(--primary-gradient);
+    box-shadow: 0 10px 25px -5px rgba(37, 99, 235, 0.4);
     display: flex;
     align-items: center;
     justify-content: center;
+    transition: transform 0.5s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.profileCard:hover .avatarRing {
+    transform: scale(1.05) rotate(5deg);
 }
 
 .avatar {
@@ -105,23 +131,30 @@
     height: 100%;
     border-radius: 50%;
     object-fit: cover;
-    background: #f0f4ff;
+    background: #f8fafc;
+    border: 4px solid #ffffff;
     display: block;
+    transition: transform 0.5s ease;
+}
+
+.profileCard:hover .avatar {
+    transform: rotate(-5deg);
 }
 
 /* === NAME & EMAIL === */
 .name {
-    font-size: 1.5rem;
+    font-size: 1.75rem;
     font-weight: 800;
     color: var(--text-main);
-    margin-bottom: 4px;
+    margin-bottom: 6px;
+    letter-spacing: -0.01em;
 }
 
 .email {
-    font-size: 0.875rem;
+    font-size: 0.95rem;
     font-weight: 500;
     color: var(--text-muted);
-    margin-bottom: 20px;
+    margin-bottom: 28px;
     word-break: break-all;
 }
 
@@ -129,49 +162,78 @@
 .badge {
     display: inline-flex;
     align-items: center;
-    gap: 6px;
-    background: rgba(67, 24, 255, 0.08);
+    gap: 8px;
+    background: rgba(37, 99, 235, 0.06);
     color: var(--primary);
-    border: 1.5px solid rgba(67, 24, 255, 0.18);
-    padding: 7px 20px;
+    border: 1px solid rgba(37, 99, 235, 0.15);
+    padding: 8px 24px;
     border-radius: 999px;
-    font-size: 0.8rem;
+    font-size: 0.85rem;
     font-weight: 700;
-    letter-spacing: 0.3px;
-    backdrop-filter: blur(8px);
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    transition: all 0.3s ease;
+}
+
+.profileCard:hover .badge {
+    background: var(--primary-gradient);
+    color: white;
+    border-color: transparent;
+    box-shadow: 0 4px 15px rgba(37, 99, 235, 0.3);
 }
 
 .badgeDot {
-    width: 7px;
-    height: 7px;
+    width: 8px;
+    height: 8px;
     border-radius: 50%;
     background: var(--primary);
     display: inline-block;
+    box-shadow: 0 0 8px var(--primary);
+}
+
+.profileCard:hover .badgeDot {
+    background: white;
+    box-shadow: none;
 }
 
 /* ── RIGHT COLUMN ─────────────────────────────────────── */
 .rightCol {
     display: flex;
     flex-direction: column;
-    gap: 24px;
+    gap: 32px;
 }
 
 /* ── INFO CARD (Academic Information) ── */
 .infoCard {
-    background: #ffffff;
+    background: var(--bg-card);
     border-radius: var(--radius-xl);
     box-shadow: var(--shadow-glass);
-    padding: 28px 32px;
-    transition: all 0.3s ease;
+    padding: 40px;
+    transition: transform 0.4s ease, box-shadow 0.4s ease;
+    border: 1px solid rgba(255, 255, 255, 0.5);
+}
+
+.infoCard:hover {
+    box-shadow: var(--shadow-hover);
 }
 
 .sectionLabel {
-    font-size: 0.68rem;
-    font-weight: 700;
+    font-size: 0.75rem;
+    font-weight: 800;
     text-transform: uppercase;
-    letter-spacing: 1px;
-    color: var(--text-muted);
-    margin-bottom: 20px;
+    letter-spacing: 1.5px;
+    color: var(--accent);
+    margin-bottom: 24px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.sectionLabel::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: linear-gradient(90deg, rgba(147, 51, 234, 0.2), transparent);
 }
 
 .infoList {
@@ -184,8 +246,9 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 14px 0;
-    border-bottom: 1px solid rgba(163, 174, 208, 0.15);
+    padding: 18px 0;
+    border-bottom: 1px solid rgba(100, 116, 139, 0.1);
+    transition: background-color 0.3s ease;
 }
 
 .infoRow:last-child {
@@ -193,118 +256,161 @@
     padding-bottom: 0;
 }
 
+.infoRow:hover .infoLabel {
+    color: var(--primary);
+    transform: translateX(4px);
+}
+
 .infoLabel {
-    font-size: 0.82rem;
-    font-weight: 500;
+    font-size: 0.95rem;
+    font-weight: 600;
     color: var(--text-muted);
+    transition: all 0.3s ease;
 }
 
 .infoValue {
-    font-size: 0.875rem;
+    font-size: 1rem;
     font-weight: 700;
     color: var(--text-main);
     text-align: right;
+    background: #f8fafc;
+    padding: 6px 16px;
+    border-radius: var(--radius-md);
+    border: 1px solid rgba(100, 116, 139, 0.1);
 }
 
 /* ── ACCOUNT SETTINGS SECTION ── */
 .settingsSection {
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 20px;
 }
 
 .settingsTitle {
-    font-size: 0.68rem;
-    font-weight: 700;
+    font-size: 0.75rem;
+    font-weight: 800;
     text-transform: uppercase;
-    letter-spacing: 1px;
+    letter-spacing: 1.5px;
     color: var(--text-muted);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.settingsTitle::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: linear-gradient(90deg, rgba(100, 116, 139, 0.2), transparent);
 }
 
 .settingsGrid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    gap: 16px;
+    gap: 20px;
 }
 
-/* Interactive setting card — the premium piece */
+/* Interactive setting card */
 .settingCard {
-    background: #ffffff;
-    border-radius: 20px;
-    box-shadow: var(--shadow-glass);
-    padding: 24px 20px;
+    background: var(--bg-card);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-sm);
+    padding: 24px;
     cursor: pointer;
     display: flex;
     flex-direction: column;
     align-items: flex-start;
-    gap: 12px;
-    transition: all 0.3s ease;
-    border: 1.5px solid #e2e8f0;
+    gap: 16px;
+    transition: all 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
+    border: 1px solid rgba(226, 232, 240, 0.8);
     position: relative;
     overflow: hidden;
+    text-decoration: none;
 }
 
-.settingCard::before {
+.settingCard::after {
     content: '';
     position: absolute;
     inset: 0;
-    background: linear-gradient(135deg, rgba(255, 255, 255, 0.5), rgba(255, 255, 255, 0));
-    pointer-events: none;
+    background: var(--primary-gradient);
+    opacity: 0;
+    transition: opacity 0.4s ease;
+    z-index: 0;
+}
+
+.settingCardContent {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    width: 100%;
 }
 
 .settingCard:hover {
-    transform: translateY(-8px);
-    background: rgba(255, 255, 255, 0.96);
+    transform: translateY(-8px) scale(1.02);
+    border-color: transparent;
     box-shadow: var(--shadow-hover);
 }
 
-/* Logout card accent */
-.settingCard.danger:hover {
-    box-shadow: 0px 25px 50px rgba(239, 68, 68, 0.18);
+.settingCard:hover::after {
+    opacity: 1;
 }
 
-.settingCard.success:hover {
-    box-shadow: 0px 25px 50px rgba(16, 185, 129, 0.18);
-}
-
-/* icon circle */
+/* Icon circle */
 .settingIconBox {
-    width: 48px;
-    height: 48px;
-    border-radius: 14px;
+    width: 52px;
+    height: 52px;
+    border-radius: 16px;
     display: flex;
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
+    transition: all 0.4s ease;
+    background: #f8fafc;
+}
+
+.settingCard:hover .settingIconBox {
+    background: rgba(255, 255, 255, 0.2);
+    color: white !important;
+    transform: scale(1.1);
 }
 
 /* default = indigo */
-.iconIndigo {
-    background: rgba(67, 24, 255, 0.10);
-    color: #4318FF;
+.iconPrimary {
+    color: var(--primary);
+    box-shadow: 0 4px 10px rgba(37, 99, 235, 0.1);
 }
 
-.iconGreen {
-    background: rgba(16, 185, 129, 0.10);
+.iconSuccess {
     color: #10b981;
+    box-shadow: 0 4px 10px rgba(16, 185, 129, 0.1);
 }
 
-.iconRed {
-    background: rgba(239, 68, 68, 0.10);
+.iconDanger {
     color: #ef4444;
+    box-shadow: 0 4px 10px rgba(239, 68, 68, 0.1);
 }
 
 .settingCardLabel {
-    font-size: 0.9rem;
-    font-weight: 700;
+    font-size: 1.05rem;
+    font-weight: 800;
     color: var(--text-main);
-    margin-bottom: 2px;
+    margin-bottom: 4px;
+    transition: color 0.3s ease;
 }
 
 .settingCardSub {
-    font-size: 0.75rem;
+    font-size: 0.85rem;
     font-weight: 500;
     color: var(--text-muted);
+    transition: color 0.3s ease;
+    line-height: 1.4;
+}
+
+.settingCard:hover .settingCardLabel,
+.settingCard:hover .settingCardSub {
+    color: white;
 }
 
 /* === LOADING SPINNER === */
@@ -313,7 +419,6 @@
     align-items: center;
     justify-content: center;
     min-height: calc(100vh - 80px);
-    background: var(--bg-main);
     position: relative;
     z-index: 0;
 }
@@ -321,44 +426,91 @@
 .spinner {
     width: 44px;
     height: 44px;
-    border: 4px solid rgba(67, 24, 255, 0.15);
-    border-top-color: #4318FF;
+    border: 4px solid rgba(37, 99, 235, 0.15);
+    border-top-color: var(--primary);
     border-radius: 50%;
-    animation: spin 0.75s linear infinite;
+    animation: componentSpin 0.75s linear infinite;
 }
 
-@keyframes spin {
+@keyframes componentSpin {
     to {
         transform: rotate(360deg);
     }
 }
 
 /* === RESPONSIVE === */
-@media (max-width: 900px) {
+@media (max-width: 768px) {
     .grid {
         grid-template-columns: 1fr;
     }
 
+    .profileCard {
+        width: 100%;
+        /* removed by global cleanup script: max-width: 100vw; */
+        box-sizing: border-box;
+        /* removed by global cleanup script: margin: 0 auto; */
+        width: 100%;
+    }
+}
+
+@media (max-width: 768px) {
     .settingsGrid {
         grid-template-columns: 1fr;
     }
 }
 
-@media (max-width: 600px) {
+@media (max-width: 768px) {
     .profileCard {
         padding: 32px 20px;
     }
 
     .infoCard {
-        padding: 20px;
+        padding: 24px 20px;
     }
 
     .avatarRing {
-        width: 110px;
-        height: 110px;
+        width: 120px;
+        height: 120px;
     }
 
     .name {
-        font-size: 1.25rem;
+        font-size: 1.5rem;
     }
+}
+
+/* ── DARK MODE OVERRIDES ────────────────────────────────── */
+:global(.dark) .profileContainer {
+    --bg-card: #1e293b;
+    --text-main: #f8fafc;
+    --text-muted: #94a3b8;
+    --shadow-glass: 0 20px 40px -15px rgba(0, 0, 0, 0.5);
+    --shadow-hover: 0 25px 50px -12px rgba(147, 51, 234, 0.3);
+}
+
+:global(.dark) .profileCard,
+:global(.dark) .infoCard,
+:global(.dark) .settingCard {
+    border-color: #334155;
+    background: var(--bg-card);
+}
+
+:global(.dark) .infoValue {
+    background: #0f172a;
+    border-color: #334155;
+}
+
+:global(.dark) .settingIconBox {
+    background: #0f172a;
+}
+
+:global(.dark) .infoRow {
+    border-bottom-color: rgba(255, 255, 255, 0.05);
+}
+
+:global(.dark) .avatar {
+    border-color: #1e293b;
+}
+
+:global(.dark) .settingCard:hover .settingIconBox {
+    background: rgba(255, 255, 255, 0.1);
 }

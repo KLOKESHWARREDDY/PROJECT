@@ -346,7 +346,6 @@ export const approveRegistration = async (req, res) => {
       }
     })();
 
-    // ── 10. In-app notification ────────────────────────────────────────────
     await createNotification(
       registration.student._id,
       'Registration Approved 🎉',
@@ -354,6 +353,31 @@ export const approveRegistration = async (req, res) => {
       'approval',
       registration._id
     );
+
+    // ── 11. Popularity Check & Notification ──────────────────────────────────
+    // If the event hits exactly 5 approved registrations, trigger "Popular Event" notification
+    const approvedCount = await Registration.countDocuments({ event: event._id, status: 'approved' });
+    if (approvedCount === 5) {
+      console.log(`[approveRegistration] Event ${event.title} reached popularity threshold! Sending notifications.`);
+      // Find students who haven't registered
+      const allStudents = await User.find({ role: 'student' });
+      const currentRegistrations = await Registration.find({ event: event._id });
+      const registeredStudentIds = currentRegistrations.map(r => r.student.toString());
+
+      const unnotifiedStudents = allStudents.filter(s => !registeredStudentIds.includes(s._id.toString()));
+
+      const popularNotifications = unnotifiedStudents.map(student => ({
+        user: student._id,
+        title: 'Trending Event 🔥',
+        message: `Spots are filling up fast for "${event.title}". Check it out now!`,
+        type: 'popular_event',
+        relatedId: event._id
+      }));
+
+      if (popularNotifications.length > 0) {
+        await Notification.insertMany(popularNotifications);
+      }
+    }
 
     console.log('Registration approved successfully:', id);
 
@@ -624,6 +648,31 @@ export const approveAllRegistrations = async (req, res) => {
           'approval',
           registration._id
         );
+
+        // ── Popularity Check & Notification ──────────────────────────────────
+        // If the event hits exactly 5 approved registrations, trigger "Popular Event" notification
+        const approvedCount = await Registration.countDocuments({ event: event._id, status: 'approved' });
+        if (approvedCount === 5) {
+          console.log(`[approveAllRegistrations] Event ${event.title} reached popularity threshold! Sending notifications.`);
+          // Find students who haven't registered
+          const allStudents = await User.find({ role: 'student' });
+          const currentRegistrations = await Registration.find({ event: event._id });
+          const registeredStudentIds = currentRegistrations.map(r => r.student.toString());
+
+          const unnotifiedStudents = allStudents.filter(s => !registeredStudentIds.includes(s._id.toString()));
+
+          const popularNotifications = unnotifiedStudents.map(student => ({
+            user: student._id,
+            title: 'Trending Event 🔥',
+            message: `Spots are filling up fast for "${event.title}". Check it out now!`,
+            type: 'popular_event',
+            relatedId: event._id
+          }));
+
+          if (popularNotifications.length > 0) {
+            await Notification.insertMany(popularNotifications);
+          }
+        }
 
         results.push({ ...registration.toObject(), ticketId: ticket.ticketCode });
 

@@ -8,11 +8,27 @@
   padding: 0;
 }
 
+html,
+body,
+#root {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  min-height: 100vh;
+}
+
 body {
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
   -webkit-font-smoothing: antialiased;
-  background-color: #ffffff;
+  background: linear-gradient(135deg, #f8f7ff 0%, #ffffff 50%, #faf5ff 100%);
+  background-attachment: fixed;
   color: #1e293b;
+}
+
+body.dark-mode {
+  background: #0f172a;
+  background-attachment: fixed;
+  color: #f1f5f9;
 }
 
 button {
@@ -61,15 +77,22 @@ input {
 /* Provides consistent max-width, centering, and padding across the app.      */
 .page-wrapper {
   width: 100%;
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 0 28px 60px;
+  max-width: 100% !important;
+  /* Forces layout to be edge-to-edge entirely */
+  margin: 0 !important;
+  /* Strips older centering techniques */
+  padding: 48px !important;
   box-sizing: border-box;
   min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  /* Account for bottom padding of main-content */
   font-family: 'Inter', sans-serif;
-  background: #f8fafc;
+  background: linear-gradient(135deg, #f8f7ff 0%, #ffffff 50%, #faf5ff 100%);
   color: #1e293b;
 }
+
+/* Removed problematic zoom rule that breaks vh calculation on desktop */
 
 .page-wrapper.dark {
   background: #0f172a;
@@ -78,6 +101,6 @@ input {
 
 @media (max-width: 768px) {
   .page-wrapper {
-    padding: 0 16px 48px;
+    padding: 24px 20px !important;
   }
 }

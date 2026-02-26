@@ -46,18 +46,18 @@ import ResetPassword from './pages/ResetPassword';
 import Settings from './pages/Settings';
 import LanguageSelection from './pages/LanguageSelection';
 
-import api, { registrationAPI, eventAPI } from './api';
+import api, { eventAPI, authAPI, userAPI, ticketAPI, registrationAPI, notificationAPI } from './api';
 
 
 const AppContent = ({
   isAuthenticated, handleLogin, handleLogout,
-  theme, setTheme, user, setUser,
+  theme, setTheme, toggleTheme, user, setUser,
   allEvents, handleRegister, handleCancel,
   searchTerm, setSearchTerm, registeredEvents, filteredEvents,
   notifications, unreadCount, markNotificationsRead,
   handleCreateEvent, handleDeleteEvent, handleUpdateEvent,
   registrations, handleApproveReg, handleRejectReg,
-  handleApproveAll, handleRejectAll
+  handleApproveAll, handleRejectAll, handleDeleteNotification
 }) => {
   const location = useLocation();
   const isDark = theme === 'dark';
@@ -72,8 +72,6 @@ const AppContent = ({
 
   useEffect(() => {
     document.body.className = isDark ? 'dark-mode' : 'light-mode';
-    document.body.style.backgroundColor = isDark ? '#0f172a' : '#f8fafc';
-    document.body.style.margin = '0';
   }, [isDark]);
 
   const isTeacher = user?.role === 'teacher';
@@ -101,8 +99,10 @@ const AppContent = ({
     <div className="app-layout" style={{ display: 'flex', minHeight: '100vh', width: '100%' }}>
       {!isMobile && <Sidebar key={user?._id || user?.id || 'sidebar'} user={user} theme={theme} onLogout={handleLogout} />}
       <div className="main-content" style={{
-        flex: 1, marginLeft: isMobile ? '0px' : '60px', width: isMobile ? '100%' : 'calc(100% - 60px)',
-        backgroundColor: isDark ? '#0f172a' : '#f8fafc', minHeight: '100vh', paddingBottom: '80px', transition: 'margin-left 0.3s ease'
+        flex: 1,
+        marginLeft: isMobile ? '0px' : '60px',
+        boxSizing: 'border-box',
+        transition: 'margin-left 0.3s ease'
       }}>
         <Routes>
           <Route path="/" element={
@@ -141,10 +141,11 @@ const AppContent = ({
           <Route path="/change-password" element={<ChangePassword theme={theme} />} />
           <Route path="/settings/theme" element={<ThemeSelection currentTheme={theme} setTheme={setTheme} />} />
           <Route path="/settings/language" element={<LanguageSelection currentLanguage="English" setLanguage={() => { }} theme={theme} />} />
-          <Route path="/notifications" element={<Notifications theme={theme} user={user} registrations={registrations} notificationsList={notifications} />} />
+          <Route path="/notifications" element={<Notifications theme={theme} user={user} registrations={registrations} notificationsList={notifications} onDeleteNotification={handleDeleteNotification} />} />
           <Route path="/privacy" element={<PrivacyPolicy theme={theme} />} />
           <Route path="/help" element={<HelpCenter theme={theme} openChat={() => setChatOpen(true)} />} />
           <Route path="/settings" element={<Settings theme={theme} user={user} />} />
+          <Route path="/teacher-dashboard" element={<TeacherDashboard user={user} theme={theme} toggleTheme={toggleTheme} />} />
           <Route path="*" element={<Navigate to="/" />} />
         </Routes>
       </div>
@@ -218,7 +219,22 @@ function App() {
 
   useEffect(() => {
     localStorage.setItem('theme', theme);
+    // Sync theme to body class for global CSS
+    if (theme === 'dark') {
+      document.body.classList.add('dark-theme');
+    } else {
+      document.body.classList.remove('dark-theme');
+    }
   }, [theme]);
+
+  // Keep body class synced if navigated to App Content
+  useEffect(() => {
+    if (theme === 'dark') {
+      document.body.classList.add('dark-theme');
+    } else {
+      document.body.classList.remove('dark-theme');
+    }
+  }, []);
 
   useEffect(() => {
     localStorage.setItem('isAuthenticated', isAuthenticated.toString());
@@ -600,6 +616,17 @@ function App() {
       console.error('Failed to mark notifications read:', error);
     }
   }, []);
+
+  const handleDeleteNotification = useCallback(async (id) => {
+    try {
+      await notificationAPI.delete(id);
+      setNotifications(prev => prev.filter(n => n.id !== id && n._id !== id));
+      toast.success('Notification deleted.');
+    } catch (error) {
+      console.error('Failed to delete notification:', error);
+      toast.error('Failed to delete notification.');
+    }
+  }, []);
   const filteredEvents = allEvents.filter(e => e.title.toLowerCase().includes(searchTerm.toLowerCase()));
 
   // MyEvents should use registrations from database
@@ -648,6 +675,7 @@ function App() {
         handleCreateEvent={handleCreateEvent} handleDeleteEvent={handleDeleteEvent} handleUpdateEvent={handleUpdateEvent}
         handleApproveReg={handleApproveReg} handleRejectReg={handleRejectReg}
         handleApproveAll={handleApproveAll} handleRejectAll={handleRejectAll}
+        handleDeleteNotification={handleDeleteNotification}
       />
     </Router>
   );

@@ -23,17 +23,17 @@ const TeacherMyEvents = ({ events, theme }) => {
       try {
         const token = localStorage.getItem('token');
         console.log("TeacherMyEvents token:", token);
-        
+
         const response = await eventAPI.getTeacherEvents();
         console.log("TeacherMyEvents response:", response.data);
-        
+
         setTeacherEvents(response.data);
       } catch (error) {
         console.log('Error fetching teacher events:', error.message);
         setTeacherEvents([]);
       }
     };
-    
+
     fetchTeacherEvents();
   }, []);
 
@@ -93,7 +93,7 @@ const TeacherMyEvents = ({ events, theme }) => {
     eventTitle: { fontSize: isMobile ? '4vw' : '1.1vw', fontWeight: 'bold', marginBottom: '0.5vh' },
     eventMeta: { display: 'flex', gap: '2vw', color: '#64748b', fontSize: isMobile ? '3vw' : '0.85vw' },
     metaItem: { display: 'flex', alignItems: 'center', gap: '0.5vw' },
-    
+
     // Status Badge - Updated for Draft/Published/Completed
     statusBadge: (status) => ({
       padding: '0.4vh 1.5vw', borderRadius: '2vw',
@@ -140,8 +140,8 @@ const TeacherMyEvents = ({ events, theme }) => {
       {/* Updated filter buttons for Draft/Published/Completed */}
       <div style={styles.filterBar}>
         {['All', 'draft', 'published', 'completed'].map((filter) => (
-          <button 
-            key={filter} 
+          <button
+            key={filter}
             style={styles.filterBtn(activeFilter === filter)}
             onClick={() => setActiveFilter(filter)}
           >
@@ -153,8 +153,8 @@ const TeacherMyEvents = ({ events, theme }) => {
       <div>
         {filteredEvents.length > 0 ? (
           filteredEvents.map((event) => (
-            <div 
-              key={event._id} 
+            <div
+              key={event._id}
               style={styles.eventCard}
               onClick={() => {
                 const eventId = event.id || event._id;
@@ -164,18 +164,18 @@ const TeacherMyEvents = ({ events, theme }) => {
               }}
             >
               <img src={event.image} alt={event.title} style={styles.eventImage} />
-              
+
               <div style={styles.eventInfo}>
                 <h3 style={styles.eventTitle}>{event.title}</h3>
                 <div style={styles.eventMeta}>
-                  <span style={styles.metaItem}><Calendar size={12}/> {formatDate(event.date)}</span>
+                  <span style={styles.metaItem}><Calendar size={12} /> {formatDate(event.date)}</span>
                   {formatTime(event.date) && (
-                    <span style={styles.metaItem}><Clock size={12}/> {formatTime(event.date)}</span>
+                    <span style={styles.metaItem}><Clock size={12} /> {formatTime(event.date)}</span>
                   )}
                 </div>
               </div>
 
-              <div style={{display:'flex', flexDirection:'column', alignItems:'flex-end', gap:'0.5vh'}}>
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '0.5vh' }}>
                 <span style={styles.statusBadge(event.status)}>
                   {event.status === 'published' ? 'Published' : event.status === 'draft' ? 'Draft' : 'Completed'}
                 </span>
@@ -184,7 +184,7 @@ const TeacherMyEvents = ({ events, theme }) => {
             </div>
           ))
         ) : (
-          <div style={{textAlign:'center', padding:'5vh', color:'#64748b'}}>
+          <div style={{ textAlign: 'center', padding: '5vh', color: '#64748b' }}>
             No {activeFilter !== 'All' ? activeFilter.toLowerCase() : ''} events found.
           </div>
         )}

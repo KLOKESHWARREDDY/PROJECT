@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { User, Lock, LogOut, GraduationCap } from 'lucide-react';
+import { User, Lock, LogOut, GraduationCap, Settings } from 'lucide-react';
 import axios from 'axios';
 import styles from './Profile.module.css';
 
@@ -63,7 +63,7 @@ const Profile = ({ user: initialUser, theme, onLogout, setUser }) => {
     };
 
     fetchUserData();
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [initialUser, setUser]); // eslint-disable-line react-hooks/exhaustive-deps
 
   /* ── Image URL helper ── */
   const getImageUrl = (url) => {
@@ -78,25 +78,22 @@ const Profile = ({ user: initialUser, theme, onLogout, setUser }) => {
     {
       label: 'Edit Profile',
       sub: 'Update personal info',
-      icon: <User size={22} />,
-      iconCls: styles.iconIndigo,
-      cardCls: '',
+      icon: <User size={26} strokeWidth={2.5} />,
+      iconCls: styles.iconPrimary,
       onClick: () => navigate('/edit-profile'),
     },
     {
       label: 'Security',
       sub: 'Change password',
-      icon: <Lock size={22} />,
-      iconCls: styles.iconGreen,
-      cardCls: styles.success,
+      icon: <Lock size={26} strokeWidth={2.5} />,
+      iconCls: styles.iconSuccess,
       onClick: () => navigate('/change-password'),
     },
     {
       label: 'Log Out',
       sub: 'Sign out of account',
-      icon: <LogOut size={22} />,
-      iconCls: styles.iconRed,
-      cardCls: styles.danger,
+      icon: <LogOut size={26} strokeWidth={2.5} />,
+      iconCls: styles.iconDanger,
       onClick: onLogout,
     },
   ];
@@ -118,90 +115,104 @@ const Profile = ({ user: initialUser, theme, onLogout, setUser }) => {
 
   return (
     <div className={`page-wrapper${theme === 'dark' ? ' dark' : ''}`}>
+      <div className={styles.profileContainer}>
 
-      {/* Header */}
-      <div className={styles.header}>
-        <h1 className={styles.pageTitle}>My Profile</h1>
-        <p className={styles.pageSubtitle}>Manage your account and personal details</p>
-      </div>
-
-      <div className={styles.grid}>
-
-        {/* ── LEFT: Profile Card ── */}
-        <div className={styles.profileCard}>
-
-          {/* Avatar with glowing indigo ring */}
-          <div className={styles.avatarWrap}>
-            <div className={styles.avatarRing}>
-              <img
-                className={styles.avatar}
-                src={imageError
-                  ? 'https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png'
-                  : imageUrl}
-                alt="Profile"
-                onError={() => setImageError(true)}
-              />
-            </div>
-          </div>
-
-          <h2 className={styles.name}>{user?.name || '—'}</h2>
-          <p className={styles.email}>{user?.email || '—'}</p>
-
-          <span className={styles.badge}>
-            <span className={styles.badgeDot} />
-            {isTeacher ? 'Teacher Account' : 'Student Account'}
-          </span>
+        {/* Header */}
+        <div className={styles.header}>
+          <h1 className={styles.pageTitle}>My Profile</h1>
+          <p className={styles.pageSubtitle}>Manage your account and personal details</p>
         </div>
 
-        {/* ── RIGHT: Details + Settings ── */}
-        <div className={styles.rightCol}>
+        <div className={styles.grid}>
 
-          {/* Academic Information card */}
-          <div className={styles.infoCard}>
-            <div className={styles.sectionLabel}>Academic Information</div>
-            <div className={styles.infoList}>
-              <div className={styles.infoRow}>
-                <span className={styles.infoLabel}>College</span>
-                <span className={styles.infoValue}>{user?.college || 'N/A'}</span>
-              </div>
-              <div className={styles.infoRow}>
-                <span className={styles.infoLabel}>Department</span>
-                <span className={styles.infoValue}>{user?.department || 'N/A'}</span>
-              </div>
-              <div className={styles.infoRow}>
-                <span className={styles.infoLabel}>
-                  {isTeacher ? 'Employee ID' : 'Registration ID'}
-                </span>
-                <span className={styles.infoValue}>{user?.regNo || 'N/A'}</span>
-              </div>
-            </div>
-          </div>
+          {/* ── LEFT: Profile Card ── */}
+          <div className={styles.profileCard}>
+            <div className={styles.profileCardBg} />
+            <div className={styles.profileCardContent}>
 
-          {/* Account Settings */}
-          <div className={styles.settingsSection}>
-            <div className={styles.settingsTitle}>Account Settings</div>
-            <div className={styles.settingsGrid}>
-              {settingsOptions.map((opt, i) => (
-                <div
-                  key={i}
-                  className={`${styles.settingCard} ${opt.cardCls}`}
-                  onClick={opt.onClick}
-                  role="button"
-                  tabIndex={0}
-                  onKeyDown={(e) => e.key === 'Enter' && opt.onClick()}
-                >
-                  <div className={`${styles.settingIconBox} ${opt.iconCls}`}>
-                    {opt.icon}
-                  </div>
-                  <div>
-                    <div className={styles.settingCardLabel}>{opt.label}</div>
-                    <div className={styles.settingCardSub}>{opt.sub}</div>
-                  </div>
+              {/* Avatar with glowing primary ring */}
+              <div className={styles.avatarWrap}>
+                <div className={styles.avatarRing}>
+                  <img
+                    className={styles.avatar}
+                    src={imageError
+                      ? 'https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png'
+                      : imageUrl}
+                    alt="Profile"
+                    onError={() => setImageError(true)}
+                  />
                 </div>
-              ))}
+              </div>
+
+              <h2 className={styles.name}>{user?.name || '—'}</h2>
+              <p className={styles.email}>{user?.email || '—'}</p>
+
+              <span className={styles.badge}>
+                <span className={styles.badgeDot} />
+                {isTeacher ? 'Teacher Account' : 'Student Account'}
+              </span>
+
             </div>
           </div>
 
+          {/* ── RIGHT: Details + Settings ── */}
+          <div className={styles.rightCol}>
+
+            {/* Academic Information card */}
+            <div className={styles.infoCard}>
+              <div className={styles.sectionLabel}>
+                <GraduationCap size={18} />
+                Academic Information
+              </div>
+              <div className={styles.infoList}>
+                <div className={styles.infoRow}>
+                  <span className={styles.infoLabel}>College</span>
+                  <span className={styles.infoValue}>{user?.college || 'N/A'}</span>
+                </div>
+                <div className={styles.infoRow}>
+                  <span className={styles.infoLabel}>Department</span>
+                  <span className={styles.infoValue}>{user?.department || 'N/A'}</span>
+                </div>
+                <div className={styles.infoRow}>
+                  <span className={styles.infoLabel}>
+                    {isTeacher ? 'Employee ID' : 'Registration ID'}
+                  </span>
+                  <span className={styles.infoValue}>{user?.regNo || 'N/A'}</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Account Settings */}
+            <div className={styles.settingsSection}>
+              <div className={styles.settingsTitle}>
+                <Settings size={16} />
+                Account Settings
+              </div>
+              <div className={styles.settingsGrid}>
+                {settingsOptions.map((opt, i) => (
+                  <div
+                    key={i}
+                    className={styles.settingCard}
+                    onClick={opt.onClick}
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={(e) => e.key === 'Enter' && opt.onClick()}
+                  >
+                    <div className={styles.settingCardContent}>
+                      <div className={`${styles.settingIconBox} ${opt.iconCls}`}>
+                        {opt.icon}
+                      </div>
+                      <div>
+                        <div className={styles.settingCardLabel}>{opt.label}</div>
+                        <div className={styles.settingCardSub}>{opt.sub}</div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+          </div>
         </div>
       </div>
     </div>

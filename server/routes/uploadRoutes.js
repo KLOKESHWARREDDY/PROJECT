@@ -46,7 +46,7 @@ const fileFilter = (req, file, cb) => {
 const upload = multer({
   storage: storage,
   limits: {
-    fileSize: 5 * 1024 * 1024, // 5MB limit
+    fileSize: 20 * 1024 * 1024, // 20MB limit
   },
   fileFilter: fileFilter,
 });
@@ -54,7 +54,16 @@ const upload = multer({
 // @route   POST /api/auth/upload-profile-image
 // @desc    Upload profile image
 // @access  Private (requires JWT token)
-router.post('/upload-profile-image', protect, upload.single('profileImage'), async (req, res) => {
+router.post('/upload-profile-image', protect, (req, res, next) => {
+  upload.single('profileImage')(req, res, function (err) {
+    if (err instanceof multer.MulterError) {
+      return res.status(400).json({ message: `Upload error: ${err.message}` });
+    } else if (err) {
+      return res.status(400).json({ message: err.message });
+    }
+    next();
+  });
+}, async (req, res) => {
   try {
     // Check if file was uploaded
     if (!req.file) {

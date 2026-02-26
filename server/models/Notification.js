@@ -39,7 +39,7 @@ const notificationSchema = new mongoose.Schema({
   },
   type: {
     type: String,
-    enum: ['registration', 'approval', 'publish', 'delete', 'general'],
+    enum: ['registration', 'approval', 'publish', 'delete', 'general', 'new_event', 'popular_event', 'event_update', 'registration_sent'],
     default: 'general'
   },
   relatedId: {

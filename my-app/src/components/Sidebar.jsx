@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import {
   Home, Calendar, Ticket, Menu, X,
   Shield, HelpCircle, CalendarCheck,
-  CheckSquare, User, LogOut
+  CheckSquare, User, LogOut, LayoutDashboard
 } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import './Sidebar.css';
@@ -21,6 +21,7 @@ const Sidebar = ({ user, theme, onLogout }) => {
       { label: 'Dashboard', icon: <Home size={19} />, path: '/' },
       { label: 'My Events', icon: <CalendarCheck size={19} />, path: '/teacher-events' },
       { label: 'Registrations', icon: <CheckSquare size={19} />, path: '/teacher-registrations' },
+      { label: 'Event Board', icon: <LayoutDashboard size={19} />, path: '/teacher-dashboard' },
       { label: 'Profile', icon: <User size={19} />, path: '/profile' },
     ]
     : [
