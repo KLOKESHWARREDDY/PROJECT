@@ -22,6 +22,8 @@ import Dashboard from './pages/Dashboard';
 import Events from './pages/Events';
 import MyEvents from './pages/MyEvents';
 import TicketConfirmation from './pages/TicketConfirmation';
+import Calendar from './pages/Calendar';
+import StudentReports from './pages/StudentReports';
 
 // Teacher Pages
 import TeacherDashboard from './pages/TeacherDashboard';
@@ -31,6 +33,7 @@ import TeacherMyEvents from './pages/TeacherMyEvents';
 import TeacherEventDetails from './pages/TeacherEventDetails';
 import TeacherRegistrations from './pages/TeacherRegistrations';
 import EventSpecificRegistrations from './pages/EventSpecificRegistrations';
+import ReportsPage from './pages/ReportsPage';
 
 // Shared Pages
 import Profile from './pages/Profile';
@@ -44,7 +47,9 @@ import HelpCenter from './pages/HelpCenter';
 import ForgotPassword from './pages/ForgotPassword';
 import ResetPassword from './pages/ResetPassword';
 import Settings from './pages/Settings';
+import TeacherProfile from './pages/TeacherProfile';
 import LanguageSelection from './pages/LanguageSelection';
+import ReportIssue from './pages/ReportIssue';
 
 import api, { registrationAPI, eventAPI } from './api';
 
@@ -60,9 +65,10 @@ const AppContent = ({
   handleApproveAll, handleRejectAll
 }) => {
   const location = useLocation();
-  const isDark = theme === 'dark';
+  const isDark = ['dark', 'purple-gradient', 'blue-ocean', 'midnight-dark', 'emerald-dark', 'cherry-dark', 'slate-minimal'].includes(theme);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   const [chatOpen, setChatOpen] = useState(false);
+  const [isSidebarExpanded, setIsSidebarExpanded] = useState(false);
 
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth < 768);
@@ -71,10 +77,11 @@ const AppContent = ({
   }, []);
 
   useEffect(() => {
-    document.body.className = isDark ? 'dark-mode' : 'light-mode';
-    document.body.style.backgroundColor = isDark ? '#0f172a' : '#f8fafc';
-    document.body.style.margin = '0';
-  }, [isDark]);
+    // Map 'dark' and 'light' to their existing classes, pass custom themes directly
+    if (theme === 'dark') document.body.className = 'dark-mode';
+    else if (theme === 'light') document.body.className = 'light-mode';
+    else document.body.className = theme;
+  }, [theme]);
 
   const isTeacher = user?.role === 'teacher';
   const showNavOn = ['/', '/events', '/my-events', '/profile', '/dashboard', '/teacher-events', '/teacher-registrations'];
@@ -82,7 +89,7 @@ const AppContent = ({
 
   if (!isAuthenticated) {
     return (
-      <div style={{ minHeight: '100vh', backgroundColor: isDark ? '#0f172a' : '#fff' }}>
+      <div style={{ minHeight: '100vh' }}>
         <Routes>
           <Route path="/" element={<LandingPage />} />
           <Route path="/signin" element={<StudentSignIn onLogin={handleLogin} />} />
@@ -97,12 +104,28 @@ const AppContent = ({
     );
   }
 
+
+
   return (
     <div className="app-layout" style={{ display: 'flex', minHeight: '100vh', width: '100%' }}>
-      {!isMobile && <Sidebar key={user?._id || user?.profileImage || 'sidebar'} user={user} theme={theme} onLogout={handleLogout} />}
+      {!isMobile && (
+        <Sidebar
+          key={user?._id || user?.profileImage || 'sidebar'}
+          user={user}
+          theme={theme}
+          onLogout={handleLogout}
+          isExpanded={isSidebarExpanded}
+          setIsExpanded={setIsSidebarExpanded}
+        />
+      )}
       <div className="main-content" style={{
-        flex: 1, marginLeft: isMobile ? '0px' : '60px', width: isMobile ? '100%' : 'calc(100% - 60px)',
-        backgroundColor: isDark ? '#0f172a' : '#f8fafc', minHeight: '100vh', paddingBottom: '80px', transition: 'margin-left 0.3s ease'
+        flex: 1,
+        marginLeft: isMobile ? '0px' : (isSidebarExpanded ? '240px' : '80px'),
+        width: isMobile ? '100%' : `calc(100% - ${isSidebarExpanded ? '240px' : '80px'})`,
+        minHeight: '100vh',
+        paddingBottom: '80px',
+        boxSizing: 'border-box',
+        transition: 'margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1), width 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
       }}>
         <Routes>
           <Route path="/" element={
@@ -120,9 +143,11 @@ const AppContent = ({
               <Route path="/teacher-events" element={<TeacherMyEvents events={allEvents} theme={theme} />} />
               <Route path="/teacher-event-details/:id" element={<TeacherEventDetails events={allEvents} onDelete={handleDeleteEvent} theme={theme} />} />
               <Route path="/teacher-registrations" element={<TeacherRegistrations registrations={registrations} onApprove={handleApproveReg} onReject={handleRejectReg} onApproveAll={handleApproveAll} onRejectAll={handleRejectAll} theme={theme} />} />
+              <Route path="/reports" element={<ReportsPage theme={theme} events={allEvents} registrations={registrations} />} />
               <Route path="/ticket/:id" element={<TicketConfirmation allEvents={allEvents} theme={theme} onCancel={handleCancel} />} />
               <Route path="/ticket-confirmation/:id" element={<TicketConfirmation allEvents={allEvents} theme={theme} onCancel={handleCancel} />} />
               <Route path="/event-registrations/:id" element={<EventSpecificRegistrations events={allEvents} registrations={registrations} onApprove={handleApproveReg} onReject={handleRejectReg} onApproveAll={handleApproveAll} onRejectAll={handleRejectAll} theme={theme} />} />
+              <Route path="/calendar" element={<Calendar allEvents={allEvents} theme={theme} />} />
             </>
           )}
 
@@ -130,13 +155,16 @@ const AppContent = ({
             <>
               <Route path="/events" element={<Events allEvents={filteredEvents} theme={theme} searchTerm={searchTerm} setSearchTerm={setSearchTerm} onRegister={handleRegister} />} />
               <Route path="/events/:id" element={<EventDetails allEvents={allEvents} registrations={registrations} theme={theme} onRegister={handleRegister} />} />
+              <Route path="/calendar" element={<Calendar allEvents={allEvents} theme={theme} />} />
+              <Route path="/student-reports" element={<StudentReports theme={theme} />} />
               <Route path="/my-events" element={<MyEvents theme={theme} events={registeredEvents} onCancel={handleCancel} />} />
               <Route path="/ticket/:id" element={<TicketConfirmation allEvents={allEvents} theme={theme} onCancel={handleCancel} />} />
               <Route path="/ticket-confirmation/:id" element={<TicketConfirmation allEvents={allEvents} theme={theme} onCancel={handleCancel} />} />
+              <Route path="/report-issue" element={<ReportIssue theme={theme} />} />
             </>
           )}
 
-          <Route path="/profile" element={<Profile user={user} theme={theme} onLogout={handleLogout} setUser={setUser} />} />
+          <Route path="/profile" element={isTeacher ? <TeacherProfile user={user} theme={theme} onLogout={handleLogout} setUser={setUser} /> : <Profile user={user} theme={theme} onLogout={handleLogout} setUser={setUser} />} />
           <Route path="/edit-profile" element={<EditProfile user={user} setUser={setUser} theme={theme} />} />
           <Route path="/change-password" element={<ChangePassword theme={theme} />} />
           <Route path="/settings/theme" element={<ThemeSelection currentTheme={theme} setTheme={setTheme} />} />
@@ -144,7 +172,7 @@ const AppContent = ({
           <Route path="/notifications" element={<Notifications theme={theme} user={user} registrations={registrations} notificationsList={notifications} />} />
           <Route path="/privacy" element={<PrivacyPolicy theme={theme} />} />
           <Route path="/help" element={<HelpCenter theme={theme} openChat={() => setChatOpen(true)} />} />
-          <Route path="/settings" element={<Settings theme={theme} user={user} />} />
+          <Route path="/settings" element={<Settings theme={theme} setTheme={setTheme} user={user} />} />
           <Route path="*" element={<Navigate to="/" />} />
         </Routes>
       </div>
@@ -300,18 +328,40 @@ function App() {
       console.log("Events from API:", response.data)
       console.log("Upcoming events response:", response.data)
 
-      const backendEvents = response.data.map(event => ({
-        id: event._id,
-        _id: event._id,
-        title: event.title,
-        date: new Date(event.date).toISOString().slice(0, 16).replace('T', ' '),
-        location: event.location,
-        category: 'Event',
-        image: event.image || 'https://images.unsplash.com/photo-1485827404703-89b55fcc595e?w=800&q=80',
-        description: event.description,
-        teacher: event.teacher,
-        status: event.status || 'draft'
-      }));
+      const backendEvents = response.data.map(event => {
+        let formattedDate = '';
+        if (event.date) {
+          try {
+            const d = new Date(event.date);
+            if (!isNaN(d)) {
+              formattedDate = d.toISOString().slice(0, 16).replace('T', ' ');
+            } else {
+              formattedDate = event.date;
+            }
+          } catch (e) {
+            formattedDate = event.date;
+          }
+        }
+
+        return {
+          id: event._id,
+          _id: event._id,
+          title: event.title,
+          date: formattedDate,
+          location: event.location,
+          category: event.category || 'Other',
+          image: event.image || 'https://images.unsplash.com/photo-1485827404703-89b55fcc595e?w=800&q=80',
+          description: event.description,
+          teacher: event.teacher ? {
+            _id: event.teacher._id,
+            name: event.teacher.name,
+            email: event.teacher.email,
+            profileImage: event.teacher.profileImage || null,
+          } : null,
+          status: event.status || 'draft',
+          createdAt: event.createdAt
+        };
+      });
 
       setAllEvents(backendEvents);
       console.log('[App.js] Events fetched successfully:', backendEvents.length);

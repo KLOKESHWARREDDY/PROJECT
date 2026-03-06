@@ -108,10 +108,10 @@ const ResetPassword = () => {
       fontSize: '14px',
       textAlign: 'center',
       marginTop: '20px',
-      backgroundColor: message?.includes('successful') 
+      backgroundColor: message?.includes('successful')
         ? (isDark ? 'rgba(16, 185, 129, 0.2)' : '#dcfce7')
         : (isDark ? 'rgba(239, 68, 68, 0.2)' : '#fee2e2'),
-      color: message?.includes('successful') 
+      color: message?.includes('successful')
         ? (isDark ? '#6ee7b7' : '#16a34a')
         : (isDark ? '#fca5a5' : '#dc2626')
     },

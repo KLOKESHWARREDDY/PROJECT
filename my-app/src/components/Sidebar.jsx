@@ -1,14 +1,29 @@
 import React, { useState, useEffect } from 'react';
-import { Home, Calendar, Ticket, Menu, Shield, HelpCircle, CalendarCheck, CheckSquare, User, LogOut } from 'lucide-react';
+import {
+  Home,
+  Calendar,
+  ClipboardList,
+  CalendarDays,
+  BarChart3,
+  Settings,
+  HelpCircle,
+  LogOut,
+  Menu,
+  Shield,
+  CalendarCheck,
+  CheckSquare,
+  User,
+  PlusCircle,
+  Edit,
+  Users
+} from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import './Sidebar.css';
 
-const Sidebar = ({ user, theme, onLogout }) => {
+const Sidebar = ({ user, theme, onLogout, isExpanded, setIsExpanded }) => {
   const navigate = useNavigate();
   const location = useLocation();
-  const isDark = theme === 'dark';
-  const [isExpanded, setIsExpanded] = useState(false);
   const [iconSize, setIconSize] = useState(20);
-  const [imageError, setImageError] = useState(false);
 
   useEffect(() => {
     const handleResize = () => {
@@ -19,29 +34,41 @@ const Sidebar = ({ user, theme, onLogout }) => {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  // Handle case where user is null or undefined
   const isTeacher = user?.role === 'teacher';
 
-  const menuItems = isTeacher
-    ? [
-      { label: 'Dashboard', icon: <Home size={iconSize} />, path: '/' },
-      { label: 'My Events', icon: <CalendarCheck size={iconSize} />, path: '/teacher-events' },
-      { label: 'Registrations', icon: <CheckSquare size={iconSize} />, path: '/teacher-registrations' },
-      { label: 'Profile', icon: <User size={iconSize} />, path: '/profile' },
-    ]
-    : [
-      { label: 'Dashboard', icon: <Home size={iconSize} />, path: '/' },
-      { label: 'Events', icon: <Calendar size={iconSize} />, path: '/events' },
-      { label: 'My Tickets', icon: <Ticket size={iconSize} />, path: '/my-events' },
-      { label: 'Profile', icon: <User size={iconSize} />, path: '/profile' },
-    ];
-
-  const footerItems = [
-    { label: 'Privacy Policy', icon: <Shield size={iconSize} />, path: '/privacy' },
-    { label: 'Help Center', icon: <HelpCircle size={iconSize} />, path: '/help' },
+  // TEACHER MENU - Updated to modern 10-item layout (8 main + 2 preference/footer)
+  const teacherMenuItems = [
+    { label: 'Dashboard', icon: <Home size={iconSize} />, path: '/' },
+    { label: 'Create Event', icon: <PlusCircle size={iconSize} />, path: '/create-event' },
+    { label: 'Manage Events', icon: <Edit size={iconSize} />, path: '/teacher-events' },
+    { label: 'Student Registrations', icon: <Users size={iconSize} />, path: '/teacher-registrations' },
+    { label: 'Event Reports', icon: <BarChart3 size={iconSize} />, path: '/reports' },
+    { label: 'Calendar', icon: <Calendar size={iconSize} />, path: '/calendar' },
   ];
 
-  // ✅ GET FULL IMAGE URL
+  // STUDENT MENU - Updated to 10 distinct items
+  const studentMenuItems = [
+    { label: 'Dashboard', icon: <Home size={iconSize} />, path: '/' },
+    { label: 'Events', icon: <Calendar size={iconSize} />, path: '/events' },
+    { label: 'My Registrations', icon: <ClipboardList size={iconSize} />, path: '/my-events' },
+    { label: 'Calendar', icon: <CalendarDays size={iconSize} />, path: '/calendar' }, // Placeholder route
+    { label: 'Reports', icon: <BarChart3 size={iconSize} />, path: '/student-reports' }, // Placeholder route
+  ];
+
+  const menuItems = isTeacher ? teacherMenuItems : studentMenuItems;
+
+  // Secondary/Footer items specific to Student vs Teacher
+  const footerItems = isTeacher
+    ? [
+      { label: 'Settings', icon: <Settings size={iconSize} />, path: '/settings' },
+      { label: 'Privacy Policy', icon: <Shield size={iconSize} />, path: '/privacy' },
+      { label: 'Help Center', icon: <HelpCircle size={iconSize} />, path: '/help' },
+    ]
+    : [
+      { label: 'Settings', icon: <Settings size={iconSize} />, path: '/settings' },
+      { label: 'Help Center', icon: <HelpCircle size={iconSize} />, path: '/help' },
+    ];
+
   const getImageUrl = (url) => {
     if (!url) return 'https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png';
     if (url.startsWith('http')) return url;
@@ -49,108 +76,88 @@ const Sidebar = ({ user, theme, onLogout }) => {
     return url;
   };
 
-  // ✅ HANDLE IMAGE ERROR
-  const handleImageError = () => {
-    setImageError(true);
-  };
-
-  const styles = {
-    sidebar: {
-      height: '100vh',
-      width: isExpanded ? 220 : 60,
-      minWidth: isExpanded ? '220px' : '60px',
-      backgroundColor: isDark ? '#1e293b' : '#fff',
-      borderRight: isDark ? '1px solid #334155' : '1px solid #e2e8f0',
-      display: 'flex', flexDirection: 'column', padding: '16px 0',
-      position: 'fixed', left: 0, top: 0, zIndex: 1000,
-      transition: 'width 0.2s ease', overflowX: 'hidden',
-    },
-    topSection: {
-      display: 'flex', alignItems: 'center', gap: 12, marginBottom: 20,
-      paddingLeft: isExpanded ? 16 : 0, justifyContent: isExpanded ? 'flex-start' : 'center',
-      height: 48
-    },
-    menuBtn: {
-      cursor: 'pointer', color: isDark ? '#fff' : '#1e293b',
-      display: 'flex', alignItems: 'center', justifyContent: 'center',
-      width: 36, height: 36, minWidth: 30, minHeight: 30
-    },
-    logoText: {
-      fontSize: 18, fontWeight: '800', color: '#6366f1',
-      whiteSpace: 'nowrap', opacity: isExpanded ? 1 : 0, display: isExpanded ? 'block' : 'none'
-    },
-    nav: { flex: 1, display: 'flex', flexDirection: 'column', gap: 4 },
-    navItem: (isActive) => ({
-      display: 'flex', alignItems: 'center', gap: 12,
-      width: isExpanded ? '90%' : '100%', margin: isExpanded ? '0 auto' : '0',
-      padding: isExpanded ? '10px 12px' : '12px 0',
-      borderRadius: isExpanded ? 10 : 0, cursor: 'pointer',
-      backgroundColor: isActive ? (isDark ? '#334155' : '#eff6ff') : 'transparent',
-      borderLeft: (!isExpanded && isActive) ? '4px solid #6366f1' : '4px solid transparent',
-      color: isActive ? '#6366f1' : '#64748b',
-      justifyContent: isExpanded ? 'flex-start' : 'center',
-      transition: 'all 0.2s'
-    }),
-    navLabel: {
-      fontWeight: '600', fontSize: 14, display: isExpanded ? 'block' : 'none', whiteSpace: 'nowrap'
-    }
-  };
-
   return (
-    <div style={styles.sidebar}>
-      <div style={styles.topSection}>
-        <div style={styles.menuBtn} onClick={() => setIsExpanded(!isExpanded)}>
-          <Menu size={iconSize} />
+    <div className={`sidebar-container ${isExpanded ? 'expanded' : 'collapsed'}`} style={{ width: isExpanded ? 260 : 80 }}>
+      {/* Glow effects for dark mode / SaaS aesthetic */}
+      <div className="sidebar-glow"></div>
+
+      {/* Header with Logo */}
+      <div className="sidebar-header">
+        <div className="menu-toggle" onClick={() => setIsExpanded(!isExpanded)}>
+          <Menu size={24} />
         </div>
-        <div style={styles.logoText}>EventSphere</div>
+        <div className="sidebar-logo" style={{ opacity: isExpanded ? 1 : 0, width: isExpanded ? 'auto' : 0 }}>
+          EventSphere
+        </div>
       </div>
 
-      <div style={styles.nav}>
+      {/* Main Navigation */}
+      <nav className="sidebar-nav">
+        <div className="nav-section-title" style={{ opacity: isExpanded ? 1 : 0, display: isExpanded ? 'block' : 'none' }}>
+          Menu
+        </div>
+
         {menuItems.map((item) => {
-          const isActive = location.pathname === item.path;
+          // Map placeholder routes to actual existing routes for now to avoid errors
+          const effectivePath = item.path;
+
+          const isActive = location.pathname === item.path || location.pathname === effectivePath;
+
           return (
             <div
               key={item.label}
-              style={styles.navItem(isActive)}
-              onClick={() => navigate(item.path)}
+              className={`nav-item ${isActive ? 'active' : ''}`}
+              onClick={() => navigate(effectivePath)}
               title={!isExpanded ? item.label : ''}
             >
-              <div style={{ display: 'flex', justifyContent: 'center', minWidth: '20px' }}>{item.icon}</div>
-              <span style={styles.navLabel}>{item.label}</span>
+              <div className="nav-icon">{item.icon}</div>
+              <span className="nav-label" style={{ opacity: isExpanded ? 1 : 0, width: isExpanded ? 'auto' : 0 }}>
+                {item.label}
+              </span>
             </div>
           );
         })}
 
-        <div style={{ height: '1px', backgroundColor: isDark ? '#334155' : '#e2e8f0', margin: '12px 16px' }} />
+        <div className="sidebar-divider" />
 
-        {footerItems.map((item) => (
-          <div
-            key={item.label}
-            style={styles.navItem(location.pathname === item.path)}
-            onClick={() => navigate(item.path)}
-            title={!isExpanded ? item.label : ''}
-          >
-            <div style={{ display: 'flex', justifyContent: 'center', minWidth: '20px' }}>{item.icon}</div>
-            <span style={styles.navLabel}>{item.label}</span>
-          </div>
-        ))}
+        <div className="nav-section-title" style={{ opacity: isExpanded ? 1 : 0, display: isExpanded ? 'block' : 'none' }}>
+          Preferences
+        </div>
 
+        {footerItems.map((item) => {
+          const isActive = location.pathname === item.path;
+          return (
+            <div
+              key={item.label}
+              className={`nav-item ${isActive ? 'active' : ''}`}
+              onClick={() => navigate(item.path)}
+              title={!isExpanded ? item.label : ''}
+            >
+              <div className="nav-icon">{item.icon}</div>
+              <span className="nav-label" style={{ opacity: isExpanded ? 1 : 0, width: isExpanded ? 'auto' : 0 }}>
+                {item.label}
+              </span>
+            </div>
+          );
+        })}
+
+        {/* Ensure LogOut is the 10th functional item for students */}
         <div
-          style={styles.navItem(false)}
+          className="nav-item logout-item"
           onClick={() => {
             onLogout();
             navigate('/');
           }}
           title={!isExpanded ? 'Log Out' : ''}
         >
-          <div style={{ display: 'flex', justifyContent: 'center', minWidth: '20px' }}>
-            <LogOut size={iconSize} color="#ef4444" />
+          <div className="nav-icon">
+            <LogOut size={iconSize} />
           </div>
-          <span style={{ ...styles.navLabel, color: '#ef4444' }}>Log Out</span>
+          <span className="nav-label" style={{ opacity: isExpanded ? 1 : 0, width: isExpanded ? 'auto' : 0 }}>
+            Log Out
+          </span>
         </div>
-      </div>
-
-      {/* User Section Removed as per request */}
+      </nav>
     </div>
   );
 };

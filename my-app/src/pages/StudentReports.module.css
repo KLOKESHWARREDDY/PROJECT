@@ -1,0 +1,363 @@
+/* ── Modern SaaS Reports CSS ── */
+
+.reportsContainer {
+    padding: 32px 24px;
+    max-width: 1400px;
+    margin: 0 auto;
+    min-height: calc(100vh - 80px);
+}
+
+.headerArea {
+    margin-bottom: 32px;
+}
+
+.titleWrapper {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 8px;
+}
+
+.titleIcon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 48px;
+    height: 48px;
+    background: var(--treg-primary-glow);
+    color: var(--treg-primary);
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(139, 92, 246, 0.2);
+}
+
+.pageTitle {
+    font-size: 2.25rem;
+    font-weight: 800;
+    margin: 0;
+    color: var(--text-primary);
+    background: linear-gradient(135deg, var(--text-primary), var(--treg-primary));
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    letter-spacing: -0.5px;
+}
+
+.pageSubtitle {
+    font-size: 1rem;
+    color: var(--text-secondary);
+    margin: 0;
+}
+
+/* ── Summary Stats Grid ── */
+.statsGrid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 24px;
+    margin-bottom: 32px;
+}
+
+.statCard {
+    background: var(--treg-card-bg);
+    border: 1px solid var(--treg-glass-border);
+    border-radius: var(--treg-radius-lg);
+    padding: 24px;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.statCard:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.05);
+    border-color: rgba(139, 92, 246, 0.3);
+}
+
+.statIconWrapper {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 56px;
+    height: 56px;
+    border-radius: 12px;
+    flex-shrink: 0;
+}
+
+.statInfo {
+    display: flex;
+    flex-direction: column;
+    z-index: 1;
+}
+
+.statLabel {
+    margin: 0 0 4px 0;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.statValue {
+    margin: 0;
+    font-size: 2rem;
+    font-weight: 800;
+    color: var(--text-primary);
+}
+
+.emphasizedCard {
+    background: linear-gradient(135deg, var(--treg-card-bg), rgba(139, 92, 246, 0.05));
+    border-color: rgba(139, 92, 246, 0.2);
+}
+
+.emphasizedCard .statValue {
+    background: linear-gradient(135deg, var(--treg-primary), var(--treg-secondary));
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.sparkline,
+.sparklineActive {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: var(--treg-glass-border);
+}
+
+.sparklineActive {
+    background: linear-gradient(90deg, var(--treg-primary), var(--treg-secondary));
+}
+
+/* ── Charts Grid ── */
+.chartsGrid {
+    display: grid;
+    grid-template-columns: 3fr 2fr;
+    gap: 24px;
+    margin-bottom: 32px;
+}
+
+.chartCard {
+    background: var(--treg-card-bg);
+    border: 1px solid var(--treg-glass-border);
+    border-radius: var(--treg-radius-lg);
+    padding: 24px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
+    backdrop-filter: blur(10px);
+}
+
+.chartHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+}
+
+.chartHeader h3 {
+    margin: 0;
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.chartBadge {
+    font-size: 0.75rem;
+    padding: 4px 10px;
+    background: var(--treg-glass-bg);
+    color: var(--text-secondary);
+    border-radius: 12px;
+    border: 1px solid var(--treg-glass-border);
+    font-weight: 600;
+}
+
+.chartWrapper {
+    height: 300px;
+    width: 100%;
+}
+
+/* Custom Recharts Tooltip */
+.chartTooltip {
+    background: var(--bg-primary);
+    border: 1px solid var(--treg-glass-border);
+    border-radius: var(--treg-radius-sm);
+    padding: 12px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.tooltipLabel {
+    margin: 0 0 8px 0;
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+}
+
+.tooltipValue {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.tooltipDot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    display: inline-block;
+}
+
+/* ── Table Section ── */
+.tableCard {
+    background: var(--treg-card-bg);
+    border: 1px solid var(--treg-glass-border);
+    border-radius: var(--treg-radius-lg);
+    padding: 24px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
+}
+
+.cardHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+}
+
+.cardHeader h3 {
+    margin: 0;
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.viewAllBtn {
+    background: transparent;
+    border: none;
+    color: var(--treg-primary);
+    font-weight: 600;
+    font-size: 0.9rem;
+    cursor: pointer;
+    padding: 8px 16px;
+    border-radius: var(--treg-radius-sm);
+    transition: all 0.2s ease;
+}
+
+.viewAllBtn:hover {
+    background: var(--treg-primary-glow);
+}
+
+.tableContainer {
+    overflow-x: auto;
+}
+
+.dataTable {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.dataTable th {
+    text-align: left;
+    padding: 16px;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--treg-text-muted);
+    border-bottom: 1px solid var(--treg-glass-border);
+    font-weight: 600;
+}
+
+.dataTable th svg {
+    vertical-align: middle;
+    margin-right: 6px;
+    margin-bottom: 2px;
+}
+
+.dataTable td {
+    padding: 16px;
+    border-bottom: 1px solid var(--treg-glass-border);
+    font-size: 0.95rem;
+    color: var(--text-secondary);
+}
+
+.dataTable tbody tr {
+    transition: background 0.2s ease;
+}
+
+.dataTable tbody tr:hover {
+    background: rgba(139, 92, 246, 0.03);
+}
+
+.dataTable tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.boldCell {
+    font-weight: 600;
+    color: var(--text-primary) !important;
+}
+
+.dateCell {
+    font-family: monospace;
+    color: var(--text-secondary);
+}
+
+.statusPill,
+.certPill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+.statusCompleted {
+    background: rgba(16, 185, 129, 0.1);
+    color: #10b981;
+}
+
+.statusRegistered {
+    background: rgba(59, 130, 246, 0.1);
+    color: #3b82f6;
+}
+
+.certAvailable {
+    background: rgba(139, 92, 246, 0.1);
+    color: var(--treg-primary);
+    border: 1px solid rgba(139, 92, 246, 0.2);
+}
+
+.certPending {
+    background: var(--treg-glass-bg);
+    color: var(--text-secondary);
+    border: 1px dashed var(--treg-glass-border);
+}
+
+/* ── Responsive ── */
+@media (max-width: 1024px) {
+    .statsGrid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .chartsGrid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 600px) {
+    .statsGrid {
+        grid-template-columns: 1fr;
+    }
+
+    .statCard {
+        padding: 20px;
+    }
+}

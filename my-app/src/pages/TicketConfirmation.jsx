@@ -9,7 +9,7 @@ import html2canvas from 'html2canvas';
 const TicketConfirmation = ({ allEvents, theme, onCancel }) => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const isDark = theme === 'dark';
+  const isDark = ['dark', 'purple-gradient', 'blue-ocean', 'midnight-dark', 'emerald-dark', 'cherry-dark', 'slate-minimal'].includes(theme);
 
   // State for ticket data
   const [ticket, setTicket] = useState(null);
@@ -63,7 +63,7 @@ const TicketConfirmation = ({ allEvents, theme, onCancel }) => {
         justifyContent: 'center',
         fontFamily: "'Inter', sans-serif"
       }}>
-        <div style={{ color: isDark ? '#fff' : '#1e293b' }}>Loading ticket...</div>
+        <div style={{ color: 'var(--text-primary)' }}>Loading ticket...</div>
       </div>
     );
   }
@@ -110,7 +110,7 @@ const TicketConfirmation = ({ allEvents, theme, onCancel }) => {
         justifyContent: 'center',
         fontFamily: "'Inter', sans-serif"
       }}>
-        <div style={{ color: isDark ? '#fff' : '#1e293b' }}>No ticket found</div>
+        <div style={{ color: 'var(--text-primary)' }}>No ticket found</div>
       </div>
     );
   }
@@ -153,7 +153,7 @@ const TicketConfirmation = ({ allEvents, theme, onCancel }) => {
     // Page Background
     container: {
       minHeight: '100vh',
-      backgroundColor: isDark ? '#0f172a' : '#f1f5f9',
+      backgroundColor: 'var(--bg-primary)',
       display: 'flex',
       flexDirection: 'column',
       alignItems: 'center',
@@ -184,7 +184,9 @@ const TicketConfirmation = ({ allEvents, theme, onCancel }) => {
       width: '80px', height: '80px', borderRadius: '16px',
       border: '4px solid rgba(255,255,255,0.2)',
       objectFit: 'cover', marginBottom: '15px',
-      boxShadow: '0 4px 15px rgba(0,0,0,0.2)'
+      boxShadow: isDark
+        ? '0 8px 32px rgba(99, 102, 241, 0.3), 0 4px 12px rgba(168, 85, 247, 0.25)'
+        : '0 8px 32px rgba(99, 102, 241, 0.3), 0 4px 12px rgba(168, 85, 247, 0.25)'
     },
     eventTitle: { fontSize: '22px', fontWeight: '800', lineHeight: '1.3', marginBottom: '8px' },
     eventCategory: {
@@ -218,11 +220,11 @@ const TicketConfirmation = ({ allEvents, theme, onCancel }) => {
     },
     notchLeft: {
       position: 'absolute', top: '-10px', left: '-10px', width: '20px', height: '20px',
-      borderRadius: '50%', backgroundColor: isDark ? '#0f172a' : '#f1f5f9', zIndex: 10
+      borderRadius: '50%', backgroundColor: 'var(--bg-primary)', zIndex: 10
     },
     notchRight: {
       position: 'absolute', top: '-10px', right: '-10px', width: '20px', height: '20px',
-      borderRadius: '50%', backgroundColor: isDark ? '#0f172a' : '#f1f5f9', zIndex: 10
+      borderRadius: '50%', backgroundColor: 'var(--bg-primary)', zIndex: 10
     },
 
     // 5. BOTTOM PART (QR Code)
@@ -254,7 +256,7 @@ const TicketConfirmation = ({ allEvents, theme, onCancel }) => {
         <div style={{ cursor: 'pointer', padding: '10px', background: '#fff', borderRadius: '12px' }} onClick={() => navigate(-1)}>
           <ArrowLeft size={20} color="#1e293b" />
         </div>
-        <span style={{ marginLeft: '15px', fontWeight: '700', fontSize: '18px', color: isDark ? '#fff' : '#1e293b' }}>Ticket Details</span>
+        <span style={{ marginLeft: '15px', fontWeight: '700', fontSize: '18px', color: 'var(--text-primary)' }}>Ticket Details</span>
       </div>
 
       {/* The Ticket Card */}

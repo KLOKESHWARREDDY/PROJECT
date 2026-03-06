@@ -1,32 +1,43 @@
 import React from 'react';
 
 const languages = [
-  { code: 'English', name: 'English', flag: '🇺🇸' },
-  { code: 'Hindi', name: 'हिंदी (Hindi)', flag: '🇮🇳' },
-  { code: 'Spanish', name: 'Español (Spanish)', flag: '🇪🇸' },
-  { code: 'French', name: 'Français (French)', flag: '🇫🇷' },
-  { code: 'German', name: 'Deutsch (German)', flag: '🇩🇪' },
-  { code: 'Chinese', name: '中文 (Chinese)', flag: '🇨🇳' },
-  { code: 'Japanese', name: '日本語 (Japanese)', flag: '🇯🇵' },
-  { code: 'Korean', name: '한국어 (Korean)', flag: '🇰🇷' },
+  { code: 'en', name: 'English (US)', flag: '🇺🇸' },
+  { code: 'hi', name: 'हिंदी (Hindi)', flag: '🇮🇳' },
+  { code: 'te', name: 'తెలుగు (Telugu)', flag: '🇮🇳' },
+  { code: 'ta', name: 'தமிழ் (Tamil)', flag: '🇮🇳' },
+  { code: 'kn', name: 'ಕನ್ನಡ (Kannada)', flag: '🇮🇳' },
+  { code: 'ml', name: 'മലയാളം (Malayalam)', flag: '🇮🇳' },
+  { code: 'mr', name: 'मराठी (Marathi)', flag: '🇮🇳' },
+  { code: 'bn', name: 'বাংলা (Bengali)', flag: '🇮🇳' },
+  { code: 'gu', name: 'ગુજરાતી (Gujarati)', flag: '🇮🇳' },
+  { code: 'pa', name: 'ਪੰਜਾਬੀ (Punjabi)', flag: '🇮🇳' },
+  { code: 'or', name: 'ଓଡ଼ିଆ (Odia)', flag: '🇮🇳' },
+  { code: 'ur', name: 'اردو (Urdu)', flag: '🇮🇳' },
+  { code: 'as', name: 'অসমীয়া (Assamese)', flag: '🇮🇳' },
+  { code: 'es', name: 'Español (Spanish)', flag: '🇪🇸' },
+  { code: 'fr', name: 'Français (French)', flag: '🇫🇷' },
+  { code: 'de', name: 'Deutsch (German)', flag: '🇩🇪' },
+  { code: 'zh', name: '中文 (Chinese)', flag: '🇨🇳' },
+  { code: 'ja', name: '日本語 (Japanese)', flag: '🇯🇵' },
+  { code: 'ko', name: '한국어 (Korean)', flag: '🇰🇷' },
 ];
 
 const LanguageSelection = ({ currentLanguage, setLanguage, theme }) => {
-  const isDark = theme === 'dark';
+  const isDark = ['dark', 'purple-gradient', 'blue-ocean', 'midnight-dark', 'emerald-dark', 'cherry-dark', 'slate-minimal'].includes(theme);
 
   return (
-    <div className="settings-container" style={{ 
-      backgroundColor: isDark ? '#0f172a' : '#f8fafc',
+    <div className="settings-container" style={{
+      backgroundColor: 'var(--bg-primary)',
       minHeight: '100vh',
       padding: '20px'
     }}>
-      <h2 style={{ 
-        color: isDark ? '#f1f5f9' : '#1e293b',
+      <h2 style={{
+        color: 'var(--text-primary)',
         marginBottom: '24px'
       }}>
         Select Language / भाषा चुनें
       </h2>
-      
+
       <div className="settings-list">
         {languages.map((lang) => (
           <div
@@ -34,27 +45,28 @@ const LanguageSelection = ({ currentLanguage, setLanguage, theme }) => {
             className={`settings-item ${currentLanguage === lang.code ? 'active' : ''}`}
             onClick={() => setLanguage(lang.code)}
             style={{
-              backgroundColor: currentLanguage === lang.code 
-                ? (isDark ? '#1e293b' : '#e0e7ff') 
-                : (isDark ? '#1e293b' : '#fff'),
-              border: currentLanguage === lang.code 
-                ? '2px solid #6366f1' 
+              backgroundColor: currentLanguage === lang.code
+                ? 'var(--treg-glass-bg)'
+                : 'var(--treg-card-bg)',
+              border: currentLanguage === lang.code
+                ? '2px solid var(--treg-primary)'
                 : '2px solid transparent',
               cursor: 'pointer',
-              transition: 'all 0.2s ease'
+              transition: 'all 0.2s ease',
+              boxShadow: 'var(--treg-shadow)'
             }}
           >
             <span style={{ fontSize: '24px', marginRight: '12px' }}>{lang.flag}</span>
-            <span style={{ 
-              color: isDark ? '#f1f5f9' : '#1e293b',
+            <span style={{
+              color: 'var(--text-primary)',
               fontWeight: currentLanguage === lang.code ? '600' : '400'
             }}>
               {lang.name}
             </span>
             {currentLanguage === lang.code && (
-              <span style={{ 
-                marginLeft: 'auto', 
-                color: '#6366f1',
+              <span style={{
+                marginLeft: 'auto',
+                color: 'var(--treg-primary)',
                 fontSize: '20px'
               }}>
                 ✓
@@ -63,9 +75,9 @@ const LanguageSelection = ({ currentLanguage, setLanguage, theme }) => {
           </div>
         ))}
       </div>
-      
-      <p style={{ 
-        color: isDark ? '#94a3b8' : '#64748b',
+
+      <p style={{
+        color: 'var(--text-muted)',
         marginTop: '24px',
         textAlign: 'center'
       }}>

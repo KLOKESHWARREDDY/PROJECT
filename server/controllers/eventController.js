@@ -46,7 +46,7 @@ export const createEvent = async (req, res) => {
       publishedAt: eventStatus === 'published' ? new Date() : null,
     });
 
-    await event.populate('teacher', 'name email');
+    await event.populate('teacher', 'name email profileImage');
 
     res.status(201).json(event);
 
@@ -70,7 +70,7 @@ export const getEvents = async (req, res) => {
       status: 'published',
       isDeleted: false
     })
-      .populate('teacher', 'name email')
+      .populate('teacher', 'name email profileImage')
       .sort({ publishedAt: -1, createdAt: -1 });
 
     console.log("Events from DB (public):", events.length);
@@ -104,7 +104,7 @@ export const getTeacherEvents = async (req, res) => {
         { isDeleted: false }
       ]
     })
-      .populate('teacher', 'name email')
+      .populate('teacher', 'name email profileImage')
       .sort({ updatedAt: -1, createdAt: -1 });
 
     console.log("Teacher events found:", events.length);
@@ -183,7 +183,7 @@ export const updateEvent = async (req, res) => {
       query,
       { $set: updates },
       { new: true, runValidators: true }
-    ).populate('teacher', 'name email');
+    ).populate('teacher', 'name email profileImage');
 
     if (!event) {
       return res.status(404).json({ message: 'Event not found' });
@@ -310,7 +310,7 @@ export const publishEvent = async (req, res) => {
         }
       },
       { new: true }
-    ).populate('teacher', 'name email');
+    ).populate('teacher', 'name email profileImage');
 
     if (!event) {
       return res.status(404).json({ message: 'Event not found or unauthorized' });
@@ -367,7 +367,7 @@ export const unpublishEvent = async (req, res) => {
         }
       },
       { new: true }
-    ).populate('teacher', 'name email');
+    ).populate('teacher', 'name email profileImage');
 
     if (!event) {
       return res.status(404).json({ message: 'Event not found or unauthorized' });
@@ -405,7 +405,7 @@ export const completeEvent = async (req, res) => {
         }
       },
       { new: true }
-    ).populate('teacher', 'name email');
+    ).populate('teacher', 'name email profileImage');
 
     if (!event) {
       return res.status(404).json({ message: 'Event not found or unauthorized' });
@@ -454,7 +454,7 @@ export const schedulePublishEvent = async (req, res) => {
         }
       },
       { new: true }
-    ).populate('teacher', 'name email');
+    ).populate('teacher', 'name email profileImage');
 
     if (!event) {
       return res.status(404).json({ message: 'Event not found or unauthorized' });

@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { ArrowLeft, Check, X, User, Mail, Filter, Search } from 'lucide-react';
+import { ArrowLeft, Check, X, User, Mail, Filter, Search, Eye } from 'lucide-react';
 import ConfirmationModal from '../components/ConfirmationModal';
 
 const EventSpecificRegistrations = ({ events, registrations = [], onApprove, onReject, onApproveAll, onRejectAll, theme }) => {
   const navigate = useNavigate();
   const { id } = useParams(); // Get ID from URL
-  const isDark = theme === 'dark';
+  const isDark = ['dark', 'purple-gradient', 'blue-ocean', 'midnight-dark', 'emerald-dark', 'cherry-dark', 'slate-minimal'].includes(theme);
   const [relatedRegistrations, setRelatedRegistrations] = useState([]);
 
   // UI State
@@ -74,15 +74,15 @@ const EventSpecificRegistrations = ({ events, registrations = [], onApprove, onR
       padding: isMobile ? '4vw' : '2vw',
       maxWidth: isMobile ? '100vw' : '60vw',
       margin: '0 auto',
-      backgroundColor: isDark ? '#0f172a' : '#f8fafc',
+      backgroundColor: 'var(--bg-primary)',
       minHeight: '100vh',
       fontFamily: "'Inter', sans-serif",
-      color: isDark ? '#fff' : '#1e293b'
+      color: 'var(--text-primary)'
     },
     header: { display: 'flex', alignItems: 'center', gap: '2vw', marginBottom: '3vh' },
     backBtn: {
       background: 'none', border: 'none', cursor: 'pointer',
-      color: isDark ? '#fff' : '#64748b', display: 'flex', alignItems: 'center'
+      color: 'var(--text-primary)', display: 'flex', alignItems: 'center'
     },
     pageTitle: { fontSize: isMobile ? '5vw' : '1.8vw', fontWeight: '800' },
     subTitle: { fontSize: isMobile ? '3.5vw' : '1vw', color: '#6366f1', marginLeft: 'auto', fontWeight: '600' },
@@ -99,16 +99,16 @@ const EventSpecificRegistrations = ({ events, registrations = [], onApprove, onR
     // Left side tabs
     filterContainer: {
       display: 'flex', gap: '1vw',
-      padding: '0.5vh', backgroundColor: isDark ? '#1e293b' : '#fff',
+      padding: '0.5vh', backgroundColor: 'var(--card-bg)',
       borderRadius: '2vw', width: 'fit-content',
-      border: isDark ? '1px solid #334155' : '1px solid #e2e8f0'
+      border: '1px solid var(--border-color)'
     },
     filterTab: (isActive) => ({
       padding: isMobile ? '1vh 4vw' : '0.8vh 2vw',
       borderRadius: '1.5vw', border: 'none', cursor: 'pointer',
       fontSize: isMobile ? '3.5vw' : '0.9vw', fontWeight: '600',
       backgroundColor: isActive ? '#4f46e5' : 'transparent',
-      color: isActive ? '#fff' : (isDark ? '#94a3b8' : '#64748b'),
+      color: isActive ? '#fff' : 'var(--text-secondary)',
       transition: 'all 0.2s'
     }),
 
@@ -122,8 +122,8 @@ const EventSpecificRegistrations = ({ events, registrations = [], onApprove, onR
       border: isDark ? '1px solid #334155' : '1px solid #e2e8f0',
       cursor: 'pointer',
       display: 'flex', alignItems: 'center', justifyContent: 'center',
-      backgroundColor: isActive ? '#4f46e5' : (isDark ? '#1e293b' : '#fff'),
-      color: isActive ? '#fff' : (isDark ? '#cbd5e1' : '#64748b'),
+      backgroundColor: isActive ? '#4f46e5' : 'var(--card-bg)',
+      color: isActive ? '#fff' : 'var(--text-muted)',
       transition: 'all 0.2s'
     }),
 
@@ -137,9 +137,9 @@ const EventSpecificRegistrations = ({ events, registrations = [], onApprove, onR
       width: '100%',
       padding: isMobile ? '1.5vh 3vw' : '1.2vh 1.5vw',
       borderRadius: '1vw',
-      border: isDark ? '1px solid #334155' : '1px solid #e2e8f0',
-      backgroundColor: isDark ? '#1e293b' : '#fff',
-      color: isDark ? '#fff' : '#1e293b',
+      border: '1px solid var(--border-color)',
+      backgroundColor: 'var(--card-bg)',
+      color: 'var(--text-primary)',
       outline: 'none',
       fontSize: isMobile ? '3.5vw' : '0.9vw'
     },
@@ -156,28 +156,28 @@ const EventSpecificRegistrations = ({ events, registrations = [], onApprove, onR
       borderColor: isActive ? '#4f46e5' : (isDark ? '#334155' : '#e2e8f0'),
       cursor: 'pointer',
       fontSize: isMobile ? '3vw' : '0.8vw',
-      backgroundColor: isActive ? 'rgba(79, 70, 229, 0.1)' : (isDark ? '#1e293b' : '#fff'),
-      color: isActive ? '#4f46e5' : (isDark ? '#94a3b8' : '#64748b'),
+      backgroundColor: isActive ? 'rgba(79, 70, 229, 0.1)' : 'var(--card-bg)',
+      color: isActive ? '#4f46e5' : 'var(--text-secondary)',
       transition: 'all 0.2s'
     }),
 
     listContainer: { display: 'flex', flexDirection: 'column', gap: '2vh' },
     card: {
-      backgroundColor: isDark ? '#1e293b' : '#fff',
+      backgroundColor: 'var(--card-bg)',
       borderRadius: isMobile ? '3vw' : '1vw',
       padding: isMobile ? '3vw' : '1.2vw',
       display: 'flex', alignItems: 'center', gap: '3vw',
-      border: isDark ? '1px solid #334155' : '1px solid #e2e8f0',
+      border: '1px solid var(--border-color)',
       boxShadow: '0 2px 4px rgba(0,0,0,0.02)'
     },
     avatarBox: {
       width: isMobile ? '12vw' : '3.5vw', height: isMobile ? '12vw' : '3.5vw',
-      borderRadius: '50%', backgroundColor: isDark ? '#334155' : '#f1f5f9',
+      borderRadius: '50%', backgroundColor: 'var(--bg-tertiary)',
       display: 'flex', alignItems: 'center', justifyContent: 'center',
-      color: '#64748b', fontSize: isMobile ? '4.5vw' : '1.2vw', fontWeight: 'bold'
+      color: 'var(--text-muted)', fontSize: isMobile ? '4.5vw' : '1.2vw', fontWeight: 'bold'
     },
     cardInfo: { flex: 1 },
-    name: { fontSize: isMobile ? '4vw' : '1.1vw', fontWeight: 'bold', color: isDark ? '#fff' : '#1e293b' },
+    name: { fontSize: isMobile ? '4vw' : '1.1vw', fontWeight: 'bold', color: 'var(--text-primary)' },
     detail: { fontSize: isMobile ? '3vw' : '0.85vw', color: '#64748b', display: 'flex', alignItems: 'center', gap: '5px', marginTop: '4px' },
 
     actions: { display: 'flex', gap: '1vw' },
@@ -333,7 +333,29 @@ const EventSpecificRegistrations = ({ events, registrations = [], onApprove, onR
                   <button style={styles.actionBtn('approve')} onClick={() => onApprove(reg._id)}><Check size={18} /></button>
                 </div>
               ) : (
-                <div style={styles.statusBadge(reg.status)}>{reg.status}</div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '1vw' }}>
+                  {reg.status === 'Approved' && (
+                    <button
+                      onClick={() => navigate(`/ticket/${reg._id}`)}
+                      style={{
+                        padding: '0.6vh 1.2vw',
+                        borderRadius: '8px',
+                        border: '1px solid var(--border-color)',
+                        backgroundColor: 'var(--card-bg)',
+                        color: '#4f46e5',
+                        fontSize: '0.8vw',
+                        fontWeight: '600',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '6px'
+                      }}
+                    >
+                      <Eye size={14} /> View Ticket
+                    </button>
+                  )}
+                  <div style={styles.statusBadge(reg.status)}>{reg.status}</div>
+                </div>
               )}
             </div>
           ))

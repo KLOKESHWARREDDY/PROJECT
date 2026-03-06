@@ -1,26 +1,28 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, Bell, Calendar, MapPin, Clock, ArrowRight, Sun, Moon } from 'lucide-react';
+import { Search, Bell, Calendar, MapPin, Clock, ArrowRight, Sun, Moon, Star, CheckCircle, ClipboardList, Award, TrendingUp } from 'lucide-react';
 import { authAPI, registrationAPI, eventAPI } from '../api';
+import styles from './Dashboard.module.css';
 
-const Dashboard = ({ user, events, theme, unreadCount, onReadNotifications, toggleTheme }) => {
+const Dashboard = ({ user, theme, unreadCount, onReadNotifications, toggleTheme }) => {
   const navigate = useNavigate();
-  const isDark = theme === 'dark';
-  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+  const isDark = ['dark', 'purple-gradient', 'blue-ocean', 'midnight-dark', 'emerald-dark', 'cherry-dark', 'slate-minimal'].includes(theme);
   const [currentUser, setCurrentUser] = useState(user);
   const [imageError, setImageError] = useState(false);
   const [realRegCount, setRealRegCount] = useState(0);
   const [loadingRegs, setLoadingRegs] = useState(true);
   const [studentEvents, setStudentEvents] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedDate, setSelectedDate] = useState(null);
+  const [currentMonthDate, setCurrentMonthDate] = useState(new Date());
 
-  // Sync user from props when it changes (e.g., after login)
+  // Sync user from props when it changes
   useEffect(() => {
     if (user && user.name && user.name !== 'Guest') {
       setCurrentUser(user);
       setLoading(false);
     } else {
-      // Try to restore from localStorage
       const savedUser = localStorage.getItem('user');
       if (savedUser) {
         try {
@@ -38,18 +40,9 @@ const Dashboard = ({ user, events, theme, unreadCount, onReadNotifications, togg
     }
   }, [user]);
 
+  // Fetch fresh user data
   useEffect(() => {
-    const handleResize = () => setIsMobile(window.innerWidth < 768);
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
-
-  // ✅ FETCH FRESH USER DATA ON MOUNT (only if user exists)
-  useEffect(() => {
-    // Skip if no user yet
-    if (!user || !user.name || user.name === 'Guest') {
-      return;
-    }
+    if (!user || !user.name || user.name === 'Guest') return;
 
     const fetchLatestUserData = async () => {
       try {
@@ -58,12 +51,10 @@ const Dashboard = ({ user, events, theme, unreadCount, onReadNotifications, togg
         if (!token) return;
 
         const response = await authAPI.getProfile();
-
-        // Merge new data with existing token
         const updatedUser = {
           ...JSON.parse(savedUser),
           ...response.data,
-          token: token // Always preserve token
+          token
         };
 
         setCurrentUser(updatedUser);
@@ -72,11 +63,10 @@ const Dashboard = ({ user, events, theme, unreadCount, onReadNotifications, togg
         console.log('Could not fetch latest user data:', error.message);
       }
     };
-
     fetchLatestUserData();
   }, [user]);
 
-  // ✅ FETCH REAL REGISTRATION COUNT
+  // Fetch registrations
   useEffect(() => {
     const fetchRegistrations = async () => {
       try {
@@ -88,9 +78,7 @@ const Dashboard = ({ user, events, theme, unreadCount, onReadNotifications, togg
         }
 
         const response = await registrationAPI.getMyRegistrations();
-
-        const registrations = response.data || [];
-        setRealRegCount(registrations.length);
+        setRealRegCount(response.data?.length || 0);
       } catch (error) {
         console.log('Error fetching registrations:', error.message);
         setRealRegCount(0);
@@ -98,31 +86,23 @@ const Dashboard = ({ user, events, theme, unreadCount, onReadNotifications, togg
         setLoadingRegs(false);
       }
     };
-
     fetchRegistrations();
   }, []);
 
-  // ✅ FETCH ACTIVE EVENTS FOR STUDENTS
+  // Fetch events
   useEffect(() => {
     const fetchEvents = async () => {
       try {
-        const token = localStorage.getItem('token');
-        console.log("Student token:", token);
-
         const response = await eventAPI.getAll();
-        console.log("Student events response:", response.data);
-
         setStudentEvents(response.data);
       } catch (error) {
         console.log('Error fetching events:', error.message);
         setStudentEvents([]);
       }
     };
-
     fetchEvents();
   }, []);
 
-  // ✅ GET FULL IMAGE URL
   const getImageUrl = (url) => {
     if (!url) return 'https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png';
     if (url.startsWith('http')) return url;
@@ -130,303 +110,304 @@ const Dashboard = ({ user, events, theme, unreadCount, onReadNotifications, togg
     return url;
   };
 
-  // ✅ HANDLE IMAGE ERROR
-  const handleImageError = () => {
-    setImageError(true);
-  };
-
-  const styles = {
-    container: {
-      padding: isMobile ? '16px' : '30px',
-      backgroundColor: isDark ? '#0f172a' : '#f8fafc',
-      minHeight: '100vh',
-      fontFamily: "'Inter', sans-serif",
-      maxWidth: isMobile ? '100vw' : '95vw',
-      margin: '0 auto'
-    },
-    header: {
-      display: 'flex',
-      justifyContent: 'space-between',
-      alignItems: 'center',
-      marginBottom: '30px',
-      flexWrap: 'wrap',
-      gap: isMobile ? '12px' : '30px'
-    },
-    profileSection: {
-      display: 'flex',
-      alignItems: 'center',
-      gap: isMobile ? '12px' : '15px',
-      cursor: 'pointer'
-    },
-    avatar: {
-      width: isMobile ? '48px' : '60px',
-      height: isMobile ? '48px' : '60px',
-      borderRadius: '50%',
-      objectFit: 'cover',
-      border: '2px solid #6366f1',
-      backgroundColor: '#f3f4f6'
-    },
-    welcomeText: { display: 'flex', flexDirection: 'column' },
-    hello: {
-      fontSize: isMobile ? '14px' : '16px',
-      color: '#64748b',
-      fontWeight: '500'
-    },
-    name: {
-      fontSize: isMobile ? '18px' : '22px',
-      fontWeight: '800',
-      color: isDark ? '#fff' : '#1e293b'
-    },
-    rightHeader: { display: 'flex', alignItems: 'center', gap: isMobile ? '12px' : '15px' },
-    searchContainer: {
-      display: 'flex',
-      alignItems: 'center',
-      backgroundColor: isDark ? '#1e293b' : '#ffffff',
-      borderRadius: '50px',
-      padding: isMobile ? '12px 16px' : '10px 24px',
-      boxShadow: '0 4px 15px rgba(0,0,0,0.05)',
-      width: isMobile ? '40vw' : '25vw',
-      border: isDark ? '1px solid #334155' : '1px solid #e2e8f0',
-      display: isMobile ? 'none' : 'flex'
-    },
-    searchIcon: { color: '#94a3b8', marginRight: '10px', width: '20px' },
-    input: {
-      border: 'none', outline: 'none', background: 'transparent',
-      fontSize: '14px', color: isDark ? '#fff' : '#334155', flex: 1, fontWeight: '500'
-    },
-    iconBtn: {
-      width: isMobile ? '40px' : '50px',
-      height: isMobile ? '40px' : '50px',
-      borderRadius: '50%',
-      backgroundColor: isDark ? '#1e293b' : '#fff',
-      border: isDark ? '1px solid #334155' : '1px solid #e2e8f0',
-      color: isDark ? '#fff' : '#6366f1',
-      display: 'flex', alignItems: 'center', justifyContent: 'center',
-      cursor: 'pointer', position: 'relative',
-      boxShadow: '0 4px 15px rgba(0,0,0,0.05)', transition: 'transform 0.2s'
-    },
-    badge: {
-      position: 'absolute', top: '0', right: '0',
-      width: '12px', height: '12px',
-      backgroundColor: '#ef4444', borderRadius: '50%', border: '2px solid #fff'
-    },
-    heroBanner: {
-      display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-      backgroundColor: isDark ? '#312e81' : '#e0e7ff',
-      borderRadius: isMobile ? '20px' : '25px',
-      padding: isMobile ? '20px' : '45px',
-      marginBottom: '40px', position: 'relative', overflow: 'hidden',
-      boxShadow: '0 10px 30px rgba(0,0,0,0.05)',
-      height: isMobile ? 'auto' : '180px',
-      minHeight: isMobile ? '180px' : 'auto'
-    },
-    heroContent: { maxWidth: isMobile ? '100%' : '500px', zIndex: 2 },
-    heroTitle: {
-      fontSize: isMobile ? '24px' : '36px',
-      fontWeight: '800', marginBottom: '12px',
-      color: isDark ? '#fff' : '#1e1b4b', lineHeight: '1.2'
-    },
-    heroText: {
-      fontSize: isMobile ? '14px' : '18px',
-      marginBottom: '20px', color: isDark ? '#c7d2fe' : '#4338ca', lineHeight: '1.6'
-    },
-    heroBtn: {
-      backgroundColor: '#1e1b4b', color: '#fff', border: 'none',
-      padding: isMobile ? '12px 24px' : '12px 30px',
-      borderRadius: isMobile ? '12px' : '14px',
-      fontWeight: 'bold', fontSize: isMobile ? '14px' : '16px',
-      cursor: 'pointer', boxShadow: '0 4px 12px rgba(30, 27, 75, 0.3)'
-    },
-    heroImage: {
-      height: '160px', objectFit: 'contain',
-      display: isMobile ? 'none' : 'block'
-    },
-    statsRow: {
-      display: 'flex', gap: isMobile ? '12px' : '30px', marginBottom: '40px', flexWrap: 'wrap'
-    },
-    statCard: {
-      flex: 1, minWidth: isMobile ? '150px' : '200px',
-      backgroundColor: isDark ? '#1e293b' : '#fff',
-      padding: isMobile ? '16px' : '24px',
-      borderRadius: isMobile ? '16px' : '20px',
-      border: isDark ? '1px solid #334155' : '1px solid #e2e8f0',
-      display: 'flex', alignItems: 'center', gap: isMobile ? '12px' : '20px',
-      boxShadow: '0 4px 6px rgba(0,0,0,0.02)'
-    },
-    statIconBox: (bg, color) => ({
-      width: isMobile ? '40px' : '60px',
-      height: isMobile ? '40px' : '60px',
-      borderRadius: isMobile ? '12px' : '16px',
-      backgroundColor: bg, color: color, display: 'flex', alignItems: 'center', justifyContent: 'center'
-    }),
-    statNumber: {
-      fontSize: isMobile ? '20px' : '28px',
-      fontWeight: 'bold',
-      color: isDark ? '#fff' : '#1e293b'
-    },
-    statLabel: {
-      color: isDark ? '#cbd5e1' : '#64748b',
-      fontSize: isMobile ? '12px' : '14px'
-    },
-    sectionHeader: {
-      display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px'
-    },
-    sectionTitle: {
-      fontSize: isMobile ? '20px' : '24px',
-      fontWeight: 'bold', color: isDark ? '#fff' : '#1e293b'
-    },
-    seeAll: {
-      fontSize: isMobile ? '14px' : '16px',
-      color: '#4f46e5', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px', fontWeight: '600'
-    },
-    grid: {
-      display: 'grid',
-      gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fill, minmax(280px, 1fr))',
-      gap: isMobile ? '16px' : '30px'
-    },
-    eventCard: {
-      backgroundColor: isDark ? '#1e293b' : '#fff',
-      borderRadius: isMobile ? '16px' : '20px',
-      overflow: 'hidden',
-      border: isDark ? '1px solid #334155' : '1px solid #e2e8f0',
-      transition: 'all 0.2s', cursor: 'pointer', display: 'flex', flexDirection: 'column',
-      boxShadow: '0 2px 10px rgba(0,0,0,0.03)'
-    },
-    cardImage: {
-      width: '100%',
-      height: isMobile ? '140px' : '180px',
-      objectFit: 'cover'
-    },
-    cardBody: {
-      padding: isMobile ? '16px' : '20px',
-      flex: 1, display: 'flex', flexDirection: 'column'
-    },
-    cardTitle: {
-      fontSize: isMobile ? '16px' : '18px',
-      fontWeight: 'bold', marginBottom: '8px', color: isDark ? '#fff' : '#1e293b'
-    },
-    cardMeta: {
-      fontSize: isMobile ? '12px' : '14px',
-      color: '#64748b', marginBottom: '6px', display: 'flex', alignItems: 'center', gap: '8px'
-    }
-  };
-
   const imageUrl = getImageUrl(currentUser?.profileImage);
 
-  // Show loading while user data is being restored
+  // Functional Calendar Data
+  const days = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'];
+
+  const getDaysInMonth = (year, month) => new Date(year, month + 1, 0).getDate();
+  const getFirstDayOfMonth = (year, month) => new Date(year, month, 1).getDay();
+
+  const currentYear = currentMonthDate.getFullYear();
+  const currentMonth = currentMonthDate.getMonth();
+  const daysInMonth = getDaysInMonth(currentYear, currentMonth);
+  const firstDay = getFirstDayOfMonth(currentYear, currentMonth);
+
+  const blanks = Array.from({ length: firstDay }, (_, i) => i);
+  const dates = Array.from({ length: daysInMonth }, (_, i) => i + 1);
+
+  const today = new Date();
+
+  const parseEventDate = (dateStr) => {
+    if (!dateStr) return null;
+    const d = new Date(dateStr);
+    return isNaN(d) ? null : d;
+  };
+
+  const hasEventOnDate = (day) => {
+    return studentEvents.some(event => {
+      const eDate = parseEventDate(event.date);
+      if (!eDate) return false;
+      return eDate.getFullYear() === currentYear &&
+        eDate.getMonth() === currentMonth &&
+        eDate.getDate() === day;
+    });
+  };
+
+  const filteredUpcomingEvents = selectedDate ? studentEvents.filter(event => {
+    const eDate = parseEventDate(event.date);
+    if (!eDate) return false;
+    return eDate.getFullYear() === selectedDate.getFullYear() &&
+      eDate.getMonth() === selectedDate.getMonth() &&
+      eDate.getDate() === selectedDate.getDate();
+  }) : [];
+
+  const displayEvents = selectedDate
+    ? filteredUpcomingEvents
+    : studentEvents.filter(event => {
+      const eDate = parseEventDate(event.date);
+      if (!eDate) return false;
+      // fallback to upcoming events from today
+      const todayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+      return eDate >= todayStart;
+    });
+
+  const nextMonth = () => {
+    setCurrentMonthDate(new Date(currentYear, currentMonth + 1, 1));
+  };
+
+  const prevMonth = () => {
+    setCurrentMonthDate(new Date(currentYear, currentMonth - 1, 1));
+  };
+
+  const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+
   if (loading) {
     return (
-      <div style={{
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center',
-        minHeight: '100vh',
-        backgroundColor: isDark ? '#0f172a' : '#f8fafc'
-      }}>
-        <div style={{
-          width: 40,
-          height: 40,
-          border: '4px solid #e2e8f0',
-          borderTop: '4px solid #6366f1',
-          borderRadius: '50%',
-          animation: 'spin 1s linear infinite'
-        }} />
+      <div className={`page-wrapper ${isDark ? 'dark' : ''}`}>
+        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '60vh' }}>
+          <div style={{ width: 40, height: 40, border: '4px solid #e2e8f0', borderTop: '4px solid #4318FF', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
+        </div>
       </div>
     );
   }
 
   return (
-    <div style={styles.container}>
-      <div style={styles.header}>
-        <div style={styles.profileSection} onClick={() => navigate('/profile')}>
+    <div className={`page-wrapper ${isDark ? 'dark' : ''}`}>
+      <div className={styles.dashboardRoot}>
+
+        {/* Header */}
+        <header className={styles.header}>
+          <div className={styles.profileInfo} onClick={() => navigate('/profile')}>
+            <div className={styles.avatarWrapper}>
+              <img
+                src={imageError ? 'https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png' : imageUrl}
+                className={styles.avatar}
+                alt="Profile"
+                onError={() => setImageError(true)}
+              />
+            </div>
+            <div className={styles.greetingText}>
+              <span>Good Morning,</span>
+              <span className={styles.userName}>{currentUser?.name || 'Student'}</span>
+            </div>
+          </div>
+
+          <div className={styles.headerActions}>
+            <div className={styles.searchBar}>
+              <Search size={18} color="#A3AED0" />
+              <input
+                type="text"
+                placeholder="Search for events..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+            </div>
+
+            <button className={styles.iconBtn} onClick={toggleTheme} title="Toggle Theme">
+              {isDark ? <Sun size={20} color="#f59e0b" /> : <Moon size={20} />}
+            </button>
+
+            <button className={styles.iconBtn} onClick={() => { onReadNotifications(); navigate('/notifications'); }} title="Notifications">
+              <Bell size={20} />
+              {unreadCount > 0 && <div className={styles.badge} />}
+            </button>
+          </div>
+        </header>
+
+        {/* Hero Section */}
+        <div className={styles.heroBanner}>
+          <div className={styles.heroContent}>
+            <h1>Boost your skills with EventSphere!</h1>
+            <p>Don't miss out on the latest workshops and technical seminars happening this week.</p>
+            <button className={styles.heroBtn} onClick={() => navigate('/events')}>Explore Events</button>
+          </div>
           <img
-            src={imageError ? 'https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png' : imageUrl}
-            alt="Profile"
-            style={styles.avatar}
-            onError={handleImageError}
+            src="https://img.freepik.com/free-vector/happy-student-with-graduation-cap-diploma_23-2147954930.jpg?w=740"
+            alt="Hero"
+            className={styles.heroImg}
           />
-          <div style={styles.welcomeText}>
-            <span style={styles.hello}>Welcome back,</span>
-            <span style={styles.name}>{currentUser?.name ? currentUser.name.split(' ')[0] : 'User'}</span>
-          </div>
         </div>
 
-        <div style={styles.rightHeader}>
-          {!isMobile && (
-            <div style={styles.searchContainer}>
-              <Search style={styles.searchIcon} />
-              <input style={styles.input} placeholder="Search events..." />
+        {/* Stats Row */}
+        <div className={styles.statsRow}>
+          <div className={styles.statCard}>
+            <div className={styles.statIcon} style={{ background: '#E9EDF7', color: '#4318FF' }}>
+              <TrendingUp size={28} />
             </div>
-          )}
-
-          {isMobile && (
-            <div style={styles.iconBtn} onClick={() => navigate('/events')}>
-              <Search size={20} />
+            <div className={styles.statInfo}>
+              <span className={styles.statLabel}>Total Events</span>
+              <span className={styles.statVal}>{studentEvents.length}</span>
             </div>
-          )}
-
-          <div style={styles.iconBtn} onClick={toggleTheme} title="Toggle Theme">
-            {isDark ? <Sun size={isMobile ? 24 : 20} color="#fbbf24" /> : <Moon size={isMobile ? 24 : 20} />}
           </div>
-
-          <div style={styles.iconBtn} onClick={() => { onReadNotifications(); navigate('/notifications'); }}>
-            <Bell size={isMobile ? 24 : 20} />
-            {unreadCount > 0 && <div style={styles.badge}></div>}
+          <div className={styles.statCard}>
+            <div className={styles.statIcon} style={{ background: '#E2FBE7', color: '#05CD99' }}>
+              <CheckCircle size={28} />
+            </div>
+            <div className={styles.statInfo}>
+              <span className={styles.statLabel}>Registered</span>
+              <span className={styles.statVal}>{realRegCount}</span>
+            </div>
           </div>
-        </div>
-      </div>
-
-      <div style={styles.heroBanner}>
-        <div style={styles.heroContent}>
-          <h1 style={styles.heroTitle}>Discover New Skills!</h1>
-          <p style={styles.heroText}>Join workshops, seminars, and events to boost your career.</p>
-          <button style={styles.heroBtn} onClick={() => navigate('/events')}>Explore Events</button>
-        </div>
-        <img src="https://img.freepik.com/free-vector/happy-student-with-graduation-cap-diploma_23-2147954930.jpg?w=740" alt="Student" style={styles.heroImage} />
-      </div>
-
-      <div style={styles.statsRow}>
-        <div style={styles.statCard}>
-          <div style={styles.statIconBox('#e0e7ff', '#4338ca')}><Calendar size={24} /></div>
-          <div>
-            <div style={styles.statNumber}>{studentEvents.length}</div>
-            <div style={styles.statLabel}>Total Events</div>
+          <div className={styles.statCard}>
+            <div className={styles.statIcon} style={{ background: '#FFF3E0', color: '#FFA000' }}>
+              <Star size={28} />
+            </div>
+            <div className={styles.statInfo}>
+              <span className={styles.statLabel}>Top Category</span>
+              <span className={styles.statVal}>Technical</span>
+            </div>
           </div>
         </div>
-        <div style={styles.statCard}>
-          <div style={styles.statIconBox('#dcfce7', '#15803d')}><Clock size={24} /></div>
-          <div>
-            <div style={styles.statNumber}>{loadingRegs ? '...' : realRegCount}</div>
-            <div style={styles.statLabel}>Registered</div>
-          </div>
-        </div>
-      </div>
 
-      <div>
-        <div style={styles.sectionHeader}>
-          <div style={styles.sectionTitle}>Upcoming Events</div>
-          <div style={styles.seeAll} onClick={() => navigate('/events')}>View all <ArrowRight size={16} /></div>
-        </div>
-        <div style={styles.grid}>
-          {studentEvents.slice(0, 3).map(event => (
-            <div key={event._id} style={styles.eventCard} onClick={() => {
-              console.log("Clicked Event ID:", event.id || event._id);
-              navigate(`/events/${event.id || event._id}`);
-            }}>
-              <img src={event.image} alt={event.title} style={styles.cardImage} />
-              <div style={styles.cardBody}>
-                <h3 style={styles.cardTitle}>{event.title}</h3>
-                <div style={styles.cardMeta}><Calendar size={16} /> {event.date.split('·')[0]}</div>
-                <div style={styles.cardMeta}><MapPin size={16} /> {event.location}</div>
-                <div style={{ marginTop: 'auto', paddingTop: '12px' }}>
-                  <span style={{ backgroundColor: '#f1f5f9', padding: '6px 12px', borderRadius: '8px', fontSize: '12px', fontWeight: '600', color: '#475569' }}>{event.category}</span>
-                </div>
+        {/* Calendar and Upcoming Row */}
+        <div className={styles.sideBySideRow}>
+          {/* Calendar */}
+          <div className={styles.calendarCard}>
+            <div className={styles.sectionHead} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <h2 className={styles.sectionTitle}>Calendar</h2>
+              <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+                <button onClick={prevMonth} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-primary)' }}>&lt;</button>
+                <span style={{ fontSize: '14px', fontWeight: 'bold' }}>{monthNames[currentMonth]} {currentYear}</span>
+                <button onClick={nextMonth} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-primary)' }}>&gt;</button>
               </div>
             </div>
-          ))}
+            <div className={styles.calendarMock}>
+              {days.map(d => <div key={d} className={styles.calDay}>{d}</div>)}
+              {blanks.map(b => <div key={`blank-${b}`} className={styles.calDate} style={{ visibility: 'hidden' }}></div>)}
+              {dates.map(d => {
+                const isSelected = selectedDate && selectedDate.getDate() === d && selectedDate.getMonth() === currentMonth && selectedDate.getFullYear() === currentYear;
+                const isToday = today.getDate() === d && today.getMonth() === currentMonth && today.getFullYear() === currentYear;
+                const hasEvent = hasEventOnDate(d);
+                return (
+                  <div
+                    key={d}
+                    onClick={() => setSelectedDate(isSelected ? null : new Date(currentYear, currentMonth, d))}
+                    className={`${styles.calDate} ${isSelected ? styles.active : (isToday ? styles.today : '')} ${hasEvent ? styles.hasEvent : ''}`}
+                    style={{ cursor: 'pointer', border: isToday && !isSelected ? '2px solid #4318FF' : '', borderRadius: isToday && !isSelected ? '8px' : '' }}
+                  >
+                    {d}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Upcoming List */}
+          <div className={styles.upcomingCard}>
+            <div className={styles.sectionHead}>
+              <h2 className={styles.sectionTitle} style={{ fontSize: '16px' }}>
+                {selectedDate
+                  ? `Events on ${selectedDate.getDate()} ${monthNames[selectedDate.getMonth()].substring(0, 3)}`
+                  : 'Upcoming Events'}
+              </h2>
+            </div>
+            <div className={styles.upcomingList}>
+              {displayEvents.length > 0 ? (
+                displayEvents.slice(0, 3).map((event, idx) => {
+                  const eDate = parseEventDate(event.date);
+                  const displayDay = eDate ? eDate.getDate() : '--';
+                  const displayMonth = eDate ? monthNames[eDate.getMonth()].substring(0, 3).toUpperCase() : 'TBA';
+                  return (
+                    <div key={idx} className={styles.upcomingItem} style={{ cursor: 'pointer' }} onClick={() => navigate(`/events/${event._id}`)}>
+                      <div className={styles.dateBox}>
+                        <span>{displayDay}</span>
+                        <span>{displayMonth}</span>
+                      </div>
+                      <div className={styles.upcomingInfo}>
+                        <h4>{event.title}</h4>
+                        <span>{event.location || 'College Campus'}</span>
+                      </div>
+                    </div>
+                  );
+                })
+              ) : (
+                <div style={{ padding: '20px', textAlign: 'center', color: '#A3AED0' }}>
+                  No events found.
+                </div>
+              )}
+            </div>
+          </div>
         </div>
+
+        {/* Main Content Area */}
+        <main className={styles.mainArea}>
+          {/* Registered Events */}
+          <section>
+            <div className={styles.sectionHead}>
+              <h2 className={styles.sectionTitle}>Registered Events</h2>
+              <div className={styles.viewAll} onClick={() => navigate('/registrations')}>
+                My Tickets <ArrowRight size={18} />
+              </div>
+            </div>
+            <div className={styles.eventGrid}>
+              {studentEvents.length > 0 ? (
+                studentEvents.slice(2, 5).map((event) => (
+                  <div key={event._id} className={styles.eventCard} onClick={() => navigate(`/events/${event._id}`)}>
+                    <div className={styles.eventImgWrap}>
+                      <img src={event.image || "https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=800"} alt={event.title} />
+                    </div>
+                    <div className={styles.eventBody}>
+                      <h3 className={styles.eventTitle}>{event.title}</h3>
+                      <div className={styles.eventMeta}>
+                        <Clock size={14} />
+                        <span>Happening Soon</span>
+                      </div>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <div style={{ gridColumn: '1 / -1', padding: '40px', textAlign: 'center', background: 'white', borderRadius: '16px', color: '#A3AED0', border: '1px dashed #E2E8F0' }}>
+                  You haven't registered for any events yet. Explore and join!
+                </div>
+              )}
+            </div>
+          </section>
+
+          {/* Featured Events */}
+          <section>
+            <div className={styles.sectionHead}>
+              <h2 className={styles.sectionTitle}>Featured Events</h2>
+              <div className={styles.viewAll} onClick={() => navigate('/events')}>
+                See all <ArrowRight size={18} />
+              </div>
+            </div>
+            <div className={styles.eventGrid}>
+              {studentEvents.slice(0, 3).map((event) => (
+                <div key={event._id} className={styles.eventCard} onClick={() => navigate(`/events/${event._id}`)}>
+                  <div className={styles.eventImgWrap}>
+                    <img src={event.image || "https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=800"} alt={event.title} />
+                    <span className={styles.categoryBadge}>{event.category || 'General'}</span>
+                  </div>
+                  <div className={styles.eventBody}>
+                    <h3 className={styles.eventTitle}>{event.title}</h3>
+                    <div className={styles.eventMeta}>
+                      <Calendar size={14} />
+                      <span>{event.date?.split('·')[0] || 'Date TBA'}</span>
+                    </div>
+                    <div className={styles.eventMeta}>
+                      <MapPin size={14} />
+                      <span>{event.location || 'Online'}</span>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+        </main>
       </div>
     </div>
   );
 };
+
 export default Dashboard;

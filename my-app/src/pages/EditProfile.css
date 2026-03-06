@@ -1,0 +1,318 @@
+/* EditProfile.css - Elite Pro Max Edit Profile Redesign */
+
+.ep-page-wrapper {
+    /* Focus on Elite styling local to this page */
+    --elite-bg: var(--bg-primary, #f4f7fe);
+    --elite-card-bg: var(--card-bg, #ffffff);
+    --elite-text-main: var(--text-primary, #1e293b);
+    --elite-text-muted: var(--text-secondary, #64748b);
+    --elite-accent: #6366f1;
+    --elite-glass-bg: rgba(255, 255, 255, 0.4);
+    --elite-glass-border: rgba(99, 102, 241, 0.12);
+    --elite-shadow: 0 20px 40px -10px rgba(99, 102, 241, 0.08);
+
+    background: var(--elite-bg);
+    min-height: 100vh;
+    font-family: 'Inter', sans-serif;
+    color: var(--elite-text-main);
+    position: relative;
+    overflow-x: hidden;
+    padding-bottom: 100px;
+    width: 100%;
+}
+
+.dark-mode .ep-page-wrapper {
+    --elite-bg: #0f172a;
+    --elite-card-bg: rgba(30, 41, 59, 0.7);
+    --elite-glass-bg: rgba(255, 255, 255, 0.03);
+    --elite-glass-border: rgba(255, 255, 255, 0.1);
+    --elite-text-main: #f8fafc;
+    --elite-text-muted: #94a3b8;
+    --elite-accent: #818cf8;
+    --elite-shadow: 0 40px 80px -20px rgba(0, 0, 0, 0.5);
+}
+
+/* ── Background Elements ── */
+.ep-bg-glow {
+    position: fixed;
+    width: 600px;
+    height: 600px;
+    background: radial-gradient(circle, rgba(99, 102, 241, 0.15) 0%, transparent 70%);
+    top: -200px;
+    right: -200px;
+    z-index: 0;
+    pointer-events: none;
+}
+
+.ep-bg-glow-alt {
+    position: fixed;
+    width: 400px;
+    height: 400px;
+    background: radial-gradient(circle, rgba(14, 165, 233, 0.12) 0%, transparent 70%);
+    bottom: -100px;
+    left: -100px;
+    z-index: 0;
+    pointer-events: none;
+}
+
+/* ── Layout ── */
+.ep-container {
+    max-width: 500px;
+    margin: 0 auto;
+    padding: 60px 24px;
+    position: relative;
+    z-index: 1;
+}
+
+/* ── Header ── */
+.ep-header {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    margin-bottom: 48px;
+    animation: fadeInDown 0.8s cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+.ep-back-btn {
+    width: 44px;
+    height: 44px;
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--elite-glass-bg);
+    border: 1px solid var(--elite-glass-border);
+    color: var(--elite-text-main);
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.ep-back-btn:hover {
+    background: var(--elite-glass-border);
+    transform: translateX(-4px);
+    border-color: var(--elite-accent);
+}
+
+.ep-title {
+    font-size: 36px;
+    font-weight: 900;
+    letter-spacing: -0.04em;
+    margin: 0;
+}
+
+/* ── Profile Card ── */
+.ep-profile-card {
+    background: var(--elite-card-bg);
+    border: 1px solid var(--elite-glass-border);
+    border-radius: 32px;
+    padding: 40px;
+    backdrop-filter: blur(20px);
+    box-shadow: var(--elite-shadow);
+    display: flex;
+    flex-direction: column;
+    gap: 32px;
+    animation: fadeInUp 0.8s cubic-bezier(0.23, 1, 0.32, 1) 0.1s both;
+}
+
+/* ── Avatar Section ── */
+.ep-avatar-section {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+}
+
+.ep-avatar-wrapper {
+    position: relative;
+    width: 140px;
+    height: 140px;
+}
+
+.ep-avatar {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 4px solid var(--elite-card-bg);
+    box-shadow: 0 10px 40px -10px rgba(99, 102, 241, 0.5);
+    transition: all 0.5s cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+.ep-avatar-wrapper:hover .ep-avatar {
+    transform: scale(1.05);
+    box-shadow: 0 20px 60px -12px rgba(99, 102, 241, 0.6);
+}
+
+.ep-camera-btn {
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: var(--elite-accent);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 4px solid var(--elite-card-bg);
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.ep-camera-btn:hover {
+    transform: scale(1.1) rotate(15deg);
+    background: #4f46e5;
+}
+
+.ep-change-text {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--elite-accent);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.ep-change-text:hover {
+    text-decoration: underline;
+    opacity: 0.8;
+}
+
+/* ── Form Fields ── */
+.ep-form {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+.ep-field {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.ep-label {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--elite-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding-left: 4px;
+}
+
+.ep-input {
+    width: 100%;
+    padding: 16px 20px;
+    background: var(--elite-glass-bg);
+    border: 1px solid var(--elite-glass-border);
+    border-radius: 16px;
+    color: var(--elite-text-main);
+    font-size: 16px;
+    font-weight: 600;
+    outline: none;
+    transition: all 0.3s ease;
+    backdrop-filter: blur(5px);
+}
+
+.ep-input:focus {
+    background: var(--elite-card-bg);
+    border-color: var(--elite-accent);
+    box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
+}
+
+.ep-input:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* ── Buttons ── */
+.ep-save-btn {
+    padding: 18px;
+    border-radius: 20px;
+    font-size: 16px;
+    font-weight: 800;
+    background: var(--elite-accent);
+    color: white;
+    border: none;
+    cursor: pointer;
+    transition: all 0.4s cubic-bezier(0.23, 1, 0.32, 1);
+    box-shadow: 0 10px 20px -5px rgba(99, 102, 241, 0.4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    margin-top: 12px;
+}
+
+.ep-save-btn:hover:not(:disabled) {
+    transform: translateY(-4px);
+    box-shadow: 0 20px 40px -10px rgba(99, 102, 241, 0.5);
+}
+
+.ep-save-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+/* ── Message ── */
+.ep-message {
+    padding: 14px 20px;
+    border-radius: 16px;
+    font-size: 14px;
+    font-weight: 700;
+    text-align: center;
+    animation: fadeInUp 0.4s ease;
+}
+
+.ep-message-success {
+    background: rgba(16, 185, 129, 0.1);
+    color: #10b981;
+    border: 1px solid rgba(16, 185, 129, 0.2);
+}
+
+.ep-message-error {
+    background: rgba(239, 68, 68, 0.1);
+    color: #ef4444;
+    border: 1px solid rgba(239, 68, 68, 0.2);
+}
+
+/* Animations */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes fadeInDown {
+    from {
+        opacity: 0;
+        transform: translateY(-30px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .ep-container {
+        padding: 40px 20px;
+    }
+
+    .ep-profile-card {
+        padding: 24px;
+    }
+
+    .ep-title {
+        font-size: 28px;
+    }
+}

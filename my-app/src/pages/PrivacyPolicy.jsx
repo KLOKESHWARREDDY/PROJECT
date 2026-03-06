@@ -2,7 +2,7 @@ import React from 'react';
 import { Shield, Lock, Eye, Database, Mail, PhoneCall } from 'lucide-react';
 
 const PrivacyPolicy = ({ theme }) => {
-  const isDark = theme === 'dark';
+  const isDark = ['dark', 'purple-gradient', 'blue-ocean', 'midnight-dark', 'emerald-dark', 'cherry-dark', 'slate-minimal'].includes(theme);
 
   const styles = {
     container: {
@@ -72,7 +72,7 @@ const PrivacyPolicy = ({ theme }) => {
 
   return (
     <div style={styles.container}>
-      
+
       {/* HEADER */}
       <div style={styles.header}>
         <div style={{ display: 'inline-flex', padding: '12px', borderRadius: '50%', backgroundColor: '#e0e7ff', color: '#4338ca', marginBottom: '20px' }}>
@@ -131,7 +131,7 @@ const PrivacyPolicy = ({ theme }) => {
         <div style={styles.contactBox}>
           <Mail size={20} /> eventsphere@gmail.com
         </div>
-         <div style={styles.contactBox}>
+        <div style={styles.contactBox}>
           <PhoneCall size={20} /> 5216738460
         </div>
       </div>

@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { HelpCircle, Mail, ChevronDown, ChevronUp, MessageCircle, FileText } from 'lucide-react';
 
 const HelpCenter = ({ theme, openChat }) => {
-  const isDark = theme === 'dark';
+  const isDark = ['dark', 'purple-gradient', 'blue-ocean', 'midnight-dark', 'emerald-dark', 'cherry-dark', 'slate-minimal'].includes(theme);
   const [openIndex, setOpenIndex] = useState(null);
 
   const faqs = [

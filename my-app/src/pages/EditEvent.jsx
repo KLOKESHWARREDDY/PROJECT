@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { 
-  ArrowLeft, Upload, X, CheckCircle, 
-  Calendar, Clock, Tag, Heading, 
+import {
+  ArrowLeft, Upload, X, CheckCircle,
+  Calendar, Clock, Tag, Heading,
   MapPin, AlignLeft, Camera, Save, Send, ArrowDownToLine
 } from 'lucide-react';
 import api, { eventAPI } from '../api';
@@ -10,7 +10,7 @@ import api, { eventAPI } from '../api';
 function EditEvent({ events, onUpdate, theme }) {
   const navigate = useNavigate();
   const { id } = useParams(); // ✅ Get ID from URL
-  const isDark = theme === 'dark';
+  const isDark = ['dark', 'purple-gradient', 'blue-ocean', 'midnight-dark', 'emerald-dark', 'cherry-dark', 'slate-minimal'].includes(theme);
 
   console.log("EditEvent - Received ID:", id);
   console.log("EditEvent - Available events:", events.map(e => ({ id: e.id, _id: e._id, title: e.title })));
@@ -33,10 +33,10 @@ function EditEvent({ events, onUpdate, theme }) {
       try {
         const token = localStorage.getItem('token');
         console.log("EditEvent - Token:", token);
-        
+
         const response = await eventAPI.getEventById(id);
         console.log("EditEvent - Event response:", response.data);
-        
+
         setEventToEdit(response.data);
       } catch (error) {
         console.log('Error fetching event:', error.message);
@@ -47,7 +47,7 @@ function EditEvent({ events, onUpdate, theme }) {
         setLoading(false);
       }
     };
-    
+
     if (id) {
       fetchEvent();
     }
@@ -60,7 +60,7 @@ function EditEvent({ events, onUpdate, theme }) {
   const [category, setCategory] = useState("Technology");
   const [location, setLocation] = useState("");
   const [eventImage, setEventImage] = useState(null);
-  
+
   const [showPopup, setShowPopup] = useState(false);
   const [popupMessage, setPopupMessage] = useState("");
   const [eventStatus, setEventStatus] = useState("draft");
@@ -80,7 +80,7 @@ function EditEvent({ events, onUpdate, theme }) {
       setCategory(eventToEdit.category || "Technology");
       setEventImage(eventToEdit.image || null);
       setEventStatus(eventToEdit.status || "draft");
-      
+
       // Store initial values for change tracking
       initialValues.current = {
         title: eventToEdit.title || "",
@@ -91,7 +91,7 @@ function EditEvent({ events, onUpdate, theme }) {
         date: "",
         time: ""
       };
-      
+
       // Parse date/time if stored as string "YYYY-MM-DD · HH:MM"
       if (eventToEdit.date && eventToEdit.date.includes("·")) {
         const parts = eventToEdit.date.split("·");
@@ -117,7 +117,7 @@ function EditEvent({ events, onUpdate, theme }) {
 
   // Track changes
   useEffect(() => {
-    const hasChanges = 
+    const hasChanges =
       eventName !== initialValues.current.title ||
       description !== initialValues.current.description ||
       location !== initialValues.current.location ||
@@ -125,7 +125,7 @@ function EditEvent({ events, onUpdate, theme }) {
       date !== initialValues.current.date ||
       time !== initialValues.current.time ||
       eventImage !== initialValues.current.image;
-    
+
     setHasUnsavedChanges(hasChanges);
   }, [eventName, description, location, category, date, time, eventImage]);
 
@@ -139,7 +139,7 @@ function EditEvent({ events, onUpdate, theme }) {
 
     try {
       const dateTime = new Date(`${date}T${time}`);
-      
+
       const updatedEvent = {
         title: eventName,
         description: description,
@@ -151,7 +151,7 @@ function EditEvent({ events, onUpdate, theme }) {
 
       const eventId = eventToEdit._id || eventToEdit.id;
       await eventAPI.update(eventId, updatedEvent);
-      
+
       setPopupMessage("Event updated successfully!");
       setShowPopup(true);
       setHasUnsavedChanges(false);
@@ -181,7 +181,7 @@ function EditEvent({ events, onUpdate, theme }) {
     try {
       const eventId = eventToEdit._id || eventToEdit.id;
       const dateTime = new Date(`${date}T${time}`);
-      
+
       // Update event with new details AND set status to published
       const updatedEvent = {
         title: eventName,
@@ -192,12 +192,12 @@ function EditEvent({ events, onUpdate, theme }) {
         image: eventImage,
         status: "published"
       };
-      
+
       console.log("Publishing event with details:", updatedEvent);
-      
+
       // Use update API with status included
       await eventAPI.update(eventId, updatedEvent);
-      
+
       setEventStatus('published');
       setPopupMessage("Event published successfully!");
       setShowPopup(true);
@@ -222,7 +222,7 @@ function EditEvent({ events, onUpdate, theme }) {
     try {
       const eventId = eventToEdit._id || eventToEdit.id;
       await eventAPI.unpublish(eventId);
-      
+
       setEventStatus('draft');
       setPopupMessage("Event unpublished! Now only visible to you.");
       setShowPopup(true);
@@ -246,7 +246,7 @@ function EditEvent({ events, onUpdate, theme }) {
     try {
       const eventId = eventToEdit._id || eventToEdit.id;
       await eventAPI.complete(eventId);
-      
+
       setEventStatus('completed');
       setPopupMessage("Event marked as completed!");
       setShowPopup(true);
@@ -291,8 +291,8 @@ function EditEvent({ events, onUpdate, theme }) {
     }
   };
 
-  if (loading) return <div style={{padding:'20px', color: isDark?'#fff':'#000'}}>Loading...</div>;
-  if (!eventToEdit) return <div style={{padding:'20px'}}>Event not found</div>;
+  if (loading) return <div style={{ padding: '20px', color: isDark ? '#fff' : '#000' }}>Loading...</div>;
+  if (!eventToEdit) return <div style={{ padding: '20px' }}>Event not found</div>;
 
   const styles = {
     container: {
@@ -313,7 +313,7 @@ function EditEvent({ events, onUpdate, theme }) {
       color: isDark ? '#fff' : '#64748b', display: 'flex', alignItems: 'center'
     },
     pageTitle: { fontSize: isMobile ? '6vw' : '2vw', fontWeight: '800' },
-    
+
     // Status Badge
     statusBadge: {
       padding: '4px 12px',
@@ -323,7 +323,7 @@ function EditEvent({ events, onUpdate, theme }) {
       backgroundColor: eventStatus === 'published' ? '#dcfce7' : eventStatus === 'completed' ? '#e0e7ff' : '#fef3c7',
       color: eventStatus === 'published' ? '#166534' : eventStatus === 'completed' ? '#4338ca' : '#92400e',
     },
-    
+
     form: {
       backgroundColor: isDark ? '#1e293b' : '#fff',
       padding: isMobile ? '5vw' : '2.5vw',
@@ -331,7 +331,7 @@ function EditEvent({ events, onUpdate, theme }) {
       boxShadow: '0 4px 20px rgba(0,0,0,0.05)',
       border: isDark ? '1px solid #334155' : '1px solid #e2e8f0'
     },
-    
+
     uploadBox: {
       border: isDark ? '2px dashed #475569' : '2px dashed #cbd5e1',
       borderRadius: '1.5vw',
@@ -351,8 +351,8 @@ function EditEvent({ events, onUpdate, theme }) {
     },
     uploadText: { marginTop: '10px', color: '#64748b', fontSize: isMobile ? '3.5vw' : '0.9vw' },
 
-    label: { 
-      fontSize: isMobile ? '3.5vw' : '0.9vw', fontWeight: '600', 
+    label: {
+      fontSize: isMobile ? '3.5vw' : '0.9vw', fontWeight: '600',
       marginBottom: '0.8vh', display: 'flex', alignItems: 'center', gap: '0.5vw',
       color: isDark ? '#cbd5e1' : '#334155'
     },
@@ -371,7 +371,7 @@ function EditEvent({ events, onUpdate, theme }) {
 
     // Button styles
     buttonRow: { display: 'flex', gap: '1vw', marginTop: '2vh', flexWrap: 'wrap' },
-    
+
     submitBtn: {
       flex: 1,
       padding: isMobile ? '2vh' : '1.5vh',
@@ -441,7 +441,7 @@ function EditEvent({ events, onUpdate, theme }) {
 
     // Unsaved Changes Popup
     unsavedPopupOverlay: {
-      position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.6)', 
+      position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.6)',
       zIndex: 999, display: 'flex', alignItems: 'flex-end', justifyContent: 'center'
     },
     unsavedPopup: {
@@ -474,10 +474,10 @@ function EditEvent({ events, onUpdate, theme }) {
       </div>
 
       <div style={styles.form}>
-        
+
         {/* Image Upload */}
         <div style={styles.inputGroup}>
-          <div style={styles.label}><Camera size={16}/> Event Cover Image</div>
+          <div style={styles.label}><Camera size={16} /> Event Cover Image</div>
           <div style={styles.uploadBox} onClick={() => document.getElementById('fileInput').click()}>
             {eventImage ? (
               <>
@@ -498,44 +498,44 @@ function EditEvent({ events, onUpdate, theme }) {
 
         {/* Inputs */}
         <div style={styles.inputGroup}>
-          <label style={styles.label}><Heading size={16}/> Event Name</label>
-          <input 
-            style={styles.input} 
-            value={eventName} 
-            onChange={(e) => setEventName(e.target.value)} 
+          <label style={styles.label}><Heading size={16} /> Event Name</label>
+          <input
+            style={styles.input}
+            value={eventName}
+            onChange={(e) => setEventName(e.target.value)}
             readOnly={eventStatus === 'completed'}
           />
         </div>
 
         <div style={styles.row}>
           <div style={styles.col}>
-            <label style={styles.label}><Calendar size={16}/> Date</label>
-            <input 
-              style={styles.input} 
-              type="date" 
-              value={date} 
-              onChange={(e) => setDate(e.target.value)} 
+            <label style={styles.label}><Calendar size={16} /> Date</label>
+            <input
+              style={styles.input}
+              type="date"
+              value={date}
+              onChange={(e) => setDate(e.target.value)}
               readOnly={eventStatus === 'completed'}
             />
           </div>
           <div style={styles.col}>
-            <label style={styles.label}><Clock size={16}/> Time</label>
-            <input 
-              style={styles.input} 
-              type="time" 
-              value={time} 
-              onChange={(e) => setTime(e.target.value)} 
+            <label style={styles.label}><Clock size={16} /> Time</label>
+            <input
+              style={styles.input}
+              type="time"
+              value={time}
+              onChange={(e) => setTime(e.target.value)}
               readOnly={eventStatus === 'completed'}
             />
           </div>
         </div>
-        <br/>
+        <br />
 
         <div style={styles.inputGroup}>
-          <label style={styles.label}><Tag size={16}/> Category</label>
-          <select 
-            style={styles.input} 
-            value={category} 
+          <label style={styles.label}><Tag size={16} /> Category</label>
+          <select
+            style={styles.input}
+            value={category}
             onChange={(e) => setCategory(e.target.value)}
             disabled={eventStatus === 'completed'}
           >
@@ -548,21 +548,21 @@ function EditEvent({ events, onUpdate, theme }) {
         </div>
 
         <div style={styles.inputGroup}>
-          <label style={styles.label}><MapPin size={16}/> Location</label>
-          <input 
-            style={styles.input} 
-            value={location} 
-            onChange={(e) => setLocation(e.target.value)} 
+          <label style={styles.label}><MapPin size={16} /> Location</label>
+          <input
+            style={styles.input}
+            value={location}
+            onChange={(e) => setLocation(e.target.value)}
             readOnly={eventStatus === 'completed'}
           />
         </div>
 
         <div style={styles.inputGroup}>
-          <label style={styles.label}><AlignLeft size={16}/> Description</label>
-          <textarea 
-            style={{...styles.input, height: '100px', resize: 'none'}} 
-            value={description} 
-            onChange={(e) => setDescription(e.target.value)} 
+          <label style={styles.label}><AlignLeft size={16} /> Description</label>
+          <textarea
+            style={{ ...styles.input, height: '100px', resize: 'none' }}
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
             readOnly={eventStatus === 'completed'}
           />
         </div>
@@ -605,14 +605,14 @@ function EditEvent({ events, onUpdate, theme }) {
         <div style={styles.popupOverlay}>
           <div style={styles.popup}>
             <div style={styles.popupIcon}>
-              {popupMessage.includes("success") || popupMessage.includes("successfully") ? 
-                <CheckCircle size={48} color="#10b981"/> : 
-                <X size={48} color="#ef4444"/>}
+              {popupMessage.includes("success") || popupMessage.includes("successfully") ?
+                <CheckCircle size={48} color="#10b981" /> :
+                <X size={48} color="#ef4444" />}
             </div>
-            <h3 style={{color: '#1f293b', marginBottom:'5px'}}>
+            <h3 style={{ color: '#1f293b', marginBottom: '5px' }}>
               {popupMessage.includes("success") || popupMessage.includes("successfully") ? "Success!" : "Error"}
             </h3>
-            <p style={{color: '#64748b', fontSize:'14px'}}>{popupMessage}</p>
+            <p style={{ color: '#64748b', fontSize: '14px' }}>{popupMessage}</p>
           </div>
         </div>
       )}
@@ -622,16 +622,16 @@ function EditEvent({ events, onUpdate, theme }) {
         <div style={styles.unsavedPopupOverlay} onClick={() => setShowCancelPopup(false)}>
           <div style={styles.unsavedPopup} onClick={(e) => e.stopPropagation()}>
             <div style={styles.popupTitle}>You have unsaved changes</div>
-            
+
             <button style={styles.popupOption('#15803d', '#dcfce7')} onClick={handleSaveDraft}>
-              <Save size={20}/> Save Changes
+              <Save size={20} /> Save Changes
             </button>
-            
+
             <button style={styles.popupOption('#b91c1c', '#fee2e2')} onClick={handleDiscard}>
-              <X size={20}/> Discard Changes
+              <X size={20} /> Discard Changes
             </button>
-            
-            <button style={styles.popupOption(isDark?'#fff':'#333', isDark?'#334155':'#f1f5f9')} onClick={() => setShowCancelPopup(false)}>
+
+            <button style={styles.popupOption(isDark ? '#fff' : '#333', isDark ? '#334155' : '#f1f5f9')} onClick={() => setShowCancelPopup(false)}>
               Cancel
             </button>
           </div>

@@ -6,7 +6,7 @@ import { eventAPI } from '../api';
 const TeacherEventDetails = ({ events, onDelete, theme }) => {
   const navigate = useNavigate();
   const { id } = useParams();
-  const isDark = theme === 'dark';
+  const isDark = ['dark', 'purple-gradient', 'blue-ocean', 'midnight-dark', 'emerald-dark', 'cherry-dark', 'slate-minimal'].includes(theme);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   const [event, setEvent] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -26,7 +26,7 @@ const TeacherEventDetails = ({ events, onDelete, theme }) => {
         setLoading(false);
       }
     };
-    
+
     if (id) {
       fetchEvent();
     }
@@ -72,31 +72,33 @@ const TeacherEventDetails = ({ events, onDelete, theme }) => {
   };
 
   const styles = {
-    container: { 
-      padding: isMobile ? '4vw' : '20px', 
-      backgroundColor: isDark ? '#0f172a' : '#f8fafc', 
-      minHeight: '100vh', 
-      color: isDark ? '#fff' : '#1e293b',
+    container: {
+      padding: isMobile ? '4vw' : '20px',
+      backgroundColor: 'var(--bg-primary)',
+      minHeight: '100vh',
+      color: 'var(--text-primary)',
       fontFamily: "'Inter', sans-serif"
     },
     header: { display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px' },
-    backBtn: { background: 'none', border: 'none', cursor: 'pointer', color: isDark ? '#fff' : '#64748b' },
+    backBtn: { background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-primary)' },
     pageTitle: { fontSize: isMobile ? '6vw' : '24px', fontWeight: '800' },
-    
-    card: { 
-      backgroundColor: isDark ? '#1e293b' : '#fff', 
-      borderRadius: isMobile ? '4vw' : '15px', 
-      overflow: 'hidden', 
-      marginTop: '20px', 
-      boxShadow: '0 4px 6px rgba(0,0,0,0.05)',
-      border: isDark ? '1px solid #334155' : '1px solid #e2e8f0'
+
+    card: {
+      backgroundColor: 'var(--card-bg)',
+      borderRadius: isMobile ? '4vw' : '15px',
+      overflow: 'hidden',
+      marginTop: '20px',
+      boxShadow: isDark
+        ? '0 8px 32px -4px rgba(99, 102, 241, 0.3), 0 4px 12px -2px rgba(168, 85, 247, 0.25)'
+        : '0 8px 32px -4px rgba(99, 102, 241, 0.3), 0 4px 12px -2px rgba(168, 85, 247, 0.25)',
+      border: '1px solid var(--border-color)'
     },
     image: { width: '100%', height: isMobile ? '200px' : '300px', objectFit: 'cover' },
     content: { padding: isMobile ? '4vw' : '20px' },
-    
+
     titleRow: { display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '15px' },
     title: { fontSize: isMobile ? '5vw' : '24px', fontWeight: 'bold', margin: 0 },
-    
+
     // Status badge
     statusBadge: {
       padding: '4px 12px',
@@ -106,41 +108,41 @@ const TeacherEventDetails = ({ events, onDelete, theme }) => {
       backgroundColor: event?.status === 'published' ? '#dcfce7' : event?.status === 'draft' ? '#fef3c7' : event?.status === 'completed' ? '#e0e7ff' : '#f1f5f9',
       color: event?.status === 'published' ? '#166534' : event?.status === 'draft' ? '#92400e' : event?.status === 'completed' ? '#4338ca' : '#475569',
     },
-    
+
     metaRow: { display: 'flex', gap: isMobile ? '4vw' : '20px', margin: '15px 0', color: '#64748b', flexWrap: 'wrap' },
     metaItem: { display: 'flex', alignItems: 'center', gap: '5px', fontSize: isMobile ? '3vw' : '14px' },
-    
-    description: { color: isDark ? '#cbd5e1' : '#475569', lineHeight: '1.6', marginTop: '15px' },
-    
+
+    description: { color: 'var(--text-secondary)', lineHeight: '1.6', marginTop: '15px' },
+
     // Button grid
     btnGrid: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px', marginTop: '30px' },
     fullWidthBtn: { gridColumn: '1 / -1' },
-    
+
     btn: (bg, color) => ({
-      backgroundColor: bg, 
-      color: color, 
-      padding: isMobile ? '12px' : '12px', 
-      borderRadius: isMobile ? '2vw' : '8px', 
-      border: 'none', 
-      fontWeight: 'bold', 
-      cursor: 'pointer', 
-      display: 'flex', 
-      alignItems: 'center', 
-      justifyContent: 'center', 
-      gap: '8px', 
+      backgroundColor: bg,
+      color: color,
+      padding: isMobile ? '12px' : '12px',
+      borderRadius: isMobile ? '2vw' : '8px',
+      border: 'none',
+      fontWeight: 'bold',
+      cursor: 'pointer',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: '8px',
       fontSize: isMobile ? '3.5vw' : '14px'
     }),
-    
+
     // Delete popup
     popupOverlay: { position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 999 },
-    popup: { background: isDark ? '#1e293b' : '#fff', padding: '30px', borderRadius: '15px', textAlign: 'center', width: '80%', maxWidth: '350px' },
+    popup: { background: 'var(--card-bg)', padding: '30px', borderRadius: '15px', textAlign: 'center', width: '80%', maxWidth: '350px' },
     popupBtnRow: { display: 'flex', gap: '10px', justifyContent: 'center', marginTop: '20px' },
-    cancelBtn: { padding: '10px 20px', borderRadius: '8px', border: 'none', cursor: 'pointer', background: isDark ? '#334155' : '#e2e8f0' },
+    cancelBtn: { padding: '10px 20px', borderRadius: '8px', border: 'none', cursor: 'pointer', background: 'var(--bg-tertiary)', color: 'var(--text-primary)' },
     deleteBtn: { padding: '10px 20px', borderRadius: '8px', border: 'none', background: '#ef4444', color: '#fff', cursor: 'pointer' },
   };
 
-  if (loading) return <div style={{padding:'20px', color: isDark?'#fff':'#000'}}>Loading...</div>;
-  if (!event) return <div style={{padding:'20px', color: isDark?'#fff':'#000'}}>Event not found</div>;
+  if (loading) return <div style={{ padding: '20px', color: isDark ? '#fff' : '#000' }}>Loading...</div>;
+  if (!event) return <div style={{ padding: '20px', color: isDark ? '#fff' : '#000' }}>Event not found</div>;
 
   const eventStatus = event.status || 'draft';
 
@@ -155,7 +157,7 @@ const TeacherEventDetails = ({ events, onDelete, theme }) => {
 
       <div style={styles.card}>
         <img src={event.image} alt={event.title} style={styles.image} />
-        
+
         <div style={styles.content}>
           <div style={styles.titleRow}>
             <h1 style={styles.title}>{event.title}</h1>
@@ -163,48 +165,48 @@ const TeacherEventDetails = ({ events, onDelete, theme }) => {
               {eventStatus === 'published' ? 'Published' : eventStatus === 'draft' ? 'Draft' : 'Completed'}
             </span>
           </div>
-          
+
           <div style={styles.metaRow}>
-            <span style={styles.metaItem}><Calendar size={isMobile ? 16 : 18}/> {formatDate(event.date)}</span>
+            <span style={styles.metaItem}><Calendar size={isMobile ? 16 : 18} /> {formatDate(event.date)}</span>
             {formatTime(event.date) && (
-              <span style={styles.metaItem}><Clock size={isMobile ? 16 : 18}/> {formatTime(event.date)}</span>
+              <span style={styles.metaItem}><Clock size={isMobile ? 16 : 18} /> {formatTime(event.date)}</span>
             )}
           </div>
-          
+
           <div style={styles.metaRow}>
-            <span style={styles.metaItem}><Tag size={isMobile ? 16 : 18}/> {event.category || 'General'}</span>
-            <span style={styles.metaItem}><MapPin size={isMobile ? 16 : 18}/> {event.location || 'TBD'}</span>
+            <span style={styles.metaItem}><Tag size={isMobile ? 16 : 18} /> {event.category || 'General'}</span>
+            <span style={styles.metaItem}><MapPin size={isMobile ? 16 : 18} /> {event.location || 'TBD'}</span>
           </div>
-          
+
           <p style={styles.description}>{event.description || "No description provided."}</p>
 
           <div style={styles.btnGrid}>
             {/* Edit Button - Show for Draft and Published */}
             {(eventStatus === 'draft' || eventStatus === 'published') && (
-              <button 
-                style={styles.btn('#4f46e5', '#fff')} 
+              <button
+                style={styles.btn('#4f46e5', '#fff')}
                 onClick={() => navigate(`/edit-event/${event._id || event.id}`)}
               >
-                <Edit3 size={isMobile ? 16 : 18}/> Edit Event
+                <Edit3 size={isMobile ? 16 : 18} /> Edit Event
               </button>
             )}
 
             {/* View Registrations - Show for Published and Completed */}
             {(eventStatus === 'published' || eventStatus === 'completed') && (
-              <button 
-                style={styles.btn(isDark ? '#334155' : '#e0e7ff', isDark ? '#fff' : '#4338ca')} 
+              <button
+                style={styles.btn(isDark ? '#334155' : '#e0e7ff', isDark ? '#fff' : '#4338ca')}
                 onClick={() => navigate(`/event-registrations/${event._id || event.id}`)}
               >
-                <Users size={isMobile ? 16 : 18}/> View Registrations
+                <Users size={isMobile ? 16 : 18} /> View Registrations
               </button>
             )}
 
             {/* Delete Button - Always show */}
-            <button 
-              style={{...styles.btn('#fee2e2', '#ef4444'), ...styles.fullWidthBtn}} 
+            <button
+              style={{ ...styles.btn('#fee2e2', '#ef4444'), ...styles.fullWidthBtn }}
               onClick={() => setShowDeletePopup(true)}
             >
-              <Trash2 size={isMobile ? 16 : 18}/> Delete Event
+              <Trash2 size={isMobile ? 16 : 18} /> Delete Event
             </button>
           </div>
         </div>
@@ -214,9 +216,9 @@ const TeacherEventDetails = ({ events, onDelete, theme }) => {
       {showDeletePopup && (
         <div style={styles.popupOverlay} onClick={() => setShowDeletePopup(false)}>
           <div style={styles.popup} onClick={(e) => e.stopPropagation()}>
-            <AlertTriangle size={40} color="#ef4444" style={{marginBottom:'10px'}}/>
-            <h3 style={{color: isDark?'#fff':'#000', marginBottom: '10px'}}>Delete Event?</h3>
-            <p style={{color:'#64748b', marginBottom:'20px'}}>Are you sure you want to delete this event?</p>
+            <AlertTriangle size={40} color="#ef4444" style={{ marginBottom: '10px' }} />
+            <h3 style={{ color: isDark ? '#fff' : '#000', marginBottom: '10px' }}>Delete Event?</h3>
+            <p style={{ color: '#64748b', marginBottom: '20px' }}>Are you sure you want to delete this event?</p>
             <div style={styles.popupBtnRow}>
               <button onClick={() => setShowDeletePopup(false)} style={styles.cancelBtn}>Cancel</button>
               <button onClick={handleDelete} style={styles.deleteBtn}>Delete</button>

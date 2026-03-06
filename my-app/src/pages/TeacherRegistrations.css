@@ -1,0 +1,505 @@
+/* ── TeacherRegistrations.css — Pro Max SaaS Design System ─────────────── */
+/* Theme variables are now global in index.css */
+
+.page-wrapper.treg-full-page {
+    max-width: 100% !important;
+    padding: 0 !important;
+    background: var(--treg-bg);
+    min-height: 100vh;
+    font-family: var(--treg-font-sans);
+}
+
+.treg-root {
+    position: relative;
+    padding-bottom: 60px;
+}
+
+/* ── Dynamic Background Glows ── */
+.treg-bg-glow {
+    position: fixed;
+    width: 600px;
+    height: 600px;
+    border-radius: 50%;
+    filter: blur(120px);
+    z-index: 0;
+    pointer-events: none;
+    opacity: 0.12;
+}
+
+.treg-full-page.light .treg-bg-glow {
+    opacity: 0.08;
+}
+
+.treg-glow-purple {
+    background: var(--treg-primary);
+    top: -200px;
+    left: -100px;
+}
+
+.treg-glow-blue {
+    background: var(--treg-secondary);
+    bottom: -150px;
+    right: -100px;
+}
+
+/* ── Refined Header ── */
+.treg-header-wrapper {
+    padding: 60px 80px 40px;
+    position: relative;
+    z-index: 1;
+}
+
+.treg-title {
+    font-size: 42px;
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    color: var(--treg-text-main);
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    margin: 0;
+}
+
+.treg-title-icon-wrapper {
+    width: 64px;
+    height: 64px;
+    background: rgba(139, 92, 246, 0.1);
+    border: 1px solid rgba(139, 92, 246, 0.2);
+    border-radius: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 0 20px var(--treg-primary-glow);
+}
+
+.treg-subtitle {
+    font-size: 16px;
+    color: var(--treg-text-dim);
+    margin: 12px 0 0 84px;
+    max-width: 600px;
+    line-height: 1.6;
+}
+
+.treg-view-ticket-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 12px;
+    color: var(--treg-secondary);
+    background: rgba(59, 130, 246, 0.1);
+    padding: 6px 12px;
+    border-radius: 8px;
+    font-weight: 700;
+    transition: all 0.2s;
+    margin-top: 6px;
+    border: 1px solid rgba(59, 130, 246, 0.2);
+}
+
+.treg-view-ticket-link:hover {
+    background: var(--treg-secondary);
+    color: #fff;
+    transform: translateY(-1px);
+}
+
+/* ── Glass Controls ── */
+.treg-content-wrapper {
+    padding: 0 80px;
+    position: relative;
+    z-index: 1;
+}
+
+.treg-tabs-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 32px;
+}
+
+.treg-tabs {
+    background: var(--treg-glass-bg);
+    backdrop-filter: blur(10px);
+    border: 1px solid var(--treg-glass-border);
+    padding: 6px;
+    border-radius: 16px;
+    display: flex;
+    gap: 4px;
+}
+
+/* ── Toolbar ── */
+.treg-toolbar {
+    display: flex;
+    gap: 12px;
+}
+
+.treg-tool-btn {
+    width: 48px;
+    height: 48px;
+    border-radius: 14px;
+    border: 1px solid var(--treg-glass-border);
+    background: var(--treg-glass-bg);
+    color: var(--treg-text-muted);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.treg-tool-btn:hover {
+    background: var(--treg-glass-border);
+    color: var(--treg-text-main);
+}
+
+.treg-tool-btn.active {
+    background: var(--treg-primary);
+    color: #fff;
+    border-color: var(--treg-primary);
+    box-shadow: 0 4px 12px var(--treg-primary-glow);
+}
+
+.treg-tab {
+    padding: 10px 24px;
+    border-radius: 12px;
+    border: none;
+    background: transparent;
+    color: var(--treg-text-muted);
+    font-weight: 600;
+    font-size: 15px;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.treg-tab:hover:not(.active) {
+    color: #fff;
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.treg-tab.active {
+    background: var(--treg-primary);
+    color: #fff;
+    box-shadow: 0 4px 12px var(--treg-primary-glow);
+}
+
+.treg-search-bar {
+    background: var(--treg-glass-bg);
+    backdrop-filter: blur(10px);
+    border: 1px solid var(--treg-glass-border);
+    border-radius: 16px;
+    padding: 14px 24px;
+    width: 100%;
+    margin-bottom: 32px;
+    display: flex;
+    align-items: center;
+    transition: all 0.3s ease;
+}
+
+.treg-search-bar:focus-within {
+    border-color: var(--treg-primary);
+    background: var(--treg-card-bg);
+    box-shadow: 0 0 0 4px var(--treg-primary-glow);
+}
+
+.treg-search-bar input {
+    background: transparent;
+    border: none;
+    color: var(--treg-text-main);
+    font-size: 15px;
+    margin-left: 14px;
+    width: 100%;
+    outline: none;
+}
+
+/* ── Department Chips ── */
+.treg-dept-chips {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    background: var(--treg-glass-bg);
+    padding: 16px;
+    border-radius: 16px;
+    border: 1px solid var(--treg-glass-border);
+    margin-bottom: 24px;
+}
+
+.treg-chip {
+    padding: 6px 16px;
+    border-radius: 99px;
+    border: 1px solid var(--treg-glass-border);
+    background: var(--treg-glass-bg);
+    color: var(--treg-text-muted);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.treg-chip:hover:not(.active) {
+    background: var(--treg-glass-border);
+    color: var(--treg-text-main);
+}
+
+.treg-chip.active {
+    background: var(--treg-primary);
+    color: #fff;
+    border-color: var(--treg-primary);
+    box-shadow: 0 4px 10px var(--treg-primary-glow);
+}
+
+/* ── Bulk Actions Banner ── */
+.treg-bulk {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    padding: 16px 24px;
+    background: var(--treg-card-bg);
+    backdrop-filter: blur(10px);
+    border: 1px solid var(--treg-primary);
+    border-radius: 16px;
+    margin-bottom: 24px;
+    box-shadow: 0 8px 32px var(--treg-primary-glow);
+    animation: fadeIn 0.3s ease-out;
+}
+
+.treg-bulk-text {
+    font-weight: 700;
+    color: var(--treg-text-main);
+    flex: 1;
+    font-size: 15px;
+}
+
+.treg-bulk-btns {
+    display: flex;
+    gap: 12px;
+}
+
+/* ── Pro Table ── */
+.treg-table-container {
+    background: var(--treg-card-bg);
+    backdrop-filter: blur(20px);
+    border: 1px solid var(--treg-glass-border);
+    border-radius: 24px;
+    overflow: hidden;
+    box-shadow: var(--treg-shadow);
+}
+
+.treg-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.treg-table th {
+    background: var(--treg-glass-bg);
+    padding: 20px 24px;
+    font-size: 13px;
+    text-transform: uppercase;
+    font-weight: 700;
+    color: var(--treg-text-muted);
+    letter-spacing: 0.1em;
+    border-bottom: 1px solid var(--treg-glass-border);
+    text-align: left;
+}
+
+.treg-table td {
+    padding: 24px;
+    border-bottom: 1px solid var(--treg-glass-border);
+    vertical-align: middle;
+}
+
+.treg-table tr:last-child td {
+    border-bottom: none;
+}
+
+.treg-table tr {
+    transition: background 0.2s ease;
+}
+
+.treg-table tr:hover {
+    background: var(--treg-glass-bg);
+}
+
+/* ── Empty State ── */
+.treg-empty {
+    padding: 80px 40px;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+}
+
+.treg-empty h3 {
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--treg-text-main);
+    margin: 0;
+}
+
+.treg-empty p {
+    color: var(--treg-text-dim);
+    font-size: 16px;
+    max-width: 400px;
+    line-height: 1.6;
+    margin: 0;
+}
+
+/* ── Component Styling ── */
+.treg-student {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.treg-avatar {
+    width: 48px;
+    height: 48px;
+    border-radius: 14px;
+    object-fit: cover;
+    border: 2px solid var(--treg-glass-border);
+}
+
+.treg-name {
+    font-weight: 700;
+    color: var(--treg-text-main);
+    display: block;
+    font-size: 16px;
+}
+
+.treg-email {
+    font-size: 13px;
+    color: var(--treg-text-dim);
+}
+
+.treg-details-box {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.treg-event-title {
+    font-weight: 600;
+    color: var(--treg-text-main);
+    font-size: 14px;
+}
+
+.treg-event-date {
+    font-size: 12px;
+    color: var(--treg-text-dim);
+}
+
+.treg-dept-badge {
+    display: inline-flex;
+    padding: 6px 14px;
+    background: var(--treg-glass-bg);
+    color: var(--treg-text-main);
+    border-radius: 10px;
+    font-size: 13px;
+    font-weight: 600;
+    border: 1px solid var(--treg-glass-border);
+}
+
+.treg-status {
+    padding: 8px 16px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.treg-status.approved {
+    background: rgba(16, 185, 129, 0.1);
+    color: var(--treg-success);
+    border: 1px solid rgba(16, 185, 129, 0.2);
+}
+
+.treg-status.pending {
+    background: rgba(245, 158, 11, 0.1);
+    color: var(--treg-warning);
+    border: 1px solid rgba(245, 158, 11, 0.2);
+}
+
+.treg-status.rejected {
+    background: rgba(239, 68, 68, 0.1);
+    color: var(--treg-danger);
+    border: 1px solid rgba(239, 68, 68, 0.2);
+}
+
+.treg-btn {
+    padding: 12px 24px;
+    border-radius: 12px;
+    font-weight: 700;
+    font-size: 14px;
+    cursor: pointer;
+    border: 1px solid var(--treg-glass-border);
+    background: var(--treg-glass-bg);
+    color: var(--treg-text-main);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.treg-btn.approve {
+    background: var(--treg-success);
+    color: #fff;
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);
+}
+
+.treg-btn.reject {
+    background: var(--treg-glass-bg);
+    color: var(--treg-danger);
+    border: 1px solid var(--treg-glass-border);
+}
+
+.treg-btn.reject:hover {
+    background: rgba(239, 68, 68, 0.1);
+    border-color: var(--treg-danger);
+}
+
+.treg-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 15px rgba(0, 0, 0, 0.2);
+}
+
+/* ── Interactive Shadows ── */
+.treg-card-shadow {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 80%;
+    height: 80%;
+    background: var(--treg-primary);
+    filter: blur(100px);
+    opacity: 0.1;
+    z-index: -1;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Responsive Overrides */
+@media (max-width: 1024px) {
+
+    .treg-header-wrapper,
+    .treg-content-wrapper {
+        padding: 40px;
+    }
+
+    .treg-title {
+        font-size: 32px;
+    }
+
+    .treg-subtitle {
+        margin-left: 0;
+    }
+}

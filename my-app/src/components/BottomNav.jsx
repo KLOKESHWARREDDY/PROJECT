@@ -5,30 +5,30 @@ import { Home, Calendar, Ticket, User, List, CheckSquare } from 'lucide-react';
 const BottomNav = ({ theme, user }) => {
   const navigate = useNavigate();
   const location = useLocation();
-  const isDark = theme === 'dark';
-  
+  const isDark = ['dark', 'purple-gradient', 'blue-ocean', 'midnight-dark', 'emerald-dark', 'cherry-dark', 'slate-minimal'].includes(theme);
+
   // ✅ FIX: Check if user exists before checking role
   const isTeacher = user && user.role === 'teacher';
 
-  const navItems = isTeacher 
+  const navItems = isTeacher
     ? [
-        { id: 'home', label: 'Home', icon: <Home size={24} />, path: '/' },
-        { id: 'my-events', label: 'My Events', icon: <List size={24} />, path: '/teacher-events' },
-        { id: 'approvals', label: 'Approvals', icon: <CheckSquare size={24} />, path: '/teacher-registrations' },
-        { id: 'profile', label: 'Profile', icon: <User size={24} />, path: '/profile' },
-      ]
+      { id: 'home', label: 'Home', icon: <Home size={24} />, path: '/' },
+      { id: 'my-events', label: 'My Events', icon: <List size={24} />, path: '/teacher-events' },
+      { id: 'approvals', label: 'Approvals', icon: <CheckSquare size={24} />, path: '/teacher-registrations' },
+      { id: 'profile', label: 'Profile', icon: <User size={24} />, path: '/profile' },
+    ]
     : [
-        { id: 'home', label: 'Home', icon: <Home size={24} />, path: '/' },
-        { id: 'events', label: 'Events', icon: <Calendar size={24} />, path: '/events' },
-        { id: 'tickets', label: 'Tickets', icon: <Ticket size={24} />, path: '/my-events' },
-        { id: 'profile', label: 'Profile', icon: <User size={24} />, path: '/profile' },
-      ];
+      { id: 'home', label: 'Home', icon: <Home size={24} />, path: '/' },
+      { id: 'events', label: 'Events', icon: <Calendar size={24} />, path: '/events' },
+      { id: 'tickets', label: 'Tickets', icon: <Ticket size={24} />, path: '/my-events' },
+      { id: 'profile', label: 'Profile', icon: <User size={24} />, path: '/profile' },
+    ];
 
   const styles = {
     container: {
       position: 'fixed', bottom: 0, left: 0, width: '100%', height: '70px',
-      backgroundColor: isDark ? '#1e293b' : '#fff',
-      borderTop: isDark ? '1px solid #334155' : '1px solid #e2e8f0',
+      backgroundColor: 'var(--card-bg)',
+      borderTop: '1px solid var(--border-color)',
       display: 'flex', justifyContent: 'space-around', alignItems: 'center',
       zIndex: 1000, boxShadow: '0 -4px 20px rgba(0,0,0,0.05)',
       paddingBottom: 'safe-area-inset-bottom'

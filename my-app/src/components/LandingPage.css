@@ -89,10 +89,10 @@
   justify-content: space-between;
   padding: 80px 10%;
   gap: 50px;
-  /* Green to Dark Blue Gradient */
-  background: linear-gradient(135deg, #41794f 0%, #25354e 100%);
-  min-height: calc(100vh - 85px); /* Full height minus nav */
-  color: #fff;
+  background: var(--bg-color);
+  min-height: calc(100vh - 85px);
+  /* Full height minus nav */
+  color: var(--text-dark);
 }
 
 .hero-content {
@@ -102,10 +102,11 @@
 
 .hero-title {
   /* Ensure you have this font imported in index.html or index.css */
-  font-family: 'Akaya Telivigala', cursive, serif; 
+  font-family: 'Akaya Telivigala', cursive, serif;
   font-size: 4rem;
   line-height: 1.1;
-  color: #00bdc4; /* Cyan accent color */
+  color: #00bdc4;
+  /* Cyan accent color */
   margin-bottom: 20px;
   font-weight: 800;
 }
@@ -119,7 +120,8 @@
 
 .hero-description {
   font-size: 1.15rem;
-  color: #bfdbfe; /* Light blue text for readability */
+  color: #bfdbfe;
+  /* Light blue text for readability */
   line-height: 1.6;
   margin-bottom: 40px;
 }
@@ -130,16 +132,15 @@
 }
 
 .btn-get-started {
-  background: #2563eb;
+  background: var(--primary-color);
   color: white;
   padding: 16px 32px;
-  border-radius: 8px;
-  border: 1px solid #1e40af;
-  font-weight: 800;
+  border-radius: 12px;
+  border: none;
+  font-weight: 600;
   font-size: 1rem;
   cursor: pointer;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
-  transition: transform 0.2s;
+  transition: background-color 0.2s;
 }
 
 .btn-get-started:hover {
@@ -156,40 +157,40 @@
 .hero-image-container img {
   width: 100%;
   max-width: 650px;
-  height: 420px; 
+  height: 420px;
   border-radius: 12px;
-  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.4);
   object-fit: cover;
 }
 
 /* --- Responsive Design --- */
 @media (max-width: 992px) {
   .lp-nav-links {
-    display: none; /* Hide nav links on smaller screens */
+    display: none;
+    /* Hide nav links on smaller screens */
   }
-  
+
   .hero-wrapper {
     flex-direction: column;
     text-align: center;
     padding: 60px 5%;
     justify-content: center;
   }
-  
+
   .hero-title {
     font-size: 3rem;
   }
-  
+
   .hero-image-container {
     justify-content: center;
     width: 100%;
     margin-top: 30px;
   }
-  
+
   .hero-image-container img {
     height: auto;
     max-height: 350px;
   }
-  
+
   .button-group {
     justify-content: center;
   }

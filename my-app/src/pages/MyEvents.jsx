@@ -4,7 +4,7 @@ import { Ticket, Calendar, MapPin, Clock } from 'lucide-react';
 
 const MyEvents = ({ theme, events, onCancel }) => {
   const navigate = useNavigate();
-  const isDark = theme === 'dark';
+  const isDark = ['dark', 'purple-gradient', 'blue-ocean', 'midnight-dark', 'emerald-dark', 'cherry-dark', 'slate-minimal'].includes(theme);
 
   const styles = {
     container: {
@@ -36,7 +36,7 @@ const MyEvents = ({ theme, events, onCancel }) => {
 
     // Ticket List
     list: { display: 'flex', flexDirection: 'column', gap: '20px' },
-    
+
     // Ticket Card (Horizontal Layout)
     ticketCard: {
       backgroundColor: isDark ? '#1e293b' : '#fff',
@@ -60,7 +60,7 @@ const MyEvents = ({ theme, events, onCancel }) => {
     ticketTitle: { fontSize: '20px', fontWeight: 'bold', marginBottom: '12px' },
     metaRow: { display: 'flex', gap: '20px', flexWrap: 'wrap', color: '#64748b', fontSize: '14px' },
     metaItem: { display: 'flex', alignItems: 'center', gap: '6px' },
-    
+
     // Status Badge
     badge: (status) => ({
       display: 'inline-block',
@@ -128,7 +128,7 @@ const MyEvents = ({ theme, events, onCancel }) => {
                   {event.status === 'approved' ? 'Confirmed' : 'Pending Approval'}
                 </span>
                 <h3 style={styles.ticketTitle}>{event.title}</h3>
-                
+
                 <div style={styles.metaRow}>
                   <div style={styles.metaItem}><Calendar size={16} /> {event.date}</div>
                   <div style={styles.metaItem}><MapPin size={16} /> {event.location}</div>
@@ -138,15 +138,15 @@ const MyEvents = ({ theme, events, onCancel }) => {
 
               <div style={styles.actions}>
                 {event.status === 'approved' && (
-                  <button 
-                    style={styles.viewBtn} 
+                  <button
+                    style={styles.viewBtn}
                     onClick={() => navigate(`/ticket/${event.registrationId}`)}
                   >
                     View Ticket
                   </button>
                 )}
-                <button 
-                  style={styles.cancelBtn} 
+                <button
+                  style={styles.cancelBtn}
                   onClick={() => onCancel(event.registrationId)}
                 >
                   Cancel

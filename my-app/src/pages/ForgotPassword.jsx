@@ -91,10 +91,10 @@ const ForgotPassword = () => {
       fontSize: '14px',
       textAlign: 'center',
       marginTop: '20px',
-      backgroundColor: message?.includes('will receive') 
+      backgroundColor: message?.includes('will receive')
         ? (isDark ? 'rgba(16, 185, 129, 0.2)' : '#dcfce7')
         : (isDark ? 'rgba(239, 68, 68, 0.2)' : '#fee2e2'),
-      color: message?.includes('will receive') 
+      color: message?.includes('will receive')
         ? (isDark ? '#6ee7b7' : '#16a34a')
         : (isDark ? '#fca5a5' : '#dc2626')
     },

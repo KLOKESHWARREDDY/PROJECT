@@ -1,164 +1,154 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Users, ClipboardList, XCircle, ChevronRight, Bell, CheckCircle } from 'lucide-react';
+import {
+  ArrowLeft, Users, ClipboardList, XCircle, ChevronRight,
+  Bell, CheckCircle, Clock, Calendar, Inbox, Search
+} from 'lucide-react';
+import './Notifications.css';
 
 const Notifications = ({ theme, user, registrations = [], notificationsList = [] }) => {
   const navigate = useNavigate();
-  const isDark = theme === 'dark';
+  const [filter, setFilter] = useState('all'); // all, unread, important
+
   const isTeacher = user?.role === 'teacher';
 
-  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
-  useEffect(() => {
-    const handleResize = () => setIsMobile(window.innerWidth < 768);
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
+  // --- DATA PROCESSING ---
+  const teacherNotifications = useMemo(() => {
+    if (!isTeacher) return [];
 
-  // --- TEACHER STATS CALCULATION ---
-  const pendingCount = registrations.filter(r => r.status === 'pending').length;
-  const approvedCount = registrations.filter(r => r.status === 'approved').length;
-  const rejectedCount = registrations.filter(r => r.status === 'rejected').length;
+    const pending = registrations.filter(r => r.status === 'pending').map(r => ({
+      id: `pending-${r._id}`,
+      type: 'registration',
+      title: 'New Registration Pending',
+      message: `User ${r.student?.name || 'Someone'} applied for ${r.event?.title || 'an event'}.`,
+      time: r.createdAt,
+      status: 'pending',
+      path: '/teacher-registrations',
+      icon: <Users size={20} />,
+      color: '#4f46e5',
+      bg: '#e0e7ff'
+    }));
 
-  const styles = {
-    container: {
-      padding: isMobile ? '4vw' : '2vw',
-      maxWidth: isMobile ? '100vw' : '50vw',
-      margin: '0 auto',
-      backgroundColor: isDark ? '#0f172a' : '#f8fafc',
-      minHeight: '100vh',
-      fontFamily: "'Inter', sans-serif",
-      color: isDark ? '#fff' : '#1e293b'
-    },
-    header: { display: 'flex', alignItems: 'center', gap: '2vw', marginBottom: '4vh' },
-    backBtn: {
-      background: 'none', border: 'none', cursor: 'pointer',
-      color: isDark ? '#fff' : '#64748b', display: 'flex', alignItems: 'center'
-    },
-    pageTitle: { fontSize: isMobile ? '6vw' : '2vw', fontWeight: '800' },
+    const approved = registrations.filter(r => r.status === 'approved').slice(0, 5).map(r => ({
+      id: `approved-${r._id}`,
+      type: 'approval',
+      title: 'Registration Approved',
+      message: `You approved ${r.student?.name || 'User'} for ${r.event?.title || 'Event'}.`,
+      time: r.updatedAt || r.createdAt,
+      status: 'approved',
+      path: '/teacher-registrations',
+      icon: <CheckCircle size={20} />,
+      color: '#16a34a',
+      bg: '#dcfce7'
+    }));
 
-    list: { display: 'flex', flexDirection: 'column', gap: '2vh' },
+    return [...pending, ...approved].sort((a, b) => new Date(b.time) - new Date(a.time));
+  }, [isTeacher, registrations]);
 
-    // Card Style
-    item: {
-      display: 'flex', alignItems: 'center', gap: '3vw',
-      backgroundColor: isDark ? '#1e293b' : '#fff',
-      padding: isMobile ? '4vw' : '1.5vw',
-      borderRadius: isMobile ? '3vw' : '1vw',
-      cursor: 'pointer',
-      boxShadow: '0 2px 8px rgba(0,0,0,0.03)',
-      border: isDark ? '1px solid #334155' : '1px solid #e2e8f0',
-      transition: 'transform 0.2s'
-    },
-    iconBox: (color, bg) => ({
-      width: isMobile ? '12vw' : '3.5vw', height: isMobile ? '12vw' : '3.5vw',
-      borderRadius: '50%', backgroundColor: bg, color: color,
-      display: 'flex', alignItems: 'center', justifyContent: 'center'
-    }),
-    info: { flex: 1 },
-    title: { fontSize: isMobile ? '4vw' : '1.1vw', fontWeight: '600', marginBottom: '0.5vh' },
-    count: { fontSize: isMobile ? '3.5vw' : '0.9vw', color: '#64748b' },
-    time: { fontSize: isMobile ? '3vw' : '0.8vw', color: '#94a3b8', marginTop: '0.5vh' }
-  };
+  const displayList = isTeacher ? teacherNotifications : notificationsList;
+
+  const filteredNotifications = useMemo(() => {
+    if (filter === 'unread') return displayList.filter(n => !n.read);
+    return displayList;
+  }, [displayList, filter]);
 
   return (
-    <div style={styles.container}>
-      <div style={styles.header}>
-        <button style={styles.backBtn} onClick={() => navigate(-1)}>
-          <ArrowLeft size={isMobile ? 24 : 24} />
-        </button>
-        <h1 style={styles.pageTitle}>Notifications</h1>
+    <div className="notifications-container">
+      <div className="notifications-header">
+        <div className="back-button-container">
+          <button className="notifications-back-btn" onClick={() => navigate(-1)}>
+            <ArrowLeft size={20} />
+          </button>
+          <h1 className="notifications-page-title">Notifications</h1>
+        </div>
+
+        <div className="notifications-actions">
+          <div
+            className={`action-chip ${filter === 'all' ? 'active' : ''}`}
+            onClick={() => setFilter('all')}
+          >
+            All
+          </div>
+          <div
+            className={`action-chip ${filter === 'unread' ? 'active' : ''}`}
+            onClick={() => setFilter('unread')}
+          >
+            Unread
+          </div>
+        </div>
       </div>
 
-      <div style={styles.list}>
+      <div className="notifications-list">
+        {filteredNotifications.length > 0 ? (
+          filteredNotifications.map((notif) => {
+            const isUnread = !notif.read && !isTeacher; // Teacher stats aren't exactly "notifications" in the same way here
 
-        {/* --- TEACHER VIEW (Registration Stats) --- */}
-        {isTeacher ? (
-          <>
-            <div style={styles.item} onClick={() => navigate('/teacher-registrations')}>
-              <div style={styles.iconBox('#4f46e5', '#e0e7ff')}>
-                <Users size={isMobile ? 20 : 22} />
-              </div>
-              <div style={styles.info}>
-                <div style={styles.title}>New Registration</div>
-                <div style={styles.count}>{pendingCount} pending requests</div>
-              </div>
-              <ChevronRight size={20} color="#94a3b8" />
-            </div>
-
-            <div style={styles.item} onClick={() => navigate('/teacher-registrations')}>
-              <div style={styles.iconBox('#16a34a', '#dcfce7')}>
-                <ClipboardList size={isMobile ? 20 : 22} />
-              </div>
-              <div style={styles.info}>
-                <div style={styles.title}>Registered Members</div>
-                <div style={styles.count}>{approvedCount} active members</div>
-              </div>
-              <ChevronRight size={20} color="#94a3b8" />
-            </div>
-
-            <div style={styles.item} onClick={() => navigate('/teacher-registrations')}>
-              <div style={styles.iconBox('#dc2626', '#fee2e2')}>
-                <XCircle size={isMobile ? 20 : 22} />
-              </div>
-              <div style={styles.info}>
-                <div style={styles.title}>Registration Rejected</div>
-                <div style={styles.count}>{rejectedCount} rejected</div>
-              </div>
-              <ChevronRight size={20} color="#94a3b8" />
-            </div>
-          </>
-        ) : (
-          /* --- STUDENT VIEW (General Notifications) --- */
-          notificationsList.length > 0 ? (
-            notificationsList.map((notif) => (
+            return (
               <div
-                key={notif._id || notif.id}
-                style={styles.item}
+                key={notif.id || notif._id}
+                className={`notification-card ${isUnread ? 'unread' : ''}`}
                 onClick={() => {
-                  // Mark as read (optional, handled by API usually)
-                  // Redirect based on type
-                  if (notif.type === 'publish' && notif.relatedId) {
-                    navigate(`/events/${notif.relatedId}`);
-                  } else if (['registration', 'approval', 'registration_sent', 'rejection'].includes(notif.type)) {
-                    navigate('/my-events');
-                  } else {
-                    // Default redirect
-                    navigate('/events');
-                  }
+                  if (notif.path) navigate(notif.path);
+                  else if (notif.type === 'publish' && notif.relatedId) navigate(`/events/${notif.relatedId}`);
+                  else if (['registration', 'approval', 'registration_sent', 'rejection'].includes(notif.type)) navigate('/my-events');
+                  else navigate('/events');
                 }}
               >
-                <div style={
-                  styles.iconBox(
-                    notif.type === 'rejection' ? '#dc2626' :
-                      notif.type === 'approval' ? '#16a34a' :
-                        notif.type === 'registration_sent' ? '#ea580c' :
-                          '#4f46e5',
-                    notif.read ? '#f1f5f9' : '#e0e7ff'
-                  )
-                }>
-                  {notif.type === 'registration' ? <ClipboardList size={20} /> :
+                <div
+                  className="notification-icon-wrapper"
+                  style={{
+                    backgroundColor: notif.bg || (notif.type === 'rejection' ? '#fee2e2' : notif.type === 'approval' ? '#dcfce7' : '#e0e7ff'),
+                    color: notif.color || (notif.type === 'rejection' ? '#dc2626' : notif.type === 'approval' ? '#16a34a' : '#4f46e5')
+                  }}
+                >
+                  {notif.icon || (
                     notif.type === 'approval' ? <CheckCircle size={20} /> :
                       notif.type === 'rejection' ? <XCircle size={20} /> :
-                        notif.type === 'registration_sent' ? <ClipboardList size={20} /> : // Or Clock?
-                          <Bell size={20} />}
+                        notif.type === 'registration' || notif.type === 'registration_sent' ? <ClipboardList size={20} /> :
+                          <Bell size={20} />
+                  )}
                 </div>
-                <div style={styles.info}>
-                  <div style={styles.title}>{notif.title}</div>
-                  <div style={styles.count}>{notif.message || notif.desc}</div>
-                  <div style={styles.time}>
-                    {notif.createdAt ? new Date(notif.createdAt).toLocaleString() : notif.time}
+
+                <div className="notification-info">
+                  <div className="notification-title-row">
+                    <h3 className="notification-card-title">{notif.title}</h3>
+                    {notif.status && (
+                      <span className={`status-indicator`} style={{
+                        backgroundColor: notif.bg,
+                        color: notif.color
+                      }}>
+                        {notif.status}
+                      </span>
+                    )}
+                  </div>
+                  <p className="notification-card-message">{notif.message || notif.desc}</p>
+
+                  <div className="notification-meta">
+                    <span className="notification-time">
+                      <Clock size={12} />
+                      {new Date(notif.time || notif.createdAt).toLocaleDateString(undefined, {
+                        month: 'short',
+                        day: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                      })}
+                    </span>
                   </div>
                 </div>
-                {!notif.read && <div style={{ width: 8, height: 8, borderRadius: '50%', backgroundColor: '#4f46e5' }}></div>}
-              </div>
-            ))
-          ) : (
-            <div style={{ textAlign: 'center', color: '#64748b', marginTop: '5vh' }}>
-              No new notifications
-            </div>
-          )
-        )}
 
+                <ChevronRight size={18} className="chevron-icon" style={{ opacity: 0.3 }} />
+              </div>
+            );
+          })
+        ) : (
+          <div className="empty-state">
+            <div className="empty-state-icon">
+              <Inbox size={64} />
+            </div>
+            <h3>All caught up!</h3>
+            <p>You don't have any notifications {filter === 'unread' ? 'to read' : 'at the moment'}.</p>
+          </div>
+        )}
       </div>
     </div>
   );

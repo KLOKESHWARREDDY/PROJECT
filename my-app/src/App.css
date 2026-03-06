@@ -4,9 +4,11 @@
 .desktop-sidebar {
   display: none !important;
 }
+
 .mobile-bottom-nav {
   display: flex !important;
 }
+
 .app-layout {
   display: flex;
 }
@@ -14,11 +16,10 @@
 /* Mobile Phone Wrapper */
 .mobile-wrapper {
   width: 100%;
-  max-width: 420px;
-  margin: 0 auto;
+  max-width: 100%;
+  margin: 0;
   min-height: 100vh;
-  background-color: #fff;
-  box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+  background-color: var(--bg-color);
   position: relative;
 }
 
@@ -31,33 +32,46 @@ body.dark-mode .mobile-wrapper {
   .desktop-sidebar {
     display: flex !important;
   }
+
   .mobile-bottom-nav {
     display: none !important;
   }
+
+  /* LIGHT MODE (Default) */
+  :root {
+    --bg-primary: #f4f7fe;
+  }
+
   .app-layout {
     display: flex;
     flex-direction: row;
     min-height: 100vh;
-    background-color: #f8fafc; /* Desktop BG */
+    background-color: transparent;
+    /* Desktop BG handled by index.css */
   }
+
   .main-content {
     flex: 1;
     max-width: 100%;
-    margin: 0 0 0 260px; /* Account for sidebar width */
+    margin: 0;
+    /* Handled dynamically by App.js React state, usually 0 0 0 260px */
     width: calc(100% - 260px);
     padding: 0;
   }
+
   .mobile-wrapper {
     max-width: 100%;
     box-shadow: none;
     background-color: transparent;
   }
+
   body.dark-mode .mobile-wrapper {
     background-color: transparent;
   }
 }
 
 /* Dark Mode Overrides */
+/* Dark Mode Overrides - Let index.css handle background */
 body.dark-mode .app-layout {
-  background-color: #333f5c;
+  background-color: transparent;
 }

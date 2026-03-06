@@ -1,0 +1,40 @@
+.layout-wrapper {
+    width: 100%;
+    min-height: 100vh;
+    /* The background is handled globally in index.css, but we ensure it's transparent here */
+    background-color: transparent;
+}
+
+.layout-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 24px;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+/* Helper for floating cards/sections with white backgrounds */
+.layout-card {
+    background-color: #ffffff;
+    border-radius: 16px;
+    padding: 32px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+    margin-bottom: 24px;
+}
+
+/* Helper for transparent sections (e.g., page headers) */
+.layout-section {
+    padding: 40px 0;
+    background-color: transparent;
+}
+
+@media (max-width: 768px) {
+    .layout-container {
+        padding: 0 16px;
+    }
+
+    .layout-card {
+        padding: 20px;
+        border-radius: 12px;
+    }
+}

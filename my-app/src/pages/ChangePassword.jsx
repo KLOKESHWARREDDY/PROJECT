@@ -5,11 +5,11 @@ import axios from 'axios';
 
 const ChangePassword = ({ theme }) => {
   const navigate = useNavigate();
-  const isDark = theme === 'dark';
+  const isDark = ['dark', 'purple-gradient', 'blue-ocean', 'midnight-dark', 'emerald-dark', 'cherry-dark', 'slate-minimal'].includes(theme);
   const [show, setShow] = useState(false);
   const [showNew, setShowNew] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
-  
+
   // Form state
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
@@ -29,20 +29,20 @@ const ChangePassword = ({ theme }) => {
 
   const styles = {
     // 1. CONTAINER: Responsive Width
-    container: { 
+    container: {
       maxWidth: isMobile ? '90vw' : '40vw', // Wider on mobile, focused on desktop
-      margin: '0 auto', 
-      padding: isMobile ? '5vw' : '2vw', 
-      fontFamily: "'Inter', sans-serif", 
+      margin: '0 auto',
+      padding: isMobile ? '5vw' : '2vw',
+      fontFamily: "'Inter', sans-serif",
       color: isDark ? '#fff' : '#1e293b',
       minHeight: '100vh'
     },
     // HEADER
-    header: { 
-      display: 'flex', 
-      alignItems: 'center', 
-      gap: isMobile ? '3vw' : '1vw', 
-      marginBottom: '4vh' 
+    header: {
+      display: 'flex',
+      alignItems: 'center',
+      gap: isMobile ? '3vw' : '1vw',
+      marginBottom: '4vh'
     },
     backBtn: {
       cursor: 'pointer',
@@ -53,15 +53,15 @@ const ChangePassword = ({ theme }) => {
       alignItems: 'center',
       justifyContent: 'center'
     },
-    title: { 
-      fontSize: isMobile ? '6vw' : '2vw', 
-      fontWeight: '800' 
+    title: {
+      fontSize: isMobile ? '6vw' : '2vw',
+      fontWeight: '800'
     },
-    
+
     // FORM
-    form: { 
-      display: 'flex', 
-      flexDirection: 'column', 
+    form: {
+      display: 'flex',
+      flexDirection: 'column',
       gap: isMobile ? '3vh' : '2.5vh',
       backgroundColor: isDark ? '#1e293b' : '#fff',
       padding: isMobile ? '5vw' : '2.5vw',
@@ -74,49 +74,49 @@ const ChangePassword = ({ theme }) => {
       flexDirection: 'column',
       gap: '1vh'
     },
-    label: { 
-      display: 'block', 
-      fontSize: isMobile ? '3.5vw' : '1vw', 
-      fontWeight: '600', 
-      color: '#64748b' 
+    label: {
+      display: 'block',
+      fontSize: isMobile ? '3.5vw' : '1vw',
+      fontWeight: '600',
+      color: '#64748b'
     },
-    inputContainer: { 
+    inputContainer: {
       position: 'relative',
       display: 'flex',
       alignItems: 'center'
     },
-    input: { 
-      width: '100%', 
-      padding: isMobile ? '1.5vh 3vw' : '1.2vh 1vw', 
+    input: {
+      width: '100%',
+      padding: isMobile ? '1.5vh 3vw' : '1.2vh 1vw',
       paddingRight: '3rem', // Space for eye icon
-      borderRadius: isMobile ? '2vw' : '0.8vw', 
-      border: isDark ? '1px solid #475569' : '2px solid #e2e8f0', 
-      backgroundColor: isDark ? '#0f172a' : '#f8fafc', 
-      color: isDark ? '#fff' : '#1e293b', 
-      outline: 'none', 
+      borderRadius: isMobile ? '2vw' : '0.8vw',
+      border: isDark ? '1px solid #475569' : '2px solid #e2e8f0',
+      backgroundColor: isDark ? '#0f172a' : '#f8fafc',
+      color: isDark ? '#fff' : '#1e293b',
+      outline: 'none',
       fontSize: isMobile ? '4vw' : '1.1vw',
       transition: 'border-color 0.2s'
     },
     eyeIcon: {
-      position: 'absolute', 
-      right: isMobile ? '3vw' : '1vw', 
-      cursor: 'pointer', 
+      position: 'absolute',
+      right: isMobile ? '3vw' : '1vw',
+      cursor: 'pointer',
       color: '#94a3b8',
       display: 'flex',
       alignItems: 'center'
     },
-    
+
     // BUTTON
-    btn: { 
-      width: '100%', 
-      padding: isMobile ? '2vh' : '1.5vh', 
-      backgroundColor: '#3b82f6', 
-      color: '#fff', 
-      border: 'none', 
-      borderRadius: isMobile ? '2vw' : '0.8vw', 
-      fontWeight: 'bold', 
-      fontSize: isMobile ? '4vw' : '1.2vw', 
-      cursor: loading ? 'not-allowed' : 'pointer', 
+    btn: {
+      width: '100%',
+      padding: isMobile ? '2vh' : '1.5vh',
+      backgroundColor: '#3b82f6',
+      color: '#fff',
+      border: 'none',
+      borderRadius: isMobile ? '2vw' : '0.8vw',
+      fontWeight: 'bold',
+      fontSize: isMobile ? '4vw' : '1.2vw',
+      cursor: loading ? 'not-allowed' : 'pointer',
       marginTop: '2vh',
       display: 'flex',
       alignItems: 'center',
@@ -126,7 +126,7 @@ const ChangePassword = ({ theme }) => {
       boxShadow: '0 4px 12px rgba(59, 130, 246, 0.3)',
       opacity: loading ? 0.7 : 1
     },
-    
+
     // ERROR & SUCCESS
     message: {
       padding: '1vh',
@@ -153,7 +153,7 @@ const ChangePassword = ({ theme }) => {
   const handleUpdatePassword = async () => {
     setError('');
     setSuccess('');
-    
+
     // Validate inputs
     if (!currentPassword || !newPassword || !confirmPassword) {
       setError('Please fill all fields');
@@ -175,7 +175,7 @@ const ChangePassword = ({ theme }) => {
     try {
       const user = JSON.parse(localStorage.getItem('user'));
       const token = localStorage.getItem('token');
-      
+
       const response = await axios.put(
         'http://localhost:5000/api/auth/change-password',
         {
@@ -190,12 +190,12 @@ const ChangePassword = ({ theme }) => {
       );
 
       setSuccess('Password updated successfully');
-      
+
       // Clear form
       setCurrentPassword('');
       setNewPassword('');
       setConfirmPassword('');
-      
+
       // Navigate back after 2 seconds
       setTimeout(() => {
         navigate(-1);
@@ -212,8 +212,8 @@ const ChangePassword = ({ theme }) => {
   return (
     <div style={styles.container}>
       <div style={styles.header}>
-        <div 
-          style={styles.backBtn} 
+        <div
+          style={styles.backBtn}
           onClick={() => navigate(-1)}
           onMouseEnter={(e) => e.currentTarget.style.backgroundColor = isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)'}
           onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
@@ -226,7 +226,7 @@ const ChangePassword = ({ theme }) => {
       <div style={styles.form}>
         {/* Error Message */}
         {error && (
-          <div style={{...styles.message, ...styles.error}}>
+          <div style={{ ...styles.message, ...styles.error }}>
             <AlertCircle size={isMobile ? 16 : 14} />
             {error}
           </div>
@@ -234,7 +234,7 @@ const ChangePassword = ({ theme }) => {
 
         {/* Success Message */}
         {success && (
-          <div style={{...styles.message, ...styles.success}}>
+          <div style={{ ...styles.message, ...styles.success }}>
             <CheckCircle size={isMobile ? 16 : 14} />
             {success}
           </div>
@@ -243,29 +243,29 @@ const ChangePassword = ({ theme }) => {
         <div style={styles.inputGroup}>
           <label style={styles.label}>Current Password</label>
           <div style={styles.inputContainer}>
-            <input 
-              style={styles.input} 
-              type="password" 
-              placeholder="••••••••" 
+            <input
+              style={styles.input}
+              type="password"
+              placeholder="••••••••"
               value={currentPassword}
               onChange={(e) => setCurrentPassword(e.target.value)}
             />
             <div style={styles.eyeIcon}><Lock size={isMobile ? 20 : 18} /></div>
           </div>
         </div>
-        
+
         <div style={styles.inputGroup}>
           <label style={styles.label}>New Password</label>
           <div style={styles.inputContainer}>
-            <input 
-              style={styles.input} 
-              type={showNew ? "text" : "password"} 
+            <input
+              style={styles.input}
+              type={showNew ? "text" : "password"}
               placeholder="Enter new password"
               value={newPassword}
               onChange={(e) => setNewPassword(e.target.value)}
             />
             <div style={styles.eyeIcon} onClick={() => setShowNew(!showNew)}>
-              {showNew ? <EyeOff size={isMobile ? 20 : 20}/> : <Eye size={isMobile ? 20 : 20}/>}
+              {showNew ? <EyeOff size={isMobile ? 20 : 20} /> : <Eye size={isMobile ? 20 : 20} />}
             </div>
           </div>
         </div>
@@ -273,9 +273,9 @@ const ChangePassword = ({ theme }) => {
         <div style={styles.inputGroup}>
           <label style={styles.label}>Confirm New Password</label>
           <div style={styles.inputContainer}>
-            <input 
-              style={styles.input} 
-              type="password" 
+            <input
+              style={styles.input}
+              type="password"
               placeholder="Repeat new password"
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
@@ -284,7 +284,7 @@ const ChangePassword = ({ theme }) => {
           </div>
         </div>
 
-        <button 
+        <button
           style={styles.btn}
           onClick={handleUpdatePassword}
           disabled={loading}

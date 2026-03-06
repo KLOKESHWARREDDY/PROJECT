@@ -1,23 +1,23 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Calendar, MapPin, Share2, ArrowLeft, CheckCircle } from 'lucide-react';
+import {
+  Calendar, MapPin, Share2, ArrowLeft, CheckCircle,
+  Clock, Tag, User, ArrowRight
+} from 'lucide-react';
 import { eventAPI } from '../api';
-import { useState, useEffect } from 'react';
 import { toast } from 'react-toastify';
+import styles from './EventDetails.module.css';
 
-const EventDetails = ({ allEvents, registrations, theme, onRegister, user }) => {
+const EventDetails = ({ allEvents, registrations, theme, onRegister }) => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const isDark = theme === 'dark';
   const [event, setEvent] = useState(null);
   const [loading, setLoading] = useState(true);
   const [registering, setRegistering] = useState(false);
 
-  // Get the actual event ID from URL params - this is the MongoDB _id
   const eventIdFromUrl = id;
-  console.log("Event ID from URL useParams:", eventIdFromUrl);
 
-  // Check if already registered using registrations from database
+  // Check registration status
   const registration = registrations?.find(reg => {
     const regEventId = reg.event?._id || reg.event;
     return regEventId === eventIdFromUrl || regEventId === String(eventIdFromUrl);
@@ -28,236 +28,259 @@ const EventDetails = ({ allEvents, registrations, theme, onRegister, user }) => 
   useEffect(() => {
     const fetchEvent = async () => {
       try {
-        console.log("Fetching event with ID:", eventIdFromUrl);
-        
         const res = await eventAPI.getEventById(eventIdFromUrl);
-        console.log("Event from API:", res.data);
-        console.log("Event _id:", res.data._id);
-        console.log("Event id:", res.data.id);
-        
         setEvent(res.data);
-        setLoading(false);
       } catch (error) {
-        console.log("Error fetching event:", error.response?.data || error.message);
+        console.log('Error fetching event:', error.response?.data || error.message);
+      } finally {
         setLoading(false);
       }
     };
-
     fetchEvent();
   }, [eventIdFromUrl]);
 
-  if (loading) return <div style={{ padding: '40px', textAlign: 'center', color: isDark ? '#fff' : '#333' }}>Loading...</div>;
-
-  if (!event) return <div style={{ padding: '40px', textAlign: 'center', color: isDark ? '#fff' : '#333' }}>Event not found</div>;
-
   const handleButtonClick = async () => {
     if (isRegistered) {
-      // If approved, show ticket. If pending, go to My Events.
       if (registeredStatus === 'approved') {
         navigate(`/ticket-confirmation/${registration._id}`);
       } else {
         navigate('/my-events');
       }
     } else {
-      // Register logic - use onRegister prop which handles state update
-      // Always use URL param id directly - no dependency on event state
       setRegistering(true);
-      console.log("=== REGISTRATION START ===");
-      console.log("Event ID from URL:", eventIdFromUrl);
-      
-      // Call onRegister with URL param id directly
       await onRegister(eventIdFromUrl, () => {
         setRegistering(false);
         navigate('/my-events');
       });
+      setRegistering(false);
     }
   };
 
-  const styles = {
-    container: {
-      maxWidth: '1000px',
-      margin: '0 auto',
-      padding: '24px',
-      fontFamily: "'Inter', sans-serif",
-      color: isDark ? '#fff' : '#1e293b',
-      paddingBottom: '80px', 
-    },
-    headerNav: { 
-      display: 'flex', 
-      justifyContent: 'space-between', 
-      marginBottom: '20px' 
-    },
-    iconBtn: {
-      background: 'none', 
-      border: 'none', 
-      cursor: 'pointer',
-      color: isDark ? '#fff' : '#1e293b', 
-      padding: '10px',
-      borderRadius: '50%', 
-      backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center'
-    },
-    grid: {
-      display: 'grid',
-      gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
-      gap: '40px',
-      alignItems: 'start'
-    },
-    image: {
-      width: '100%', 
-      height: '400px', 
-      objectFit: 'cover',
-      borderRadius: '24px', 
-      boxShadow: '0 20px 40px rgba(0,0,0,0.1)'
-    },
-    infoCol: { 
-      display: 'flex', 
-      flexDirection: 'column', 
-      gap: '24px' 
-    },
-    title: { 
-      fontSize: '36px', 
-      fontWeight: '800', 
-      lineHeight: '1.2', 
-      marginBottom: '10px' 
-    },
-    row: { 
-      display: 'flex', 
-      alignItems: 'center', 
-      gap: '16px' 
-    },
-    iconBox: {
-      width: '56px', 
-      height: '56px', 
-      borderRadius: '16px',
-      backgroundColor: isDark ? '#1e293b' : '#eff6ff',
-      color: '#3b82f6', 
-      display: 'flex', 
-      alignItems: 'center', 
-      justifyContent: 'center',
-      border: isDark ? '1px solid #334155' : 'none'
-    },
-    label: { 
-      fontSize: '13px', 
-      color: '#64748b', 
-      fontWeight: '600', 
-      display: 'block', 
-      marginBottom: '4px' 
-    },
-    value: { 
-      fontSize: '16px', 
-      fontWeight: '700' 
-    },
-    descTitle: { 
-      fontSize: '22px', 
-      fontWeight: 'bold', 
-      marginBottom: '12px' 
-    },
-    descText: { 
-      lineHeight: '1.8', 
-      color: isDark ? '#cbd5e1' : '#475569', 
-      fontSize: '16px' 
-    },
-
-    // Dynamic Button Style
-    registerBtn: (registered) => ({
-      width: '100%',
-      padding: '18px',
-      // Green if registered, Blue if not
-      backgroundColor: registered ? '#10b981' : '#3b82f6', 
-      color: '#fff',
-      border: 'none',
-      borderRadius: '16px',
-      fontSize: '18px',
-      fontWeight: 'bold',
-      cursor: 'pointer',
-      boxShadow: registered ? '0 8px 25px rgba(16, 185, 129, 0.4)' : '0 8px 25px rgba(59, 130, 246, 0.4)',
-      marginTop: '20px',
-      transition: 'transform 0.2s',
-      textAlign: 'center',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      gap: '10px'
-    })
+  // Helpers
+  const formatDate = (dateStr) => {
+    try {
+      const d = new Date(dateStr);
+      return d.toLocaleDateString('en-US', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+    } catch { return dateStr; }
   };
 
-  return (
-    <div style={styles.container}>
-      
-      {/* Navigation Header */}
-      <div style={styles.headerNav}>
-        <button style={styles.iconBtn} onClick={() => navigate(-1)}>
-          <ArrowLeft size={24} />
+  const formatTime = (dateStr) => {
+    try {
+      const d = new Date(dateStr);
+      return d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+    } catch { return '—'; }
+  };
+
+  const getDaysLeft = (dateStr) => {
+    const now = new Date();
+    const eventDate = new Date(dateStr);
+    const diff = Math.ceil((eventDate - now) / (1000 * 60 * 60 * 24));
+    return diff;
+  };
+
+  const resolveAvatar = (url) => {
+    if (!url) return 'https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png';
+    if (url.startsWith('http')) return url;
+    return `http://localhost:5000${url}`;
+  };
+
+  if (loading) {
+    return (
+      <div className={styles.loadingWrap}>
+        <div className={styles.spinner} />
+        <p style={{ color: '#A0AEC0', fontFamily: 'Inter, sans-serif', fontSize: '15px' }}>Loading event…</p>
+      </div>
+    );
+  }
+
+  if (!event) {
+    return (
+      <div className={styles.loadingWrap}>
+        <p style={{ color: '#A0AEC0', fontFamily: 'Inter, sans-serif', fontSize: '18px', fontWeight: '700' }}>Event not found</p>
+        <button className={styles.backBtn} onClick={() => navigate(-1)}>
+          <ArrowLeft size={16} /> Go Back
         </button>
-        <button style={styles.iconBtn}>
-          <Share2 size={24} />
+      </div>
+    );
+  }
+
+  const now = new Date();
+  const eventDate = new Date(event.date);
+  const isUpcoming = eventDate >= now;
+  const daysLeft = getDaysLeft(event.date);
+  const teacherName = event.teacher?.name || 'Faculty Member';
+  const teacherEmail = event.teacher?.email || '';
+  const teacherAvatar = resolveAvatar(event.teacher?.profileImage);
+
+  // Button states
+  const btnClass = isRegistered
+    ? (registeredStatus === 'approved' ? styles.isRegistered : styles.isPending)
+    : styles.notRegistered;
+  const btnLabel = registering ? 'Registering…'
+    : isRegistered
+      ? (registeredStatus === 'approved' ? '🎟️ View My Ticket' : '⏳ Pending Approval')
+      : 'Register Now';
+
+  return (
+    <div className={styles.root}>
+
+      {/* Top Nav */}
+      <div className={styles.topNav}>
+        <button className={styles.backBtn} onClick={() => navigate(-1)}>
+          <ArrowLeft size={16} /> Back to Events
+        </button>
+        <button className={styles.shareBtn} onClick={() => {
+          navigator.clipboard?.writeText(window.location.href);
+          toast.success('Link copied!');
+        }}>
+          <Share2 size={18} />
         </button>
       </div>
 
-      <div style={styles.grid}>
-        {/* Left Column: Image */}
-        <img src={event.image} alt={event.title} style={styles.image} />
+      {/* Hero Image */}
+      <div className={styles.heroWrap}>
+        <img
+          src={event.image || 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=1200'}
+          alt={event.title}
+          className={styles.heroImage}
+        />
+        <div className={styles.heroBadgeRow}>
+          <span className={`${styles.statusPill} ${isUpcoming ? styles.upcoming : styles.published}`}>
+            <span className={styles.statusDot} />
+            {isUpcoming ? 'Upcoming' : 'Published'}
+          </span>
+          {event.category && (
+            <span className={styles.categoryPill}>{event.category}</span>
+          )}
+        </div>
+      </div>
 
-        {/* Right Column: Info */}
-        <div style={styles.infoCol}>
+      {/* Main Content */}
+      <div className={styles.contentWrap}>
+
+        {/* ── Left Column ── */}
+        <div className={styles.leftCol}>
           <div>
-            <h1 style={styles.title}>{event.title}</h1>
-            <span style={{ 
-              backgroundColor: isDark ? '#334155' : '#f1f5f9', 
-              padding: '6px 12px', 
-              borderRadius: '20px', 
-              fontSize: '14px', 
-              fontWeight: '600', 
-              color: isDark ? '#e2e8f0' : '#475569' 
-            }}>
-              {event.category}
-            </span>
+            <h1 className={styles.eventTitle}>{event.title}</h1>
           </div>
-          
-          <div style={styles.row}>
-            <div style={styles.iconBox}><Calendar size={28} /></div>
-            <div>
-              <span style={styles.label}>Date & Time</span>
-              <span style={styles.value}>{event.date}</span>
+
+          {/* Meta Cards Grid */}
+          <div className={styles.metaGrid}>
+            <div className={styles.metaCard}>
+              <div className={styles.metaIconBox} style={{ background: '#EEF2FF', color: '#4318FF' }}>
+                <Calendar size={22} />
+              </div>
+              <div>
+                <span className={styles.metaLabel}>Date</span>
+                <span className={styles.metaValue}>{formatDate(event.date)}</span>
+              </div>
+            </div>
+
+            <div className={styles.metaCard}>
+              <div className={styles.metaIconBox} style={{ background: '#F0FDF4', color: '#16A34A' }}>
+                <Clock size={22} />
+              </div>
+              <div>
+                <span className={styles.metaLabel}>Time</span>
+                <span className={styles.metaValue}>{formatTime(event.date)}</span>
+              </div>
+            </div>
+
+            <div className={styles.metaCard}>
+              <div className={styles.metaIconBox} style={{ background: '#FFF7ED', color: '#EA580C' }}>
+                <MapPin size={22} />
+              </div>
+              <div>
+                <span className={styles.metaLabel}>Location</span>
+                <span className={styles.metaValue}>{event.location || 'TBA'}</span>
+              </div>
+            </div>
+
+            <div className={styles.metaCard}>
+              <div className={styles.metaIconBox} style={{ background: '#FFF1F2', color: '#E11D48' }}>
+                <Tag size={22} />
+              </div>
+              <div>
+                <span className={styles.metaLabel}>Category</span>
+                <span className={styles.metaValue}>{event.category || 'General'}</span>
+              </div>
             </div>
           </div>
 
-          <div style={styles.row}>
-            <div style={styles.iconBox}><MapPin size={28} /></div>
-            <div>
-              <span style={styles.label}>Location</span>
-              <span style={styles.value}>{event.location}</span>
-            </div>
-          </div>
-
-          <div>
-            <h3 style={styles.descTitle}>About Event</h3>
-            <p style={styles.descText}>
-              Join us for an immersive experience learning about the latest in technology. 
-              This workshop is suitable for all levels. Certificate provided upon completion.
+          {/* About */}
+          <div className={styles.section}>
+            <h2 className={styles.sectionTitle}>About This Event</h2>
+            <p className={styles.descText}>
+              {event.description || 'Join us for an immersive experience. This event is open to all participants. Certificate will be provided upon completion.'}
             </p>
           </div>
 
-          {/* DYNAMIC REGISTER BUTTON */}
-          <button 
-            style={styles.registerBtn(isRegistered)} 
-            onClick={handleButtonClick}
-            disabled={registering}
-            onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(-2px)'}
-            onMouseLeave={(e) => e.currentTarget.style.transform = 'translateY(0)'}
-          >
-            {registering ? 'Registering...' : isRegistered ? (
-              <>
-                <CheckCircle size={22} />
-                {registeredStatus === 'approved' ? 'View Ticket' : 'Registration Pending'}
-              </>
-            ) : (
-              'Register Now'
-            )}
-          </button>
+          {/* Organizer */}
+          <div className={styles.organizerStrip}>
+            <img
+              src={teacherAvatar}
+              alt={teacherName}
+              className={styles.organizerAvatar}
+              onError={(e) => { e.target.src = 'https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png'; }}
+            />
+            <div>
+              <div className={styles.organizerLabel}>Organized by</div>
+              <div className={styles.organizerName}>{teacherName}</div>
+              {teacherEmail && <div className={styles.organizerEmail}>{teacherEmail}</div>}
+            </div>
+          </div>
+        </div>
+
+        {/* ── Right Sticky Column ── */}
+        <div className={styles.rightCol}>
+          <div className={styles.registerCard}>
+            <h3 className={styles.registerCardTitle}>
+              {isRegistered ? 'You\'re Registered!' : 'Join This Event'}
+            </h3>
+            <p className={styles.registerCardSub}>
+              {isRegistered
+                ? registeredStatus === 'approved'
+                  ? 'Your spot is confirmed. View your ticket below.'
+                  : 'Your registration is under review by the organizer.'
+                : isUpcoming && daysLeft > 0
+                  ? `Happening in ${daysLeft} day${daysLeft !== 1 ? 's' : ''}. Secure your spot now!`
+                  : 'Register to attend this event and receive updates.'
+              }
+            </p>
+
+            {/* Quick info rows */}
+            <div className={styles.quickInfo}>
+              <div className={styles.quickInfoRow}>
+                <div className={styles.quickInfoIcon} style={{ background: '#EEF2FF' }}>
+                  <Calendar size={16} color="#4318FF" />
+                </div>
+                <span>{formatDate(event.date)}</span>
+              </div>
+              <div className={styles.quickInfoRow}>
+                <div className={styles.quickInfoIcon} style={{ background: '#F0FDF4' }}>
+                  <MapPin size={16} color="#16A34A" />
+                </div>
+                <span>{event.location || 'TBA'}</span>
+              </div>
+              <div className={styles.quickInfoRow}>
+                <div className={styles.quickInfoIcon} style={{ background: '#FFF7ED' }}>
+                  <User size={16} color="#EA580C" />
+                </div>
+                <span>{teacherName}</span>
+              </div>
+            </div>
+
+            <div className={styles.registerDivider} />
+
+            <button
+              className={`${styles.registerBtn} ${btnClass}`}
+              onClick={handleButtonClick}
+              disabled={registering || (isRegistered && registeredStatus === 'pending')}
+            >
+              {isRegistered ? <CheckCircle size={20} /> : <ArrowRight size={20} />}
+              {btnLabel}
+            </button>
+          </div>
         </div>
       </div>
     </div>
