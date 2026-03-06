@@ -1,77 +1,61 @@
-# ==============================================================================
-# Git Ignore Configuration
-# ==============================================================================
-# This file specifies intentionally untracked files that Git should ignore.
-# Purpose: Prevents sensitive data and build artifacts from being committed.
-# ==============================================================================
+# ==============================
 
-# R History Files - R programming language session data
-# --------------------------------------------------------------------------------
-.Rhistory
-.Rapp.history
+# Node.js / MERN Stack
 
-# R Session Data Files - R workspace files
-# --------------------------------------------------------------------------------
-.RData
-.RDataTmp
+# ==============================
 
-# Environment Variables File
-# --------------------------------------------------------------------------------
-# IMPORTANT: Contains sensitive credentials - NEVER commit to version control
+# dependencies
+
+node_modules/
+my-app/node_modules/
+server/node_modules/
+
+# environment variables
+
 .env
+.env.local
+.env.development
+.env.production
 
-# R User-Specific Data
-# --------------------------------------------------------------------------------
-.Ruserdata
+# build files
 
-# Example Code in Package Build Process
-# --------------------------------------------------------------------------------
-*-Ex.R
+build/
+dist/
+.next/
 
-# R Package Build Output Files
-# --------------------------------------------------------------------------------
-/*.tar.gz
+# cache
 
-# R CMD Check Output Directories
-# --------------------------------------------------------------------------------
-/*.Rcheck/
+.cache/
+.parcel-cache/
 
-# RStudio Project Files
-# --------------------------------------------------------------------------------
-.Rproj.user/
+# logs
 
-# Produced Vignettes (R documentation)
-# --------------------------------------------------------------------------------
-vignettes/*.html
-vignettes/*.pdf
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
 
-# OAuth2 Token File
-# --------------------------------------------------------------------------------
-# Created by httr package for OAuth authentication
-.httr-oauth
+# uploads
 
-# Knitr and R Markdown Cache Directories
-# --------------------------------------------------------------------------------
-*_cache/
-/cache/
+uploads/
+server/uploads/
 
-# Temporary Files from R Markdown
-# --------------------------------------------------------------------------------
-*.utf8.md
-*.knit.md
+# OS files
 
-# R Environment Variables File
-# --------------------------------------------------------------------------------
-.Renviron
+.DS_Store
+Thumbs.db
 
-# Package Documentation Site
-# --------------------------------------------------------------------------------
-docs/
+# editor settings
 
-# Translation Temporary Files
-# --------------------------------------------------------------------------------
-po/*~
+.vscode/
+.idea/
 
-# RStudio Connect Folder
-# --------------------------------------------------------------------------------
-rsconnect/
+# temporary files
+
+tmp/
+temp/
+
+# package lock optional
+
+package-lock.json
+yarn.lock
